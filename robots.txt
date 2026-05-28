@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://themarketplace.co.nz/sitemap.xml

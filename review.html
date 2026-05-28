@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Partner Feedback | The MarketPlace NZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --charcoalBg: #0F110F;
+      --charcoalCard: #1C1F1C;
+      --emeraldPrimary: #0D5C3A;
+      --emeraldAccent: #1B9A5E;
+      --goldAccent: #C5A059;
+      --whitePrimary: #F5F7F5;
+      --whiteSecondary: #A5A8A5;
+      --glassBg: rgba(28, 31, 28, 0.7);
+      --glassBorder: rgba(197, 160, 89, 0.15);
+      --radiusLg: 16px;
+      --radiusMd: 8px;
+    }
+
+    body {
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--whitePrimary);
+      font-family: "DM Sans", sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 40px 20px;
+    }
+
+    .feedbackCard {
+      background: var(--glassBg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glassBorder);
+      border-radius: var(--radiusLg);
+      padding: 40px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    .logoBlock {
+      margin-bottom: 25px;
+    }
+
+    .logoImage {
+      height: 90px;
+      width: 90px;
+      object-fit: contain;
+      border-radius: 50%;
+      border: 2px solid rgba(197, 160, 89, 0.4);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-family: "Playfair Display", serif;
+      font-size: 28px;
+      margin: 0 0 15px 0;
+      color: var(--whitePrimary);
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      font-size: 15px;
+      color: var(--whiteSecondary);
+      line-height: 1.6;
+      margin: 0 0 30px 0;
+    }
+
+    .draftBox {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radiusMd);
+      padding: 20px;
+      text-align: left;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .draftLabel {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--goldAccent);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .draftText {
+      font-size: 14px;
+      color: var(--whitePrimary);
+      line-height: 1.6;
+      margin: 0;
+      white-space: pre-wrap;
+    }
+
+    .buttonGroup {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .primaryBtn {
+      background: var(--emeraldAccent);
+      color: var(--whitePrimary);
+      border: none;
+      padding: 16px;
+      border-radius: var(--radiusMd);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(27, 154, 94, 0.2);
+    }
+
+    .primaryBtn:hover {
+      background: #1eb871;
+    }
+
+    .primaryBtn:active {
+      transform: scale(0.98);
+    }
+
+    .secondaryBtn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--whitePrimary);
+      padding: 14px;
+      border-radius: var(--radiusMd);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      width: 100%;
+    }
+
+    .secondaryBtn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .secondaryBtn.success {
+      background: var(--emeraldPrimary);
+      border-color: var(--emeraldAccent);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="feedbackCard">
+      <div class="logoBlock">
+        <img src="logo.png" alt="The MarketPlace NZ Logo" class="logoImage">
+      </div>
+      
+      <h1 id="headline">Thank You Sopo</h1>
+      <p id="subheading">We loved building your custom Strategy Desk and live meeting audio recorder portal. To help other local Waikato businesses find our services, we would be incredibly grateful if you left us a quick Google review.</p>
+      
+      <div class="draftBox">
+        <span class="draftLabel">Your Custom Review Draft</span>
+        <p class="draftText" id="reviewDraft">The MarketPlace NZ built an incredible custom strategy portal and automatic audio recording pipeline for our business. Kurt and Henk are master operational minds who automate bottlenecks and create pristine systems. The results are world class.</p>
+      </div>
+      
+      <div class="buttonGroup">
+        <button id="copyBtn" class="secondaryBtn" onclick="copyReviewText()">Copy Draft Review Text</button>
+        <a id="reviewLink" href="https://search.google.com/local/writereview?placeid=ChIJ-zF8_a3vTG0Rr3r03y_03y8" target="_blank" style="text-decoration:none;">
+          <button class="primaryBtn">Proceed to Google to Paste Review</button>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Customize text based on URL parameters
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const client = params.get("client");
+      const type = params.get("type");
+      
+      const headline = document.getElementById("headline");
+      const subheading = document.getElementById("subheading");
+      const draft = document.getElementById("reviewDraft");
+      const reviewLink = document.getElementById("reviewLink");
+      
+      // Allow overriding the Google review link via URL query param
+      const gLink = params.get("link");
+      if (gLink) {
+        reviewLink.href = gLink;
+      }
+      
+      if (client) {
+        headline.textContent = "Thank You " + decodeURIComponent(client);
+        subheading.textContent = "We loved partnering with you to scale your business. To help other local Waikato business owners discover our digital systems, we would be incredibly grateful for your feedback.";
+      }
+      
+      if (type === "sopo" || client === "Sopo") {
+        draft.textContent = "The MarketPlace NZ built an incredible custom strategy portal and automatic audio recording pipeline for our business. Kurt and Henk are master operational minds who automate bottlenecks and create pristine systems. The results are world class.";
+      } else if (type === "builder") {
+        draft.textContent = "Kurt and Henk at The MarketPlace NZ completely transformed our digital acquisition pipeline. They built our entire client systems, wrote high conversion survival copy, and structured our Meta advertising. Predictable leads are finally coming in.";
+      } else if (type === "clinic") {
+        draft.textContent = "Working with The MarketPlace NZ has been an absolute game changer. They restructured our social media marketing, set up our client booking engine, and helped us project ultimate clinical authority in Hamilton. Highly recommended.";
+      } else {
+        // Universal default
+        draft.textContent = "Kurt and Henk at The MarketPlace NZ completely streamlined our local business pipelines. They replaced manual bottlenecks with custom webhooks and automated client booking systems. An absolute asset to any Hamilton business.";
+      }
+    });
+
+    async function copyReviewText() {
+      const text = document.getElementById("reviewDraft").textContent;
+      const btn = document.getElementById("copyBtn");
+      
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = "Draft Copied Successfully";
+        btn.classList.add("success");
+        setTimeout(() => {
+          btn.textContent = "Copy Draft Review Text";
+          btn.classList.remove("success");
+        }, 3000);
+      } catch (err) {
+        // Fallback
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        
+        btn.textContent = "Draft Copied Successfully";
+        btn.classList.add("success");
+        setTimeout(() => {
+          btn.textContent = "Copy Draft Review Text";
+          btn.classList.remove("success");
+        }, 3000);
+      }
+    }
+  </script>
+</body>
+</html>

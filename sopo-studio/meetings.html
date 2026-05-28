@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sopo Strategy Portal | The MarketPlace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: radial-gradient(circle at 50% 50%, #1b263b 0%, #0d1b2a 100%);
+      color: #ffffff;
+      font-family: 'Outfit', sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .brandHeader {
+      font-size: 11px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #C9923A;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(180deg, #ffffff 0%, #a0aec0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Voice Recorder Console */
+    .recorderConsole {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 25px;
+      text-align: center;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .timerDisplay {
+      font-size: 36px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 15px;
+      letter-spacing: 1px;
+    }
+
+    .micButton {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e63946 0%, #b5179e 100%);
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto 20px auto;
+      box-shadow: 0 0 20px rgba(230, 57, 70, 0.4);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .micButton:active {
+      transform: scale(0.95);
+    }
+
+    .micButton.recording {
+      animation: pulseGlow 1.5s infinite;
+      background: #e63946;
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 20px rgba(230, 57, 70, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(230, 57, 70, 0);
+      }
+    }
+
+    .statusText {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 15px;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .downloadButton {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #C9923A;
+      color: #0d1b2a;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      margin-top: 15px;
+      width: 100%;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+
+    /* Strategy Content Card */
+    .strategyCard {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .sectionTitle {
+      font-size: 14px;
+      color: #C9923A;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+      margin-top: 25px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+
+    .sectionTitle:first-of-type {
+      margin-top: 0;
+    }
+
+    .cardBlock {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .cardBlockTitle {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bulletList {
+      margin: 0;
+      padding-left: 20px;
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .bulletList li {
+      margin-bottom: 8px;
+    }
+
+    .bulletList li:last-child {
+      margin-bottom: 0;
+    }
+
+    .highlightText {
+      color: #10B981;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="brandHeader">The MarketPlace</div>
+      <h1>Sopo's Strategy Desk</h1>
+    </header>
+
+    <!-- Interactive Audio Recorder -->
+    <div class="recorderConsole">
+      <div class="timerDisplay" id="timerDisplay">00:00</div>
+      <button class="micButton" id="micButton">
+        <!-- SVG Microphone Icon -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+          <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+          <line x1="12" x2="12" y1="19" y2="22"></line>
+        </svg>
+      </button>
+      <div class="statusText" id="statusText">Tap to record meeting audio</div>
+      <audio id="audioPlayback" controls></audio>
+      <a href="#" class="downloadButton" id="downloadButton">Save Recording to Phone</a>
+    </div>
+
+    <!-- Strategy Meeting Card -->
+    <div class="strategyCard">
+      
+      <div class="sectionTitle">1. Content Series</div>
+      <div class="cardBlock">
+        <div class="cardBlockTitle">
+          <span class="highlightText">30 Day FAQ Interview</span>
+        </div>
+        <ul class="bulletList">
+          <li>You ask questions off camera, Sopo answers naturally.</li>
+          <li><strong>Top (Hook):</strong> Quick problem setup.</li>
+          <li><strong>Middle (Body):</strong> Simple Caregiver advice.</li>
+          <li><strong>Bottom (CTA):</strong> Tagline: <span class="highlightText">Wanna give it a go?</span></li>
+        </ul>
+      </div>
+
+      <div class="sectionTitle">2. Brain Dump Questions</div>
+      <div class="cardBlock">
+        <div class="cardBlockTitle">Ask Sopo to list:</div>
+        <ul class="bulletList">
+          <li><strong>10 Fears:</strong> What are first home buyers most afraid of when starting?</li>
+          <li><strong>10 Surprises:</strong> What catches them completely off guard?</li>
+          <li><strong>10 Myths:</strong> What myths do they believe that are total lies?</li>
+        </ul>
+      </div>
+
+      <div class="sectionTitle">3. Open Home Check-in</div>
+      <div class="cardBlock">
+        <div class="cardBlockTitle">
+          <span class="highlightText">Qualifying Leads</span>
+        </div>
+        <ul class="bulletList">
+          <li>Mobile checkin form linked to Make.</li>
+          <li>Qualifies them automatically and texts property files.</li>
+          <li><strong>Ask Sopo:</strong> What 3 questions qualify a buyer instantly without sounding pushy?</li>
+        </ul>
+      </div>
+
+      <div class="sectionTitle">4. Handover Moments</div>
+      <div class="cardBlock">
+        <div class="cardBlockTitle">
+          <span class="highlightText">Key Handover Raw Joy</span>
+        </div>
+        <ul class="bulletList">
+          <li>Rough cut, high emotion, zero corporate filter.</li>
+          <li>Capture the exact second she hands over the keys.</li>
+          <li>Ask to coordinate her next settlement.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let startTime;
+    let timerInterval;
+
+    const micButton = document.getElementById("micButton");
+    const timerDisplay = document.getElementById("timerDisplay");
+    const statusText = document.getElementById("statusText");
+    const audioPlayback = document.getElementById("audioPlayback");
+    const downloadButton = document.getElementById("downloadButton");
+
+    micButton.addEventListener("click", async () => {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        // Start Recording
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayback.src = audioUrl;
+            audioPlayback.style.display = "block";
+            downloadButton.href = audioUrl;
+            
+            // Format file name with date and time
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10);
+            downloadButton.download = `sopo_meeting_${dateStr}.webm`;
+            downloadButton.style.display = "inline-flex";
+            statusText.textContent = "Recording saved! Tap to play or download.";
+          };
+
+          mediaRecorder.start();
+          micButton.classList.add("recording");
+          statusText.textContent = "Recording active... Tap to stop";
+          
+          startTime = Date.now();
+          timerInterval = setInterval(updateTimer, 1000);
+        } catch (err) {
+          alert("Microphone access denied or not supported on this browser.");
+          statusText.textContent = "Microphone access failed.";
+        }
+      } else {
+        // Stop Recording
+        mediaRecorder.stop();
+        // Stop all audio tracks to release microphone hardware
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        
+        micButton.classList.remove("recording");
+        clearInterval(timerInterval);
+        timerDisplay.textContent = "00:00";
+      }
+    });
+
+    function updateTimer() {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      const seconds = String(elapsed % 60).padStart(2, "0");
+      timerDisplay.textContent = minutes + ":" + seconds;
+    }
+  </script>
+</body>
+</html>
