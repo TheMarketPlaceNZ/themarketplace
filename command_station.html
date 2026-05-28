@@ -427,6 +427,20 @@
 </head>
 <body>
 
+  <!-- Secure Gate Overlay -->
+  <div id="gateOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 50% 50%, #1b263b 0%, #0d1b2a 100%);z-index:9999;display:flex;align-items:center;justify-content:center;box-sizing:border-box;">
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:40px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
+      <div style="width:50px;height:50px;background:#C9923A;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d1b2a" stroke-width="2.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <h2 style="font-family:'Outfit',sans-serif;font-size:22px;color:white;margin:0 0 10px 0;">Command Station Secure Gate</h2>
+      <p style="font-family:'Outfit',sans-serif;font-size:14px;color:#94a3b8;margin:0 0 25px 0;line-height:1.5;">Enter your master agency passcode to access the operations engine.</p>
+      <input type="password" id="gatePasscode" placeholder="••••••••" style="width:100%;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;color:white;font-size:16px;text-align:center;letter-spacing:5px;box-sizing:border-box;margin-bottom:20px;" oninput="checkGatePasscode()">
+    </div>
+  </div>
   <div class="container">
     <header>
       <div class="logoBlock">
@@ -440,7 +454,14 @@
           <h1>Command Station</h1>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button class="vaultToggleBtn" style="border-color: rgba(201, 146, 58, 0.35); color: var(--gold);" onclick="loadDashboard()">
+          <!-- SVG Reload Icon -->
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+          Sync Engine
+        </button>
         <button class="vaultToggleBtn" onclick="toggleVault()">🔒 Operational Vault</button>
         <!-- Status indicator -->
         <span style="font-size:13px;color:#10B981;font-weight:600;display:flex;align-items:center;gap:8px">
@@ -449,24 +470,6 @@
         </span>
       </div>
     </header>
-
-    <!-- Credentials & Config Setup -->
-    <div class="setupPanel">
-      <div class="panelTitle">Jarvis Integration Config</div>
-      <div class="inputRow">
-        <div>
-          <label>Google Sheet Published CSV URL</label>
-          <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" onchange="saveConfig()">
-        </div>
-        <div>
-          <label>ElevenLabs API Key</label>
-          <input type="password" id="elevenApiKey" placeholder="Enter your ElevenLabs API Key" onchange="saveConfig()">
-        </div>
-      </div>
-      <div style="text-align: right">
-        <button class="saveButton" onclick="loadDashboard()">Sync Command Station</button>
-      </div>
-    </div>
 
     <!-- Active Leads Grid -->
     <div class="dashboardGrid" id="leadsGrid">
@@ -478,18 +481,39 @@
   </div>
 
   <script>
+    const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVeZa6G3lgVY7gtODdNDBmwl33TGJLmaakKJeJjY-EqYkWiR1QIPLCSVLDfsaqjQPoNr8M2WjZm1_I/pub?gid=0&single=true&output=csv";
+
     // Load config from local storage on load
     document.addEventListener("DOMContentLoaded", () => {
-      const storedUrl = localStorage.getItem("jarvisSheetUrl");
+      // Validate gate session security
+      const isUnlocked = localStorage.getItem("jarvisGateUnlocked");
+      if (isUnlocked === "true") {
+        document.getElementById("gateOverlay").style.display = "none";
+      }
+
+      const storedUrl = localStorage.getItem("jarvisSheetUrl") || DEFAULT_SHEET_URL;
       const storedKey = localStorage.getItem("jarvisElevenKey");
       
-      if (storedUrl) document.getElementById("sheetUrl").value = storedUrl;
+      document.getElementById("sheetUrl").value = storedUrl;
       if (storedKey) document.getElementById("elevenApiKey").value = storedKey;
       
-      if (storedUrl) {
+      if (isUnlocked === "true" && storedUrl) {
         loadDashboard();
       }
     });
+
+    function checkGatePasscode() {
+      const pin = document.getElementById("gatePasscode").value.trim();
+      // Lock gate behind the hello password
+      if (pin === "Pass#321Word") {
+        document.getElementById("gateOverlay").style.display = "none";
+        localStorage.setItem("jarvisGateUnlocked", "true");
+        loadDashboard();
+      } else if (pin.length >= 12) {
+        alert("Access Denied: Incorrect passcode.");
+        document.getElementById("gatePasscode").value = "";
+      }
+    }
 
     function saveConfig() {
       const sheetUrl = document.getElementById("sheetUrl").value.trim();
@@ -500,12 +524,12 @@
     }
 
     async function loadDashboard() {
-      const sheetUrl = document.getElementById("sheetUrl").value.trim();
+      let sheetUrl = document.getElementById("sheetUrl").value.trim();
       const grid = document.getElementById("leadsGrid");
       
       if (!sheetUrl) {
-        alert("Please paste your published Google Sheet CSV URL first.");
-        return;
+        sheetUrl = DEFAULT_SHEET_URL;
+        document.getElementById("sheetUrl").value = sheetUrl;
       }
 
       grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--gold); padding: 40px;">Syncing latest database updates...</div>`;
@@ -773,6 +797,14 @@
         }, 1500);
       });
     }
+
+    function openSettings() {
+      document.getElementById("settingsModalOverlay").style.display = "flex";
+    }
+
+    function closeSettings() {
+      document.getElementById("settingsModalOverlay").style.display = "none";
+    }
   </script>
 
   <!-- Branded Operational Credentials Vault Modal -->
@@ -868,6 +900,48 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Option B Footer with Settings Gear Button -->
+    <footer style="margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
+      <button class="vaultToggleBtn" onclick="openSettings()" style="background: none; border: none; padding: 0; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">
+        <!-- SVG Gear Icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+      <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">
+        &copy; 2026 The MarketPlace NZ. Operational Command Center.
+      </div>
+    </footer>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="vaultModalOverlay" id="settingsModalOverlay">
+    <div class="vaultModal">
+      <button class="vaultCloseBtn" onclick="closeSettings()">&times;</button>
+      <div class="vaultTitle">
+        <!-- SVG Gear Icon -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Integration Settings
+      </div>
+      <div style="margin-bottom: 25px; box-sizing: border-box;">
+        <label style="display:block;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;">Google Sheet Published CSV URL</label>
+        <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" onchange="saveConfig()" style="width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;color:white;font-size:14px;font-family:'Outfit',sans-serif;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom: 30px; box-sizing: border-box;">
+        <label style="display:block;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;">ElevenLabs API Key</label>
+        <input type="password" id="elevenApiKey" placeholder="Enter your ElevenLabs API Key" onchange="saveConfig()" style="width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;color:white;font-size:14px;font-family:'Outfit',sans-serif;box-sizing:border-box;">
+      </div>
+      <div style="text-align: right; box-sizing: border-box;">
+        <button class="saveButton" onclick="closeSettings(); loadDashboard();" style="background:var(--gold);color:var(--navy);border:none;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.2s ease;">Sync & Save</button>
       </div>
     </div>
   </div>
