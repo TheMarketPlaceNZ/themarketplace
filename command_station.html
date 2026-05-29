@@ -471,12 +471,25 @@
       </div>
     </header>
 
-    <!-- Active Leads Grid -->
-    <div class="dashboardGrid" id="leadsGrid">
-      <!-- Cards will be dynamically injected here -->
-      <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">
-        Configure your Google Sheet CSV URL above and click Sync to stream active leads live!
+    <!-- Folder and Leads Container -->
+    <div style="display: flex; gap: 30px; margin: 0 0 40px 0;">
+      
+      <!-- Folder Sidebar -->
+      <div id="folderSidebar" class="setupPanel" style="width: 260px; margin: 0;">
+        <h3 style="color: #C9923A; margin: 0 0 20px 0;"><b>OPERATIONAL FOLDERS</b></h3>
+        <div id="foldersList"></div>
       </div>
+
+      <!-- Content Area -->
+      <div style="flex: 1;">
+        <h2 id="folderHeaderTitle" style="color: #ffffff; margin: 0 0 20px 0;">Pre Meeting Leads</h2>
+        <div class="dashboardGrid" id="leadsGrid">
+          <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">
+            Configure your Google Sheet CSV URL above and click Sync to stream active leads live!
+          </div>
+        </div>
+      </div>
+      
     </div>
   </div>
 
@@ -523,6 +536,15 @@
       localStorage.setItem("jarvisElevenKey", elevenKey);
     }
 
+    const folders = [
+      { id: "preMeeting", name: "Pre Meeting Strategy", icon: "📁" },
+      { id: "proposal", name: "Proposal & Follow Up", icon: "📄" },
+      { id: "emailList", name: "Outbound Email List", icon: "📧" },
+      { id: "trash", name: "Archive & Trash", icon: "🗑" }
+    ];
+    let activeFolder = "preMeeting";
+    let currentLeads = [];
+
     async function loadDashboard() {
       let sheetUrl = document.getElementById("sheetUrl").value.trim();
       const grid = document.getElementById("leadsGrid");
@@ -540,6 +562,7 @@
         const csvText = await response.text();
         
         const leads = parseCSV(csvText);
+        currentLeads = leads;
         renderLeads(leads);
       } catch (err) {
         grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #e63946; padding: 40px;">Connection failed. Verify your Google Sheet is published to the web as CSV.</div>`;
@@ -584,13 +607,33 @@
     function renderLeads(leads) {
       const grid = document.getElementById("leadsGrid");
       grid.innerHTML = "";
+      
+      let clientStates = JSON.parse(localStorage.getItem("jarvisClientStates") || "{}");
+      
+      // Calculate counts and render sidebar
+      const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0 };
+      leads.forEach(lead => {
+        const name = lead.Name || lead.name || "Unknown Lead";
+        const state = clientStates[name] || "preMeeting";
+        if (counts[state] !== undefined) {
+          counts[state]++;
+        }
+      });
+      
+      renderSidebar(leads, counts);
 
-      if (leads.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">Zero active leads found in database.</div>`;
+      const filteredLeads = leads.filter(lead => {
+        const name = lead.Name || lead.name || "Unknown Lead";
+        const state = clientStates[name] || "preMeeting";
+        return state === activeFolder;
+      });
+
+      if (filteredLeads.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">Zero active leads found in this folder.</div>`;
         return;
       }
 
-      leads.forEach((lead, index) => {
+      filteredLeads.forEach((lead, index) => {
         const card = document.createElement("div");
         card.className = "leadCard";
         
@@ -604,6 +647,75 @@
         const time = lead.Time || lead.allocatedTime || "No Time Set";
         const brief = lead.Brief || lead.ResearchBrief || lead.gapPercentage || "Perplexity Lead Briefing Pending...";
 
+        // Set up contextual buttons
+        let actionButtons = "";
+        
+        if (activeFolder === "preMeeting") {
+          const emailState = localStorage.getItem("emailSent_" + name) === "true";
+          actionButtons = `
+            <div style="display: flex; gap: 10px; margin: 10px 0 0 0;">
+              <button class="voiceButton" style="flex: 1; border: 1px solid ${emailState ? '#10B981' : '#C9923A'}; color: ${emailState ? '#10B981' : '#ffffff'};" onclick="toggleEmailSent('${name}')">
+                ${emailState ? '✓ Psyops Sent' : '✉ Sent Psyops'}
+              </button>
+              <button class="voiceButton" style="flex: 1;" onclick="changeClientState('${name}', 'emailList')">
+                Push List
+              </button>
+            </div>
+            <div style="display: flex; gap: 10px; margin: 10px 0 0 0;">
+              <button class="voiceButton" style="flex: 1; background: #0D5C3A; color: white;" onclick="changeClientState('${name}', 'proposal')">
+                Advance
+              </button>
+              <button class="voiceButton" style="flex: 1; border: 1px solid rgba(230, 57, 70, 0.2); color: #e63946;" onclick="changeClientState('${name}', 'trash')">
+                Dismiss
+              </button>
+            </div>
+          `;
+        } else if (activeFolder === "proposal") {
+          const proposalStatus = localStorage.getItem("proposalStatus_" + name) || "Drafting";
+          actionButtons = `
+            <div style="display: flex; gap: 10px; margin: 10px 0 0 0;">
+              <button class="voiceButton" style="flex: 1; border: 1px solid #C9923A;" onclick="cycleProposalStatus('${name}')">
+                Status: ${proposalStatus}
+              </button>
+              <button class="voiceButton" style="flex: 1;" onclick="changeClientState('${name}', 'emailList')">
+                Push List
+              </button>
+            </div>
+            <div style="display: flex; gap: 10px; margin: 10px 0 0 0;">
+              <button class="voiceButton" style="flex: 1; border: 1px solid rgba(230, 57, 70, 0.2); color: #e63946;" onclick="changeClientState('${name}', 'trash')">
+                Dismiss
+              </button>
+            </div>
+          `;
+        } else if (activeFolder === "emailList") {
+          actionButtons = `
+            <div style="display: flex; gap: 10px; margin: 10px 0 0 0;">
+              <button class="voiceButton" style="flex: 1; border: 1px solid #10B981; color: #10B981;">
+                📧 Active in List
+              </button>
+              <button class="voiceButton" style="flex: 1;" onclick="changeClientState('${name}', 'preMeeting')">
+                Move Back
+              </button>
+            </div>
+            <div style="display: flex; gap: 10px; margin: 10px 0 0 0;">
+              <button class="voiceButton" style="flex: 1; border: 1px solid rgba(230, 57, 70, 0.2); color: #e63946;" onclick="changeClientState('${name}', 'trash')">
+                Dismiss
+              </button>
+            </div>
+          `;
+        } else if (activeFolder === "trash") {
+          actionButtons = `
+            <div style="display: flex; gap: 10px; margin: 10px 0 0 0;">
+              <button class="voiceButton" style="flex: 1; background: #0D5C3A; color: white;" onclick="changeClientState('${name}', 'preMeeting')">
+                Restore Card
+              </button>
+              <button class="voiceButton" style="flex: 1; border: 1px solid rgba(230, 57, 70, 0.4); color: #e63946; background: rgba(230, 57, 70, 0.1);" onclick="changeClientState('${name}', 'deleted')">
+                Delete Outright
+              </button>
+            </div>
+          `;
+        }
+
         card.innerHTML = `
           <div class="cardBadge">${choice}</div>
           <div class="clientName">${name}</div>
@@ -611,7 +723,7 @@
           
           <div class="divider"></div>
           
-          <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6;">
+          <div style="font-size: 13px; color: var(--text-secondary); margin: 0 0 20px 0; line-height: 1.6;">
             <div><strong>Package:</strong> ${pkg}</div>
             <div><strong>Schedule:</strong> ${date} at ${time}</div>
             <div><strong>Site:</strong> <a href="${website}" target="_blank" style="color:var(--gold);text-decoration:none;">${website}</a></div>
@@ -624,19 +736,76 @@
             <div class="briefContent" id="brief-${index}">${brief}</div>
           </div>
           
-          <button class="voiceButton" id="btn-${index}" onclick="readBrief('${index}')">
-            <!-- SVG Audio Speaker Icon -->
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-            </svg>
+          <button class="voiceButton" style="margin: 0 0 10px 0;" id="btn-${index}" onclick="readBrief('${index}')">
             Listen to Briefing
           </button>
+          
+          ${actionButtons}
         `;
         grid.appendChild(card);
       });
     }
+
+    function renderSidebar(leads, counts) {
+      const list = document.getElementById("foldersList");
+      list.innerHTML = "";
+      
+      folders.forEach(folder => {
+        const item = document.createElement("div");
+        item.style.padding = "12px 16px";
+        item.style.margin = "0 0 8px 0";
+        item.style.borderRadius = "8px";
+        item.style.cursor = "pointer";
+        item.style.display = "flex";
+        item.style.justifyContent = "space-between";
+        item.style.alignItems = "center";
+        item.style.transition = "all 0.2s ease";
+        
+        if (folder.id === activeFolder) {
+          item.style.background = "rgba(201, 146, 58, 0.15)";
+          item.style.border = "1px solid rgba(201, 146, 58, 0.3)";
+          item.style.color = "#C9923A";
+          item.style.paddingLeft = "24px";
+        } else {
+          item.style.background = "rgba(255, 255, 255, 0.01)";
+          item.style.border = "1px solid rgba(255, 255, 255, 0.03)";
+          item.style.color = "#ffffff";
+        }
+        
+        item.onclick = () => {
+          activeFolder = folder.id;
+          document.getElementById("folderHeaderTitle").textContent = folder.name + " (" + counts[folder.id] + ")";
+          renderLeads(leads);
+        };
+        
+        item.innerHTML = `
+          <span style="font-weight: 600;">${folder.icon} ${folder.name}</span>
+          <span style="background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 20px; font-size: 11px;">${counts[folder.id]}</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    window.changeClientState = function(clientName, newState) {
+      let clientStates = JSON.parse(localStorage.getItem("jarvisClientStates") || "{}");
+      clientStates[clientName] = newState;
+      localStorage.setItem("jarvisClientStates", JSON.stringify(clientStates));
+      renderLeads(currentLeads);
+    };
+
+    window.toggleEmailSent = function(clientName) {
+      const currentState = localStorage.getItem("emailSent_" + clientName) === "true";
+      localStorage.setItem("emailSent_" + clientName, !currentState);
+      renderLeads(currentLeads);
+    };
+
+    window.cycleProposalStatus = function(clientName) {
+      const statuses = ["Drafting", "Proposal Sent", "Signed Deal"];
+      const current = localStorage.getItem("proposalStatus_" + clientName) || "Drafting";
+      let nextIndex = (statuses.indexOf(current) + 1) % statuses.length;
+      localStorage.setItem("proposalStatus_" + clientName, statuses[nextIndex]);
+      renderLeads(currentLeads);
+    };
 
     // Play/Pause state tracking
     let activeAudio = null;
