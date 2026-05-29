@@ -334,7 +334,7 @@ function submitBooking() {
   
   closeBooking();
 
-  const webhookUrl = "https://hook.us2.make.com/3qv6sbxvr7pfm80sm1roe1be84mohcok";
+  const webhookUrl = "https://hook.us2.make.com/t2glxhhce8zfnnyxny1ipk3cjz1iy9m6";
 
   fetch(webhookUrl, {
     method: "POST",
