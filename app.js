@@ -351,10 +351,55 @@ function submitBooking() {
   });
 }
 
-/* Client Portal Redirect */
+/* Member and Admin Login Portal Controls */
 function openPortal() {
-  alert("Redirecting to Sopo's Studio Client Portal.\n\nSecure client workspace loading...");
-  window.open("sopo-studio/index.html", "_blank");
+  const overlay = document.getElementById("loginModalOverlay");
+  if (overlay) {
+    overlay.style.display = "flex";
+    const input = document.getElementById("memberPasscode");
+    if (input) {
+      input.value = "";
+      input.focus();
+    }
+    const errorEl = document.getElementById("loginError");
+    if (errorEl) errorEl.style.display = "none";
+  }
+}
+
+function closeLoginModal() {
+  const overlay = document.getElementById("loginModalOverlay");
+  if (overlay) {
+    overlay.style.display = "none";
+  }
+}
+
+function handleLoginKey(event) {
+  if (event.key === "Enter") {
+    submitMemberLogin();
+  }
+}
+
+function submitMemberLogin() {
+  const passcode = document.getElementById("memberPasscode").value.trim();
+  const errorEl = document.getElementById("loginError");
+  if (!passcode) return;
+
+  if (passcode === "sopo2026") {
+    if (errorEl) errorEl.style.display = "none";
+    alert("Secure client workspace loading...");
+    closeLoginModal();
+    window.open("sopo-studio/index.html", "_blank");
+  } else if (passcode === "Pass#321Word") {
+    if (errorEl) errorEl.style.display = "none";
+    alert("Access Granted: Command Station Loading...");
+    closeLoginModal();
+    localStorage.setItem("jarvisGateUnlocked", "true");
+    window.open("command_station.html", "_blank");
+  } else {
+    if (errorEl) {
+      errorEl.style.display = "block";
+    }
+  }
 }
 
 /* Collapsible Add ons and Guidelines Accordion Toggle */
