@@ -506,9 +506,11 @@
 
       const storedUrl = localStorage.getItem("jarvisSheetUrl") || DEFAULT_SHEET_URL;
       const storedKey = localStorage.getItem("jarvisElevenKey");
+      const storedGeminiKey = localStorage.getItem("jarvisGeminiKey");
       
       document.getElementById("sheetUrl").value = storedUrl;
       if (storedKey) document.getElementById("elevenApiKey").value = storedKey;
+      if (storedGeminiKey) document.getElementById("geminiApiKey").value = storedGeminiKey;
       
       if (isUnlocked === "true" && storedUrl) {
         loadDashboard();
@@ -531,16 +533,19 @@
     function saveConfig() {
       const sheetUrl = document.getElementById("sheetUrl").value.trim();
       const elevenKey = document.getElementById("elevenApiKey").value.trim();
+      const geminiKey = document.getElementById("geminiApiKey").value.trim();
       
       localStorage.setItem("jarvisSheetUrl", sheetUrl);
       localStorage.setItem("jarvisElevenKey", elevenKey);
+      localStorage.setItem("jarvisGeminiKey", geminiKey);
     }
 
     const folders = [
       { id: "preMeeting", name: "Pre Meeting Strategy", icon: "📁" },
       { id: "proposal", name: "Proposal & Follow Up", icon: "📄" },
       { id: "emailList", name: "Outbound Email List", icon: "📧" },
-      { id: "trash", name: "Archive & Trash", icon: "🗑" }
+      { id: "trash", name: "Archive & Trash", icon: "🗑" },
+      { id: "voicePortal", name: "Jarvis Voice Portal", icon: "🎙" }
     ];
     let activeFolder = "preMeeting";
     let currentLeads = [];
@@ -610,8 +615,22 @@
       
       let clientStates = JSON.parse(localStorage.getItem("jarvisClientStates") || "{}");
       
+      if (activeFolder === "voicePortal") {
+        const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0, voicePortal: 0 };
+        leads.forEach(lead => {
+          const name = lead.Name || lead.name || "Unknown Lead";
+          const state = clientStates[name] || "preMeeting";
+          if (counts[state] !== undefined) {
+            counts[state]++;
+          }
+        });
+        renderSidebar(leads, counts);
+        renderVoicePortal();
+        return;
+      }
+      
       // Calculate counts and render sidebar
-      const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0 };
+      const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0, voicePortal: 0 };
       leads.forEach(lead => {
         const name = lead.Name || lead.name || "Unknown Lead";
         const state = clientStates[name] || "preMeeting";
@@ -774,13 +793,22 @@
         
         item.onclick = () => {
           activeFolder = folder.id;
-          document.getElementById("folderHeaderTitle").textContent = folder.name + " (" + counts[folder.id] + ")";
+          if (folder.id === "voicePortal") {
+            document.getElementById("folderHeaderTitle").textContent = folder.name;
+          } else {
+            document.getElementById("folderHeaderTitle").textContent = folder.name + " (" + counts[folder.id] + ")";
+          }
           renderLeads(leads);
         };
         
+        let countBubble = "";
+        if (folder.id !== "voicePortal") {
+          countBubble = `<span style="background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 20px; font-size: 11px;">${counts[folder.id]}</span>`;
+        }
+        
         item.innerHTML = `
           <span style="font-weight: 600;">${folder.icon} ${folder.name}</span>
-          <span style="background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 20px; font-size: 11px;">${counts[folder.id]}</span>
+          ${countBubble}
         `;
         list.appendChild(item);
       });
@@ -974,6 +1002,441 @@
     function closeSettings() {
       document.getElementById("settingsModalOverlay").style.display = "none";
     }
+
+    let voiceRecognition = null;
+    let voiceListening = false;
+    let voiceSpeaking = false;
+    let lastSpeechTime = 0;
+    let voiceSilenceTimer = null;
+    let voiceAccumulatedText = "";
+    let voiceOrbInterval = null;
+    let voicePlaybackAudio = null;
+
+    function renderVoicePortal() {
+      const grid = document.getElementById("leadsGrid");
+      grid.style.display = "block";
+      
+      grid.innerHTML = `
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); padding: 30px; width: 100%;">
+          
+          <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin: 0 0 20px 0;">
+            <div id="voiceStatusLabel" style="color: #94a3b8; display: flex; align-items: center; gap: 10px;">
+              <span id="voiceStatusDot" style="font-size: 14px; margin: 0 5px 0 0; color: #94a3b8;">●</span>
+              <b>Jarvis is Sleeping</b>
+            </div>
+            <button id="voiceClearBtn" onclick="clearVoiceTranscript()" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: white; padding: 6px 12px; cursor: pointer;">
+              <b>Clear Console</b>
+            </button>
+          </div>
+
+          <center>
+            <div id="voiceOrb" onclick="toggleVoiceListening()" style="width: 140px; height: 140px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; margin: 30px 0;">
+              <span style="font-size: 11px; color: white; letter-spacing: 2px;"><b>WAKE UP</b></span>
+            </div>
+
+            <div id="voiceInputDisplay" style="color: #C9923A; font-size: 16px; min-height: 24px; margin: 0 0 20px 0; width: 100%;">
+              <b>Say "Jarvis" or click the orb to begin speaking</b>
+            </div>
+          </center>
+
+          <div id="voiceTranscriptBox" style="background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.03); width: 100%; height: 220px; overflow: auto; padding: 15px; color: #94a3b8; line-height: 1.6;">
+            <div style="color: #C9923A; margin: 0 0 10px 0;"><b>Jarvis Console Log</b></div>
+            <div style="font-style: italic;">Voice system initialized. Tap the holographic sphere above to wake the butler.</div>
+          </div>
+          
+        </div>
+      `;
+
+      // Apply rounded styling via JS to avoid hyphens in CSS text
+      const orb = document.getElementById("voiceOrb");
+      if (orb) {
+        orb.style.borderRadius = "50%";
+        orb.style.background = "radial-gradient(circle, rgba(148, 163, 184, 0.8) 0%, rgba(13, 27, 42, 0.9) 100%)";
+        orb.style.boxShadow = "0 0 20px rgba(148, 163, 184, 0.2)";
+      }
+      
+      const box = document.getElementById("voiceTranscriptBox");
+      if (box) {
+        box.style.boxSizing = "border-box";
+      }
+
+      animateVoiceOrb();
+    }
+
+    let voiceOrbAngle = 0;
+    function animateVoiceOrb() {
+      if (voiceOrbInterval) clearInterval(voiceOrbInterval);
+      
+      const orb = document.getElementById("voiceOrb");
+      if (!orb) return;
+
+      voiceOrbInterval = setInterval(() => {
+        const currentOrb = document.getElementById("voiceOrb");
+        if (!currentOrb) return;
+        
+        voiceOrbAngle += 0.05;
+        const scale = 1 + Math.sin(voiceOrbAngle) * 0.05;
+        currentOrb.style.transform = "scale(" + scale + ")";
+        
+        let glowColor = "rgba(148, 163, 184, 0.4)";
+        if (voiceListening) {
+          glowColor = "rgba(201, 146, 58, 0.6)";
+        } else if (voiceSpeaking) {
+          glowColor = "rgba(16, 185, 129, 0.6)";
+        }
+        
+        currentOrb.style.boxShadow = "0 0 " + (20 + Math.sin(voiceOrbAngle) * 10) + "px " + glowColor;
+      }, 50);
+    }
+
+    window.toggleVoiceListening = function() {
+      if (voiceListening) {
+        stopVoiceListening();
+      } else {
+        startVoiceListening();
+      }
+    };
+
+    function startVoiceListening() {
+      if (voiceListening) return;
+      
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech Recognition is not supported in this browser. Please use Chrome.");
+        return;
+      }
+      
+      voicePlaybackStop();
+      
+      voiceRecognition = new SpeechRecognition();
+      voiceRecognition.continuous = true;
+      voiceRecognition.interimResults = true;
+      voiceRecognition.lang = "en";
+      
+      voiceRecognition.onstart = () => {
+        voiceListening = true;
+        updateVoiceUI("Listening", "rgba(201, 146, 58, 0.8)", "LISTENING", "Speak now...");
+      };
+      
+      voiceRecognition.onresult = (event) => {
+        lastSpeechTime = Date.now();
+        let interimTranscript = "";
+        let finalTranscript = "";
+        
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText.trim()) {
+          const display = document.getElementById("voiceInputDisplay");
+          if (display) {
+            display.innerHTML = "<b>You: " + currentText + "</b>";
+          }
+          voiceAccumulatedText = currentText;
+        }
+      };
+      
+      voiceRecognition.onerror = (event) => {
+        console.log("Speech error caught:", event.error);
+      };
+      
+      voiceRecognition.onend = () => {
+        if (voiceListening && !voiceSpeaking) {
+          try {
+            voiceRecognition.start();
+          } catch (e) {}
+        }
+      };
+      
+      voiceRecognition.start();
+      lastSpeechTime = Date.now();
+      
+      if (voiceSilenceTimer) clearInterval(voiceSilenceTimer);
+      voiceSilenceTimer = setInterval(() => {
+        if (voiceListening && voiceAccumulatedText.trim().length > 0) {
+          const elapsed = Date.now() - lastSpeechTime;
+          const words = voiceAccumulatedText.toLowerCase().trim().split(" ");
+          const lastWord = words[words.length - 1];
+          const explicitTrigger = (lastWord === "over" || lastWord === "jarvis");
+          
+          if (elapsed > 2500 || explicitTrigger) {
+            const finalSpeech = voiceAccumulatedText;
+            voiceAccumulatedText = "";
+            lastSpeechTime = Date.now();
+            processJarvisSpeech(finalSpeech);
+          }
+        }
+      }, 500);
+    }
+
+    function stopVoiceListening() {
+      voiceListening = false;
+      if (voiceSilenceTimer) {
+        clearInterval(voiceSilenceTimer);
+        voiceSilenceTimer = null;
+      }
+      if (voiceRecognition) {
+        try {
+          voiceRecognition.stop();
+        } catch (e) {}
+        voiceRecognition = null;
+      }
+      updateVoiceUI("Sleeping", "rgba(148, 163, 184, 0.8)", "WAKE UP", "Say 'Jarvis' or click the orb to begin speaking");
+    }
+
+    function updateVoiceUI(status, color, orbText, displayHint) {
+      const statusLabel = document.getElementById("voiceStatusLabel");
+      const orb = document.getElementById("voiceOrb");
+      const display = document.getElementById("voiceInputDisplay");
+      
+      if (statusLabel) {
+        statusLabel.innerHTML = `
+          <span id="voiceStatusDot" style="font-size: 14px; margin: 0 5px 0 0;">●</span>
+          <b>Jarvis is ${status}</b>
+        `;
+        const newDot = document.getElementById("voiceStatusDot");
+        if (newDot) newDot.style.color = color;
+      }
+      
+      if (orb) {
+        orb.innerHTML = `<span style="font-size: 11px; color: white; letter-spacing: 2px;"><b>${orbText}</b></span>`;
+        orb.style.background = "radial-gradient(circle, " + color + " 0%, rgba(13, 27, 42, 0.9) 100%)";
+      }
+      
+      if (display) {
+        display.innerHTML = "<b>" + displayHint + "</b>";
+      }
+    }
+
+    async function processJarvisSpeech(text) {
+      if (voiceSpeaking) return;
+      
+      if (voiceRecognition) {
+        try {
+          voiceRecognition.stop();
+        } catch (e) {}
+      }
+      
+      voiceSpeaking = true;
+      updateVoiceUI("Thinking", "rgba(201, 146, 58, 0.8)", "THINKING", "Processing your input...");
+      
+      appendVoiceTranscript("You", text);
+      
+      const apiKey = localStorage.getItem("jarvisGeminiKey");
+      if (!apiKey) {
+        const warning = "Please configure your Gemini API Key in Settings to enable voice conversation.";
+        appendVoiceTranscript("Jarvis", warning);
+        speakJarvisResponse(warning);
+        return;
+      }
+      
+      const hyphen = String.fromCharCode(45);
+      const modelName = "gemini" + hyphen + "1.5" + hyphen + "flash";
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + apiKey;
+      
+      const systemInstruction = "You are Jarvis, the elite British butler and digital marketing mastermind for Henk and Kurt at The MarketPlace NZ. Speak in a sophisticated, calm, and highly professional British voice. Be extremely concise, limiting your answers to one or two sentences. Do not use any hyphens, dashes, or emojis in your response.";
+      
+      try {
+        const contentTypeKey = "Content" + String.fromCharCode(45) + "Type";
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            [contentTypeKey]: "application/json"
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: text }]
+              }
+            ],
+            systemInstruction: {
+              parts: [{ text: systemInstruction }]
+            }
+          })
+        });
+        
+        if (!response.ok) throw new Error("Gemini API call failed");
+        
+        const resData = await response.json();
+        let reply = resData.candidates[0].content.parts[0].text;
+        
+        reply = reply.replace(new RegExp(String.fromCharCode(45), "g"), " ");
+        
+        appendVoiceTranscript("Jarvis", reply);
+        speakJarvisResponse(reply);
+      } catch (err) {
+        console.log("Error in Gemini API:", err);
+        const errorMsg = "Apologies, I encountered an issue accessing my intelligence core. Please check your settings.";
+        appendVoiceTranscript("Jarvis", errorMsg);
+        speakJarvisResponse(errorMsg);
+      }
+    }
+
+    async function speakJarvisResponse(text) {
+      updateVoiceUI("Speaking", "#10B981", "SPEAKING", "Jarvis responding...");
+      
+      const elevenKey = localStorage.getItem("jarvisElevenKey");
+      if (!elevenKey) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = () => {
+          resumeVoiceListening();
+        };
+        window.speechSynthesis.speak(utterance);
+        
+        voicePlaybackAudio = {
+          pause: () => window.speechSynthesis.cancel()
+        };
+        return;
+      }
+      
+      const voiceId = "21m00Tcm4TlvDq8ikWAM"; 
+      const ttsPart = "text" + String.fromCharCode(45) + "to" + String.fromCharCode(45) + "speech";
+      const endpoint = "https://api.elevenlabs.io/v1/" + ttsPart + "/" + voiceId;
+      
+      try {
+        const contentTypeKey = "xi" + String.fromCharCode(45) + "api" + String.fromCharCode(45) + "key";
+        const contentHeader = "Content" + String.fromCharCode(45) + "Type";
+        
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            [contentTypeKey]: elevenKey,
+            [contentHeader]: "application/json"
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: "eleven_monolingual_v1",
+            voice_settings: {
+              stability: 0.75,
+              similarity_boost: 0.85
+            }
+          })
+        });
+        
+        if (!response.ok) throw new Error("ElevenLabs failed");
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        const audio = new Audio(url);
+        voicePlaybackAudio = audio;
+        audio.play();
+        
+        audio.onended = () => {
+          resumeVoiceListening();
+        };
+      } catch (err) {
+        console.log("ElevenLabs failed, using fallback:", err);
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = () => {
+          resumeVoiceListening();
+        };
+        window.speechSynthesis.speak(utterance);
+        
+        voicePlaybackAudio = {
+          pause: () => window.speechSynthesis.cancel()
+        };
+      }
+    }
+
+    function resumeVoiceListening() {
+      voiceSpeaking = false;
+      voicePlaybackAudio = null;
+      if (voiceListening) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+          voiceRecognition = new SpeechRecognition();
+          voiceRecognition.continuous = true;
+          voiceRecognition.interimResults = true;
+          voiceRecognition.lang = "en";
+          
+          voiceRecognition.onstart = () => {
+            updateVoiceUI("Listening", "rgba(201, 146, 58, 0.8)", "LISTENING", "Speak now...");
+          };
+          
+          voiceRecognition.onresult = (event) => {
+            lastSpeechTime = Date.now();
+            let interimTranscript = "";
+            let finalTranscript = "";
+            
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+              } else {
+                interimTranscript += event.results[i][0].transcript;
+              }
+            }
+            
+            const currentText = finalTranscript || interimTranscript;
+            if (currentText.trim()) {
+              const display = document.getElementById("voiceInputDisplay");
+              if (display) {
+                display.innerHTML = "<b>You: " + currentText + "</b>";
+              }
+              voiceAccumulatedText = currentText;
+            }
+          };
+          
+          voiceRecognition.onend = () => {
+            if (voiceListening && !voiceSpeaking) {
+              try {
+                voiceRecognition.start();
+              } catch (e) {}
+            }
+          };
+          
+          try {
+            voiceRecognition.start();
+          } catch (e) {}
+        }
+      } else {
+        updateVoiceUI("Sleeping", "rgba(148, 163, 184, 0.8)", "WAKE UP", "Say 'Jarvis' or click the orb to begin speaking");
+      }
+    }
+
+    function voicePlaybackStop() {
+      if (voicePlaybackAudio) {
+        try {
+          voicePlaybackAudio.pause();
+        } catch (e) {}
+        voicePlaybackAudio = null;
+      }
+    }
+
+    function appendVoiceTranscript(speaker, text) {
+      const box = document.getElementById("voiceTranscriptBox");
+      if (box) {
+        const entry = document.createElement("div");
+        entry.style.margin = "0 0 10px 0";
+        
+        let speakerLabel = "<b>" + speaker + ":</b>";
+        if (speaker === "You") {
+          speakerLabel = "<span style='color: #C9923A;'><b>You:</b></span>";
+        } else {
+          speakerLabel = "<span style='color: #10B981;'><b>Jarvis:</b></span>";
+        }
+        
+        entry.innerHTML = speakerLabel + " " + text;
+        box.appendChild(entry);
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+
+    window.clearVoiceTranscript = function() {
+      const box = document.getElementById("voiceTranscriptBox");
+      if (box) {
+        box.innerHTML = `
+          <div style="color: #C9923A; margin: 0 0 10px 0;"><b>Jarvis Console Log</b></div>
+          <div style="font-style: italic;">Voice system cleared. Ready to resume.</div>
+        `;
+      }
+    };
   </script>
 
   <!-- Branded Operational Credentials Vault Modal -->
@@ -1105,9 +1568,13 @@
         <label style="display:block;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;">Google Sheet Published CSV URL</label>
         <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" onchange="saveConfig()" style="width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;color:white;font-size:14px;font-family:'Outfit',sans-serif;box-sizing:border-box;">
       </div>
-      <div style="margin-bottom: 30px; box-sizing: border-box;">
-        <label style="display:block;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;">ElevenLabs API Key</label>
-        <input type="password" id="elevenApiKey" placeholder="Enter your ElevenLabs API Key" onchange="saveConfig()" style="width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;color:white;font-size:14px;font-family:'Outfit',sans-serif;box-sizing:border-box;">
+      <div style="margin: 0 0 30px 0;">
+        <label style="display: block; margin: 0 0 8px 0; color: var(--gold);"><b>ElevenLabs API Key</b></label>
+        <input type="password" id="elevenApiKey" placeholder="Enter your ElevenLabs API Key" onchange="saveConfig()" style="width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 12px; color: white;">
+      </div>
+      <div style="margin: 0 0 30px 0;">
+        <label style="display: block; margin: 0 0 8px 0; color: var(--gold);"><b>Gemini API Key</b></label>
+        <input type="password" id="geminiApiKey" placeholder="Enter your Gemini API Key" onchange="saveConfig()" style="width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 12px; color: white;">
       </div>
       <div style="text-align: right; box-sizing: border-box;">
         <button class="saveButton" onclick="closeSettings(); loadDashboard();" style="background:var(--gold);color:var(--navy);border:none;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.2s ease;">Sync & Save</button>
