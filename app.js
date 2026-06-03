@@ -16,6 +16,14 @@ let availableBookingDates = [];
 /* Initialize Page Elements */
 document.addEventListener("DOMContentLoaded", () => {
   initializeScrollReveal();
+  
+  const loginLink = document.querySelector(".loginLink");
+  if (loginLink) {
+    loginLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      openPortal();
+    });
+  }
 });
 
 /* Intersection Observer for Dynamic Scroll Reveal Animations */

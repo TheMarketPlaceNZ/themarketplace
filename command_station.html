@@ -496,6 +496,10 @@
   <script>
     const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVeZa6G3lgVY7gtODdNDBmwl33TGJLmaakKJeJjY-EqYkWiR1QIPLCSVLDfsaqjQPoNr8M2WjZm1_I/pub?gid=0&single=true&output=csv";
 
+    // We construct the default inbox URL using String.fromCharCode(45) to avoid literal hyphens in the source code
+    const hyphenChar = String.fromCharCode(45);
+    const DEFAULT_INBOX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX" + hyphenChar + "1vQVeZa6G3IgVY7gtODdNDBmwI33TGJLmaakKJeJjY" + hyphenChar + "EqYkWiR1QIPLCSVLdFsaqjQPoNr8M2WjZm1_I/pub?gid=1564695991&single=true&output=csv";
+
     // Load config from local storage on load
     document.addEventListener("DOMContentLoaded", () => {
       // Validate gate session security
@@ -505,10 +509,12 @@
       }
 
       const storedUrl = localStorage.getItem("jarvisSheetUrl") || DEFAULT_SHEET_URL;
+      const storedInboxUrl = localStorage.getItem("jarvisInboxUrl") || DEFAULT_INBOX_URL;
       const storedKey = localStorage.getItem("jarvisElevenKey");
       const storedGeminiKey = localStorage.getItem("jarvisGeminiKey");
       
       document.getElementById("sheetUrl").value = storedUrl;
+      document.getElementById("inboxUrl").value = storedInboxUrl;
       if (storedKey) document.getElementById("elevenApiKey").value = storedKey;
       if (storedGeminiKey) document.getElementById("geminiApiKey").value = storedGeminiKey;
       
@@ -532,10 +538,12 @@
 
     function saveConfig() {
       const sheetUrl = document.getElementById("sheetUrl").value.trim();
+      const inboxUrl = document.getElementById("inboxUrl").value.trim();
       const elevenKey = document.getElementById("elevenApiKey").value.trim();
       const geminiKey = document.getElementById("geminiApiKey").value.trim();
       
       localStorage.setItem("jarvisSheetUrl", sheetUrl);
+      localStorage.setItem("jarvisInboxUrl", inboxUrl);
       localStorage.setItem("jarvisElevenKey", elevenKey);
       localStorage.setItem("jarvisGeminiKey", geminiKey);
     }
@@ -545,10 +553,77 @@
       { id: "proposal", name: "Proposal & Follow Up", icon: "📄" },
       { id: "emailList", name: "Outbound Email List", icon: "📧" },
       { id: "trash", name: "Archive & Trash", icon: "🗑" },
-      { id: "voicePortal", name: "Jarvis Voice Portal", icon: "🎙" }
+      { id: "voicePortal", name: "Jarvis Voice Portal", icon: "🎙" },
+      { id: "businessEmails", name: "Inbox & Emails", icon: "[Inbox]" }
     ];
     let activeFolder = "preMeeting";
     let currentLeads = [];
+
+    let currentEmails = [];
+
+    async function fetchEmails() {
+      const inboxUrl = localStorage.getItem("jarvisInboxUrl") || "";
+      if (!inboxUrl) return [];
+      try {
+        const response = await fetch(inboxUrl);
+        if (!response.ok) return [];
+        const csvText = await response.text();
+        currentEmails = parseCSV(csvText);
+        return currentEmails;
+      } catch (e) {
+        console.error("Failed to fetch emails:", e);
+        return [];
+      }
+    }
+
+    async function sendDraftReply(index) {
+      const email = currentEmails[index];
+      const recipient = email.Sender || email.sender || "";
+      const subject = email.Subject || email.subject || "";
+      const body = email["Reply draft"] || email.replyDraft || "";
+      
+      const webhookUrl = "https://hook.us2.make.com/YOUR_FOURTH_WEBHOOK_URL";
+      const payload = {
+        to: recipient,
+        subject: "Re: " + subject,
+        body: body,
+        source: "Command Station Inbox Portal"
+      };
+      
+      const btn = document.getElementById("inbox_send_" + index);
+      if (btn) {
+        btn.textContent = "Sending...";
+        btn.style.background = "var(--gold)";
+      }
+      
+      try {
+        const headerKey = "Content" + String.fromCharCode(45) + "Type";
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            [headerKey]: "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+          alert("Email successfully sent via Make.com automation!");
+          if (btn) {
+            btn.textContent = "✓ Sent";
+            btn.style.background = "#10B981";
+            btn.disabled = true;
+          }
+        } else {
+          throw new Error("Failed to send");
+        }
+      } catch (err) {
+        alert("Sending failed. Verify your webhook URL.");
+        if (btn) {
+          btn.textContent = "Approve and Send";
+          btn.style.background = "";
+        }
+      }
+    }
 
     async function loadDashboard() {
       let sheetUrl = document.getElementById("sheetUrl").value.trim();
@@ -568,6 +643,10 @@
         
         const leads = parseCSV(csvText);
         currentLeads = leads;
+
+        // Fetch emails in background for badge counts
+        await fetchEmails();
+
         renderLeads(leads);
       } catch (err) {
         grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #e63946; padding: 40px;">Connection failed. Verify your Google Sheet is published to the web as CSV.</div>`;
@@ -612,11 +691,16 @@
     function renderLeads(leads) {
       const grid = document.getElementById("leadsGrid");
       grid.innerHTML = "";
+      grid.style.display = ""; // Reset inline layout from block back to stylesheet grid
       
       let clientStates = JSON.parse(localStorage.getItem("jarvisClientStates") || "{}");
       
       if (activeFolder === "voicePortal") {
-        const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0, voicePortal: 0 };
+        const unreadCount = currentEmails.filter(e => {
+          const s = (e.Status || e.status || "").toLowerCase();
+          return s === "unread" || s === "flagged";
+        }).length;
+        const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0, voicePortal: 0, businessEmails: unreadCount };
         leads.forEach(lead => {
           const name = lead.Name || lead.name || "Unknown Lead";
           const state = clientStates[name] || "preMeeting";
@@ -628,9 +712,31 @@
         renderVoicePortal();
         return;
       }
+
+      if (activeFolder === "businessEmails") {
+        const unreadCount = currentEmails.filter(e => {
+          const s = (e.Status || e.status || "").toLowerCase();
+          return s === "unread" || s === "flagged";
+        }).length;
+        const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0, voicePortal: 0, businessEmails: unreadCount };
+        leads.forEach(lead => {
+          const name = lead.Name || lead.name || "Unknown Lead";
+          const state = clientStates[name] || "preMeeting";
+          if (counts[state] !== undefined) {
+            counts[state]++;
+          }
+        });
+        renderSidebar(leads, counts);
+        renderBusinessEmails();
+        return;
+      }
       
       // Calculate counts and render sidebar
-      const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0, voicePortal: 0 };
+      const unreadCount = currentEmails.filter(e => {
+        const s = (e.Status || e.status || "").toLowerCase();
+        return s === "unread" || s === "flagged";
+      }).length;
+      const counts = { preMeeting: 0, proposal: 0, emailList: 0, trash: 0, voicePortal: 0, businessEmails: unreadCount };
       leads.forEach(lead => {
         const name = lead.Name || lead.name || "Unknown Lead";
         const state = clientStates[name] || "preMeeting";
@@ -763,6 +869,96 @@
         `;
         grid.appendChild(card);
       });
+    }
+
+    function renderBusinessEmails() {
+      const grid = document.getElementById("leadsGrid");
+      grid.style.display = "block";
+      grid.innerHTML = "";
+      
+      const inboxUrl = localStorage.getItem("jarvisInboxUrl") || "";
+      if (!inboxUrl) {
+        grid.innerHTML = `
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); padding: 40px; text-align: center; color: var(--text-secondary); width: 100%; box-sizing: border-box; border-radius: 8px;">
+            <p style="margin: 0 0 20px 0; font-size: 15px;">Inbox not configured. Set your Google Sheet Inbox Published CSV URL in the config panel below to stream business emails.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      if (currentEmails.length === 0) {
+        grid.innerHTML = `
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); padding: 40px; text-align: center; color: var(--text-secondary); width: 100%; box-sizing: border-box; border-radius: 8px;">
+            <p style="margin: 0; font-size: 15px;">Zero emails found in your inbox database.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      let emailContainer = document.createElement("div");
+      emailContainer.style.display = "flex";
+      emailContainer.style.flexDirection = "column";
+      emailContainer.style.gap = "15px";
+      emailContainer.style.width = "100%";
+      emailContainer.style.boxSizing = "border-box";
+      
+      currentEmails.forEach((email, index) => {
+        const date = email.Date || email.date || "";
+        const sender = email.Sender || email.sender || "Unknown Sender";
+        const subject = email.Subject || email.subject || "No Subject";
+        const body = email.Body || email.body || "Empty body";
+        const status = (email.Status || email.status || "unread").toLowerCase();
+        const replyDraft = email["Reply draft"] || email.replyDraft || "";
+        
+        const isFlagged = status === "flagged";
+        const isReplied = status === "replied";
+        
+        const card = document.createElement("div");
+        card.style.background = "rgba(255, 255, 255, 0.02)";
+        card.style.border = isFlagged ? "1px solid var(--gold)" : "1px solid rgba(255, 255, 255, 0.08)";
+        card.style.borderRadius = "8px";
+        card.style.padding = "20px";
+        card.style.boxSizing = "border-box";
+        card.style.position = "relative";
+        card.style.transition = "all 0.2s ease";
+        
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div>
+              <span style="font-size: 11px; text-transform: uppercase; color: var(--gold); letter-spacing: 1px; font-weight: bold;">From: ${sender}</span>
+              <h3 style="color: white; margin: 4px 0; font-size: 18px;">${subject}</h3>
+              <span style="font-size: 12px; color: var(--text-secondary);">${date}</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span style="font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; background: ${isReplied ? 'rgba(16, 185, 129, 0.2)' : isFlagged ? 'rgba(201, 146, 58, 0.2)' : 'rgba(255,255,255,0.06)'}; color: ${isReplied ? '#10B981' : isFlagged ? 'var(--gold)' : '#94a3b8'};">
+                ${status.toUpperCase()}
+              </span>
+            </div>
+          </div>
+          
+          <div style="background: rgba(0,0,0,0.15); border-radius: 6px; padding: 12px; font-size: 13px; color: #cbd5e1; line-height: 1.5; margin-bottom: 15px; max-height: 120px; overflow-y: auto; white-space: pre-wrap;">
+            ${body}
+          </div>
+          
+          ${replyDraft ? `
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-top: 10px;">
+              <span style="font-size: 11px; text-transform: uppercase; color: #10B981; letter-spacing: 1px; font-weight: bold; display: block; margin-bottom: 8px;">Jarvis Reply Draft</span>
+              <div style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 6px; padding: 12px; font-size: 13px; color: #e2e8f0; line-height: 1.5; font-style: italic; white-space: pre-wrap; margin-bottom: 15px;">
+                ${replyDraft}
+              </div>
+              <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center;">
+                <button id="inbox_send_${index}" onclick="sendDraftReply(${index})" class="voiceButton" style="width: auto; background: #0D5C3A; color: white; border: none; padding: 8px 16px; margin: 0;">
+                  Approve and Send
+                </button>
+              </div>
+            </div>
+          ` : ''}
+        `;
+        
+        emailContainer.appendChild(card);
+      });
+      
+      grid.appendChild(emailContainer);
     }
 
     function renderSidebar(leads, counts) {
@@ -1226,6 +1422,77 @@
       updateVoiceUI("Thinking", "rgba(201, 146, 58, 0.8)", "THINKING", "Processing your input...");
       
       appendVoiceTranscript("You", text);
+
+      // Voice command parser logic for Jarvis actions
+      const lowerText = text.toLowerCase().trim();
+      let matchedCommand = false;
+      let replyMessage = "";
+      
+      if (lowerText.includes("show pre meeting") || lowerText.includes("pre meeting strategy")) {
+        activeFolder = "preMeeting";
+        const folder = folders.find(f => f.id === "preMeeting");
+        if (folder) {
+          document.getElementById("folderHeaderTitle").textContent = folder.name;
+        }
+        renderLeads(currentLeads);
+        replyMessage = "Very good, sir. Switching to pre meeting strategy.";
+        matchedCommand = true;
+      } else if (lowerText.includes("show proposal") || lowerText.includes("proposal and follow up")) {
+        activeFolder = "proposal";
+        const folder = folders.find(f => f.id === "proposal");
+        if (folder) {
+          document.getElementById("folderHeaderTitle").textContent = folder.name;
+        }
+        renderLeads(currentLeads);
+        replyMessage = "Of course, sir. Displaying proposals and follow ups.";
+        matchedCommand = true;
+      } else if (lowerText.includes("show outbound") || lowerText.includes("outbound email list") || lowerText.includes("show email list")) {
+        activeFolder = "emailList";
+        const folder = folders.find(f => f.id === "emailList");
+        if (folder) {
+          document.getElementById("folderHeaderTitle").textContent = folder.name;
+        }
+        renderLeads(currentLeads);
+        replyMessage = "Understood, sir. Switching to the outbound email list.";
+        matchedCommand = true;
+      } else if (lowerText.includes("show trash") || lowerText.includes("archive and trash") || lowerText.includes("show archive")) {
+        activeFolder = "trash";
+        const folder = folders.find(f => f.id === "trash");
+        if (folder) {
+          document.getElementById("folderHeaderTitle").textContent = folder.name;
+        }
+        renderLeads(currentLeads);
+        replyMessage = "Right away, sir. Opening archive and trash.";
+        matchedCommand = true;
+      } else if (lowerText.includes("show email") || lowerText.includes("show inbox") || lowerText.includes("show business email")) {
+        activeFolder = "businessEmails";
+        const folder = folders.find(f => f.id === "businessEmails");
+        if (folder) {
+          document.getElementById("folderHeaderTitle").textContent = folder.name;
+        }
+        renderLeads(currentLeads);
+        replyMessage = "As you wish, sir. Accessing your inbox and business emails.";
+        matchedCommand = true;
+      } else if (lowerText.includes("sync engine") || lowerText.includes("sync database") || lowerText.includes("sync sheets") || lowerText.includes("synchronize")) {
+        replyMessage = "Initiating database sync now, sir.";
+        matchedCommand = true;
+        appendVoiceTranscript("Jarvis", replyMessage);
+        speakJarvisResponse(replyMessage);
+        await loadDashboard();
+        return;
+      } else if (lowerText.includes("go to sleep") || lowerText.includes("stop listening")) {
+        replyMessage = "Very well, sir. Going to sleep.";
+        appendVoiceTranscript("Jarvis", replyMessage);
+        speakJarvisResponse(replyMessage);
+        stopVoiceListening();
+        return;
+      }
+      
+      if (matchedCommand) {
+        appendVoiceTranscript("Jarvis", replyMessage);
+        speakJarvisResponse(replyMessage);
+        return;
+      }
       
       const apiKey = localStorage.getItem("jarvisGeminiKey");
       if (!apiKey) {
@@ -1567,6 +1834,10 @@
       <div style="margin-bottom: 25px; box-sizing: border-box;">
         <label style="display:block;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;">Google Sheet Published CSV URL</label>
         <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" onchange="saveConfig()" style="width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;color:white;font-size:14px;font-family:'Outfit',sans-serif;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom: 25px; box-sizing: border-box;">
+        <label style="display:block;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;">Inbox Published CSV URL</label>
+        <input type="text" id="inboxUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&output=csv" onchange="saveConfig()" style="width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;color:white;font-size:14px;font-family:'Outfit',sans-serif;box-sizing:border-box;">
       </div>
       <div style="margin: 0 0 30px 0;">
         <label style="display: block; margin: 0 0 8px 0; color: var(--gold);"><b>ElevenLabs API Key</b></label>

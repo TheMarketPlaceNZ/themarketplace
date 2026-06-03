@@ -10,8 +10,11 @@
         "url": "Paste your second unique Make webhook URL here"
       },
       "outputs": {
-        "bookingId": "{{bookingId}}",
-        "choice": "{{choice}}"
+        "bookingEmail": "{{bookingEmail}}",
+        "choice": "{{choice}}",
+        "allocatedDate": "{{allocatedDate}}",
+        "allocatedTime": "{{allocatedTime}}",
+        "name": "{{name}}"
       }
     },
     {
@@ -37,7 +40,7 @@
               "type": "gmail:send_email",
               "label": "Send Zoom Confirmation",
               "configuration": {
-                "to": "{{email}}",
+                "to": "{{bookingEmail}}",
                 "subject": "Confirmed: Zoom Growth Chat Details",
                 "body": "Hi,\n\nWe have locked in our Growth Chat via Zoom.\n\nDate: {{allocatedDate}}\nTime: {{allocatedTime}}\nZoom Connection Link: {{zoomLink}}\n\nLooking forward to streamlining your operations.\n\nKurt\nThe MarketPlace NZ"
               }
@@ -53,7 +56,7 @@
               "type": "gmail:send_email",
               "label": "Send Coffee Confirmation",
               "configuration": {
-                "to": "{{email}}",
+                "to": "{{bookingEmail}}",
                 "subject": "Confirmed: Coffee Growth Chat Details",
                 "body": "Hi,\n\nWe have locked in our Growth Chat over fresh coffee.\n\nDate: {{allocatedDate}}\nTime: {{allocatedTime}}\nVenue: The Wooden Spoon, Hamilton\n\nSee you there. Kurt is buying.\n\nKurt\nThe MarketPlace NZ"
               }
