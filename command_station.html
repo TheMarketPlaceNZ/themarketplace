@@ -1120,8 +1120,8 @@
       btn.classList.add("playing");
       activeBtn = btn;
 
-      // Rachel premium voice ID (clonable with your own custom Jarvis voice!)
-      const voiceId = "21m00Tcm4TlvDq8ikWAM"; 
+      // Cloned Jarvis voice ID
+      const voiceId = "T3PnIdXiFgd7TFEzra2w"; 
       const endpoint = "https://api.elevenlabs.io/v1/text-to-speech/" + voiceId;
 
       try {
@@ -1592,7 +1592,7 @@
         return;
       }
       
-      const voiceId = "21m00Tcm4TlvDq8ikWAM"; 
+      const voiceId = "T3PnIdXiFgd7TFEzra2w"; 
       const ttsPart = "text" + String.fromCharCode(45) + "to" + String.fromCharCode(45) + "speech";
       const endpoint = "https://api.elevenlabs.io/v1/" + ttsPart + "/" + voiceId;
       
