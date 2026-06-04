@@ -494,21 +494,32 @@
   </div>
 
   <script>
-    const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVeZa6G3lgVY7gtODdNDBmwl33TGJLmaakKJeJjY-EqYkWiR1QIPLCSVLDfsaqjQPoNr8M2WjZm1_I/pub?gid=0&single=true&output=csv";
+    const hyphenChar = String.fromCharCode(45);
+    const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX" + hyphenChar + "1vQVeZa6G3IgVY7gtODdNDBmwI33TGJLmaakKJeJjY" + hyphenChar + "EqYkWiR1QIPLCSVLdFsaqjQPoNr8M2WjZm1_I/pub?gid=953983657&single=true&output=csv";
 
     // We construct the default inbox URL using String.fromCharCode(45) to avoid literal hyphens in the source code
-    const hyphenChar = String.fromCharCode(45);
     const DEFAULT_INBOX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX" + hyphenChar + "1vQVeZa6G3IgVY7gtODdNDBmwI33TGJLmaakKJeJjY" + hyphenChar + "EqYkWiR1QIPLCSVLdFsaqjQPoNr8M2WjZm1_I/pub?gid=1564695991&single=true&output=csv";
 
     // Load config from local storage on load
     document.addEventListener("DOMContentLoaded", () => {
+      // Trigger voice synthesis loading cache
+      if (window.speechSynthesis) {
+        window.speechSynthesis.getVoices();
+      }
       // Validate gate session security
       const isUnlocked = localStorage.getItem("jarvisGateUnlocked");
       if (isUnlocked === "true") {
         document.getElementById("gateOverlay").style.display = "none";
       }
 
-      const storedUrl = localStorage.getItem("jarvisSheetUrl") || DEFAULT_SHEET_URL;
+      let storedUrl = localStorage.getItem("jarvisSheetUrl");
+      if (storedUrl && (storedUrl.includes("gid=0") || storedUrl.includes("Za6G3lg"))) {
+        localStorage.removeItem("jarvisSheetUrl");
+        storedUrl = null;
+      }
+      if (!storedUrl) {
+        storedUrl = DEFAULT_SHEET_URL;
+      }
       const storedInboxUrl = localStorage.getItem("jarvisInboxUrl") || DEFAULT_INBOX_URL;
       const storedKey = localStorage.getItem("jarvisElevenKey");
       const storedGeminiKey = localStorage.getItem("jarvisGeminiKey");
@@ -1035,9 +1046,26 @@
     let activeAudio = null;
     let activeBtn = null;
 
+    function getBestBritishVoice() {
+      if (!window.speechSynthesis) return null;
+      const voices = window.speechSynthesis.getVoices();
+      const hyphen = String.fromCharCode(45);
+      const gbLang = "en" + hyphen + "GB";
+      const ukLang = "en" + hyphen + "UK";
+      const usLang = "en" + hyphen + "US";
+      let gbVoices = voices.filter(v => v.lang.includes(gbLang) || v.lang.includes(ukLang));
+      if (gbVoices.length === 0) {
+        gbVoices = voices.filter(v => v.lang.startsWith("en"));
+      }
+      let maleVoice = gbVoices.find(v => v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("ryan") || v.name.toLowerCase().includes("george") || v.name.toLowerCase().includes("james") || v.name.toLowerCase().includes("daniel") || v.name.toLowerCase().includes("natural"));
+      if (maleVoice) return maleVoice;
+      if (gbVoices.length > 0) return gbVoices[0];
+      return null;
+    }
+
     async function readBrief(index) {
-      const briefText = document.getElementById(`brief-${index}`).textContent;
-      const btn = document.getElementById(`btn-${index}`);
+      const briefText = document.getElementById("brief" + String.fromCharCode(45) + index).textContent;
+      const btn = document.getElementById("btn" + String.fromCharCode(45) + index);
       const apiKey = document.getElementById("elevenApiKey").value.trim();
 
       if (activeAudio) {
@@ -1063,6 +1091,7 @@
         statusTextPrompt("Using browser text to speech fallback...");
         
         const utterance = new SpeechSynthesisUtterance(briefText);
+        utterance.voice = getBestBritishVoice();
         utterance.onend = function() {
           btn.classList.remove("playing");
           btn.innerHTML = `
@@ -1551,6 +1580,7 @@
       const elevenKey = localStorage.getItem("jarvisElevenKey");
       if (!elevenKey) {
         const utterance = new SpeechSynthesisUtterance(text);
+        utterance.voice = getBestBritishVoice();
         utterance.onend = () => {
           resumeVoiceListening();
         };
@@ -1601,6 +1631,7 @@
       } catch (err) {
         console.log("ElevenLabs failed, using fallback:", err);
         const utterance = new SpeechSynthesisUtterance(text);
+        utterance.voice = getBestBritishVoice();
         utterance.onend = () => {
           resumeVoiceListening();
         };
