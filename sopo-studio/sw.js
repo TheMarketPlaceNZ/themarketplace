@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sopo-studio-v1';
+const CACHE_NAME = 'sopo-studio-v2';
 const ASSETS = [
   'index.html',
   'checkin.html',
@@ -32,13 +32,23 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
+    fetch(event.request)
+      .then(response => {
+        // If it's a valid response, cache it
+        if (response && (response.status === 200 || response.status === 0)) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
         }
-        return fetch(event.request).catch(() => {
-          // If fetch fails (offline), return cached index.html for page navigations
+        return response;
+      })
+      .catch(() => {
+        // If fetch fails (offline), fall back to cache
+        return caches.match(event.request).then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
           if (event.request.mode === 'navigate') {
             return caches.match('index.html');
           }

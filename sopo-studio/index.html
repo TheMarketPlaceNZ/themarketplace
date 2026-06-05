@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -548,8 +548,8 @@ body {
 .tracker-kanban-column {
   display: flex;
   flex-direction: column;
-  background: rgba(13, 22, 33, 0.4);
-  border: 1px solid var(--border);
+  background: #0f2b5c; /* Rich premium royal blue background */
+  border: 1.5px solid rgba(59, 130, 246, 0.35); /* Subtle blue border */
   border-radius: var(--radius);
   padding: 16px;
   max-height: 100%;
@@ -657,7 +657,7 @@ body {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--muted); /* Professional grey for weekdays */
   margin-bottom: 12px;
 }
 .calendar-widget-grid {
@@ -674,7 +674,7 @@ body {
   border-radius: 50%;
   font-size: 13px;
   font-weight: 500;
-  color: var(--white);
+  color: var(--white); /* White for day numbers */
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
@@ -684,15 +684,15 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 .calendar-widget-day.other-month {
-  color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.15); /* Muted grey for other month days */
 }
 .calendar-widget-day.today {
-  border: 1.5px solid var(--gold);
-  color: var(--gold-bright);
+  border: 2px solid #0066cc; /* Royal blue border for today */
+  color: var(--white);
 }
 .calendar-widget-day.selected {
-  background: var(--gold) !important;
-  color: var(--navy) !important;
+  background: #0066cc !important; /* Royal blue background for selected day */
+  color: #ffffff !important;
   font-weight: 700;
 }
 .calendar-widget-day.has-events::after {
@@ -702,10 +702,10 @@ body {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--gold-bright);
+  background: #0066cc; /* Royal blue event indicator dot */
 }
 .calendar-widget-day.selected.has-events::after {
-  background: var(--navy);
+  background: #ffffff; /* White event indicator dot on selected day */
 }
 .calendar-day-schedules {
   display: flex;
@@ -752,7 +752,6 @@ body {
 
 /* ===== NEW STYLES ===== */
 #viewCalendar.active {
-  background: radial-gradient(circle at 50% 50%, #E09677 0%, #C97858 100%) !important;
   border-radius: var(--radius);
   padding: 24px;
 }
@@ -1569,7 +1568,7 @@ function reActivateLeadEarly(idx) {
 }
 
 function renderTracker() {
-  const leads = appState.leads || [];
+  const leads = (appState.leads || []).filter(l => l !== null && l !== undefined);
   
   const stages = [
     { key: 'qualified', countId: 'countTrackerPre', containerId: 'containerTrackerPre' },
@@ -1579,7 +1578,7 @@ function renderTracker() {
   ];
   
   stages.forEach(stage => {
-    const list = leads.filter(l => l.stage === stage.key);
+    const list = leads.filter(l => l && l.stage === stage.key);
     
     // Update count label
     const countEl = document.getElementById(stage.countId);
@@ -1770,7 +1769,7 @@ function filterLeads(filter, el) {
 
 function renderLeads() {
   const container = document.getElementById('leadsContainer');
-  let leads = appState.leads || [];
+  let leads = (appState.leads || []).filter(l => l !== null && l !== undefined);
   
   const today = new Date(); today.setHours(0,0,0,0);
   const filter = appState.currentFilter || 'all';
@@ -2121,10 +2120,14 @@ function createDayCell(date, dayNum, isOtherMonth) {
 }
 
 function checkDayHasEvents(date) {
+  if (!date || isNaN(date.getTime())) return false;
   const leads = appState.leads || [];
   const hasLeadAppt = leads.some(l => {
-    if (['qualified', 'finance-pending', 'valuation', 'gameplan'].includes(l.stage)) {
-      const d = new Date(l.bookingTime || l.timestamp);
+    if (l && l.stage && ['qualified', 'finance-pending', 'valuation', 'gameplan'].includes(l.stage)) {
+      const timeStr = l.bookingTime || l.timestamp;
+      if (!timeStr) return false;
+      const d = new Date(timeStr);
+      if (isNaN(d.getTime())) return false;
       return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
     }
     return false;
@@ -2134,8 +2137,12 @@ function checkDayHasEvents(date) {
   
   const blocks = appState.calendarBlocks || [];
   const hasBlock = blocks.some(b => {
-    const d = new Date(b.datetime);
-    return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+    if (b && b.datetime) {
+      const d = new Date(b.datetime);
+      if (isNaN(d.getTime())) return false;
+      return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+    }
+    return false;
   });
   
   return hasBlock;
@@ -2160,6 +2167,7 @@ function nextMonth() {
 }
 
 function renderDaySchedules(date) {
+  if (!date || isNaN(date.getTime())) return;
   const container = document.getElementById('selectedDayAppointmentContainer');
   const title = document.getElementById('selectedDayTitle');
   
@@ -2171,8 +2179,11 @@ function renderDaySchedules(date) {
   const events = [];
   const leads = appState.leads || [];
   leads.forEach(l => {
-    if (['qualified', 'finance-pending', 'valuation', 'gameplan'].includes(l.stage)) {
-      const d = new Date(l.bookingTime || l.timestamp);
+    if (l && l.stage && ['qualified', 'finance-pending', 'valuation', 'gameplan'].includes(l.stage)) {
+      const timeStr = l.bookingTime || l.timestamp;
+      if (!timeStr) return;
+      const d = new Date(timeStr);
+      if (isNaN(d.getTime())) return;
       if (d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear()) {
         events.push({
           type: 'lead',
@@ -2189,23 +2200,26 @@ function renderDaySchedules(date) {
   
   const blocks = appState.calendarBlocks || [];
   blocks.forEach(b => {
-    const d = new Date(b.datetime);
-    if (d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear()) {
-      let badgeClass = 'new';
-      if (b.theme === 'green') badgeClass = 'settled';
-      else if (b.theme === 'yellow') badgeClass = 'warm';
-      else if (b.theme === 'orange') badgeClass = 'hot';
+    if (b && b.datetime) {
+      const d = new Date(b.datetime);
+      if (isNaN(d.getTime())) return;
+      if (d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear()) {
+        let badgeClass = 'new';
+        if (b.theme === 'green') badgeClass = 'settled';
+        else if (b.theme === 'yellow') badgeClass = 'warm';
+        else if (b.theme === 'orange') badgeClass = 'hot';
 
-      events.push({
-        type: 'block',
-        date: d,
-        title: b.label || 'Blocked Time',
-        subtitle: `Personal Time`,
-        badgeText: b.theme === 'green' ? 'Holiday / Event' : b.theme === 'yellow' ? 'Social Block' : b.theme === 'orange' ? 'Personal Block' : 'Personal Block',
-        badgeClass: badgeClass,
-        blockId: b.id,
-        theme: b.theme || 'new'
-      });
+        events.push({
+          type: 'block',
+          date: d,
+          title: b.label || 'Blocked Time',
+          subtitle: `Personal Time`,
+          badgeText: b.theme === 'green' ? 'Holiday / Event' : b.theme === 'yellow' ? 'Social Block' : b.theme === 'orange' ? 'Personal Block' : 'Personal Block',
+          badgeClass: badgeClass,
+          blockId: b.id,
+          theme: b.theme || 'new'
+        });
+      }
     }
   });
   
@@ -2260,7 +2274,7 @@ function renderDaySchedules(date) {
             <div class="appt-title" style="font-size:13px; font-weight:700; color:var(--white);">${ev.title}</div>
             ${badgeHtml}
           </div>
-          <div class="appt-time" style="font-size:11px; color:var(--gold); margin-top:4px;">
+          <div class="appt-time" style="font-size:11px; ${timeStyle} margin-top:4px;">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px; vertical-align:middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             ${timeStr} · ${ev.subtitle}
           </div>
