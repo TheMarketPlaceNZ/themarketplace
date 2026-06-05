@@ -501,6 +501,236 @@ body {
   70% { box-shadow: 0 0 0 20px rgba(230,57,70,0); }
   100% { box-shadow: 0 0 0 0 rgba(230,57,70,0); }
 }
+
+/* ===== TRACKER SPLIT SUB-NAV SYSTEM ===== */
+.tracker-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .tracker-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+}
+.tracker-sidebar-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.tracker-stage-box {
+  background: var(--glass-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-20px);
+  opacity: 0;
+  animation: slideInRight 0.4s forwards;
+}
+.tracker-stage-box:nth-child(1) { animation-delay: 0.05s; }
+.tracker-stage-box:nth-child(2) { animation-delay: 0.12s; }
+.tracker-stage-box:nth-child(3) { animation-delay: 0.19s; }
+.tracker-stage-box:nth-child(4) { animation-delay: 0.26s; }
+
+@keyframes slideInRight {
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.tracker-stage-box:hover {
+  border-color: rgba(201, 169, 110, 0.3);
+  background: rgba(255, 255, 255, 0.03);
+}
+.tracker-stage-box.active {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(201, 169, 110, 0.15);
+}
+.stage-box-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.5px;
+}
+.tracker-stage-box.active .stage-box-title {
+  color: var(--gold-bright);
+}
+.stage-box-count {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.tracker-leads-panel {
+  display: flex;
+  flex-direction: column;
+  background: rgba(13, 22, 33, 0.3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  overflow: hidden;
+  height: 100%;
+  transform: translateX(30px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tracker-leads-panel.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+.tracker-leads-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+.tracker-leads-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+}
+.tracker-leads-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
+}
+.tracker-lead-card-anim {
+  opacity: 0;
+  transform: translateY(15px);
+  animation: cardFadeIn 0.35s forwards cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes cardFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== CALENDAR SPLIT MONTH GRID ===== */
+.calendar-split-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+}
+@media (max-width: 820px) {
+  .calendar-split-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+}
+.calendar-month-widget {
+  background: var(--glass-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+}
+.calendar-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.calendar-widget-nav {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--gold);
+  border-radius: var(--radius-xs);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  user-select: none;
+}
+.calendar-widget-nav:hover {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+}
+.calendar-widget-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.5px;
+}
+.calendar-widget-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.calendar-widget-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.calendar-widget-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--white);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  user-select: none;
+}
+.calendar-widget-day:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.calendar-widget-day.other-month {
+  color: rgba(255, 255, 255, 0.15);
+}
+.calendar-widget-day.today {
+  border: 1.5px solid var(--gold);
+  color: var(--gold-bright);
+}
+.calendar-widget-day.selected {
+  background: var(--gold) !important;
+  color: var(--navy) !important;
+  font-weight: 700;
+}
+.calendar-widget-day.has-events::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+}
+.calendar-widget-day.selected.has-events::after {
+  background: var(--navy);
+}
+.calendar-day-schedules {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
+  padding-right: 4px;
+}
 </style>
 </head>
 <body>
@@ -613,82 +843,79 @@ body {
 
       <!-- TRACKER PIPELINE VIEW -->
       <div class="panel-view" id="viewTracker">
-        <div class="card" style="margin-bottom: 20px; padding: 16px;">
-          <div class="section-title">Deal Tracker</div>
-          <div class="settings-hint">Track buyer progression through mortgage clearance, valuations, and settlement.</div>
-        </div>
-
-        <!-- Pre-Mortgage Broker Stage -->
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="font-weight:700; font-size:14px; color:var(--gold); letter-spacing:1px; text-transform:uppercase;">Pre-Mortgage Broker</span>
-            <span style="font-size:12px; color:var(--muted);" id="trackerCountPre">0 leads</span>
+        <div class="tracker-layout">
+          <!-- Left stage selector boxes -->
+          <div class="tracker-sidebar-stages">
+            <div class="tracker-stage-box" id="boxStagePre" onclick="selectTrackerStage('qualified', this)">
+              <div class="stage-box-title">Pre-Mortgage Broker</div>
+              <div class="stage-box-count" id="trackerCountPre">0 leads</div>
+            </div>
+            <div class="tracker-stage-box" id="boxStagePending" onclick="selectTrackerStage('finance-pending', this)">
+              <div class="stage-box-title">Finance Pending</div>
+              <div class="stage-box-count" id="trackerCountPending">0 leads</div>
+            </div>
+            <div class="tracker-stage-box" id="boxStageValuation" onclick="selectTrackerStage('valuation', this)">
+              <div class="stage-box-title">Valuation</div>
+              <div class="stage-box-count" id="trackerCountValuation">0 leads</div>
+            </div>
+            <div class="tracker-stage-box" id="boxStageGameplan" onclick="selectTrackerStage('gameplan', this)">
+              <div class="stage-box-title">Gameplan Meeting</div>
+              <div class="stage-box-count" id="trackerCountGameplan">0 leads</div>
+            </div>
           </div>
-          <div id="trackerStagePre" style="display:flex; flex-direction:column; gap:10px;"></div>
-          <div class="settings-hint" id="trackerEmptyPre" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Pre-Mortgage Broker stage.</div>
-        </div>
-        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
-
-        <!-- Finance Pending Stage -->
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="font-weight:700; font-size:14px; color:var(--gold); letter-spacing:1px; text-transform:uppercase;">Finance Pending (Bank Check)</span>
-            <span style="font-size:12px; color:var(--muted);" id="trackerCountPending">0 leads</span>
+          
+          <!-- Right customer card panel -->
+          <div class="tracker-leads-panel" id="trackerLeadsPanel">
+            <div class="tracker-leads-header">
+              <div class="tracker-leads-title" id="trackerLeadsTitle">Select a Stage</div>
+              <div class="settings-hint" id="trackerLeadsHint">Click a stage on the left to view active buyer files.</div>
+            </div>
+            <div class="tracker-leads-container" id="trackerLeadsContainer"></div>
+            <div class="settings-hint" id="trackerLeadsEmpty" style="text-align:center; padding:40px 20px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads active in this stage.</div>
           </div>
-          <div id="trackerStagePending" style="display:flex; flex-direction:column; gap:10px;"></div>
-          <div class="settings-hint" id="trackerEmptyPending" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Finance Pending stage.</div>
-        </div>
-        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
-
-        <!-- Valuation Stage -->
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="font-weight:700; font-size:14px; color:var(--gold); letter-spacing:1px; text-transform:uppercase;">Valuation Pending</span>
-            <span style="font-size:12px; color:var(--muted);" id="trackerCountValuation">0 leads</span>
-          </div>
-          <div id="trackerStageValuation" style="display:flex; flex-direction:column; gap:10px;"></div>
-          <div class="settings-hint" id="trackerEmptyValuation" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Valuation stage.</div>
-        </div>
-        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
-
-        <!-- Gameplan Meeting Stage -->
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="font-weight:700; font-size:14px; color:var(--red); letter-spacing:1px; text-transform:uppercase;">Gameplan Meeting (Denied Path)</span>
-            <span style="font-size:12px; color:var(--muted);" id="trackerCountGameplan">0 leads</span>
-          </div>
-          <div id="trackerStageGameplan" style="display:flex; flex-direction:column; gap:10px;"></div>
-          <div class="settings-hint" id="trackerEmptyGameplan" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Gameplan Meeting stage.</div>
-        </div>
-        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
-
-        <!-- Sold Stage -->
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="font-weight:700; font-size:14px; color:var(--green); letter-spacing:1px; text-transform:uppercase;">Sold & Settled</span>
-            <span style="font-size:12px; color:var(--muted);" id="trackerCountSold">0 settlements</span>
-          </div>
-          <div id="trackerStageSold" style="display:flex; flex-direction:column; gap:10px;"></div>
-          <div class="settings-hint" id="trackerEmptySold" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No sold settlements on record.</div>
         </div>
       </div>
 
       <!-- CALENDAR VIEW -->
       <div class="panel-view" id="viewCalendar">
-        <div class="card" style="margin-bottom:16px;">
-          <div class="section-title">Block Time Slot</div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-            <input type="text" class="settings-input" id="blockTimeLabel" placeholder="Reason (e.g. Family dinner, dentist)" style="flex:2; min-width:180px;">
-            <input type="datetime-local" class="settings-input" id="blockTimeDate" style="flex:1; min-width:140px;">
-            <button class="btn btn-gold" onclick="addCalendarBlock()">Block Slot</button>
+        <div class="calendar-split-layout">
+          <!-- Left column: Actual Calendar Grid -->
+          <div class="calendar-month-widget">
+            <div class="calendar-widget-header">
+              <button class="calendar-widget-nav" onclick="prevMonth()">◄</button>
+              <div class="calendar-widget-title" id="calendarWidgetMonthYear">June 2026</div>
+              <button class="calendar-widget-nav" onclick="nextMonth()">►</button>
+            </div>
+            <div class="calendar-widget-weekdays">
+              <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            </div>
+            <div class="calendar-widget-grid" id="calendarWidgetGrid"></div>
           </div>
-        </div>
-        
-        <div class="card">
-          <div class="section-title">Calendar Schedule</div>
-          <div class="appointment-list" id="appointmentContainer"></div>
-          <div id="appointmentsEmpty" style="text-align:center; padding:40px; color:var(--muted); font-size:14px; display:none;">
-            No appointments or time blocks scheduled. Sina will route qualified leads here, and you can block time above.
+          
+          <!-- Right column: Selected Day Schedules and Booking Panel -->
+          <div class="calendar-day-schedules" id="calendarDaySchedules">
+            <div class="card" style="margin-bottom: 16px; padding: 16px;">
+              <div class="section-title" id="selectedDayTitle" style="margin-bottom: 4px;">Saturday, June 6</div>
+              <div class="settings-hint">Client strategy calls and personal time blocks for this day.</div>
+            </div>
+            
+            <!-- Time blocking form for selected day -->
+            <div class="card" style="margin-bottom:16px; padding:16px;">
+              <div class="section-title" style="font-size: 10px; margin-bottom: 8px;">Block Time Slot</div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+                <input type="text" class="settings-input" id="blockTimeLabel" placeholder="Reason (e.g. Dentist, lunch)" style="flex:2; min-width:180px;">
+                <input type="time" class="settings-input" id="blockTimeHour" style="flex:1; min-width:80px;">
+                <button class="btn btn-gold" onclick="addCalendarBlockForSelectedDay()">Block Slot</button>
+              </div>
+            </div>
+            
+            <div class="card" style="padding:16px; flex:1; display:flex; flex-direction:column; overflow:hidden;">
+              <div class="section-title" style="font-size: 10px; margin-bottom: 12px;">Day's Schedule</div>
+              <div class="appointment-list" id="selectedDayAppointmentContainer" style="flex:1; overflow-y:auto;"></div>
+              <div id="selectedDayAppointmentsEmpty" style="text-align:center; padding:30px 20px; color:var(--muted); font-size:13px; display:none;">
+                No bookings or blocks scheduled for this day.
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -735,7 +962,7 @@ body {
       
       <!-- EMAIL LISTS VIEW -->
       <div class="panel-view" id="viewEmailLists">
-        <div class="nurture-layout" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto;">
+        <div class="nurture-layout" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
           <div class="list-segment-card">
             <div class="list-header">
               <div class="list-title">Cultivation List</div>
@@ -743,6 +970,15 @@ body {
             </div>
             <div class="settings-hint" style="margin-bottom:12px;">Needs monthly cultivation check-ins. Keep this cultivation list.</div>
             <div class="list-prospects" id="prospectsSaving"></div>
+          </div>
+          
+          <div class="list-segment-card">
+            <div class="list-header">
+              <div class="list-title">1st Year Hold</div>
+              <div class="list-count" id="countSoldYear">0</div>
+            </div>
+            <div class="settings-hint" style="margin-bottom:12px;">Settled clients in their first year of hold. Run WhatsApp anniversary follow-ups.</div>
+            <div class="list-prospects" id="prospectsSoldYear"></div>
           </div>
 
           <div class="list-segment-card">
@@ -807,6 +1043,24 @@ body {
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div id="leadModalContent"></div>
+  </div>
+</div>
+
+<!-- RESCHEDULE MODAL -->
+<div class="modal-overlay" id="rescheduleModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="rescheduleModalTitle">Change Appointment Time</div>
+    <input type="hidden" id="rescheduleTargetId">
+    <input type="hidden" id="rescheduleTargetType">
+    
+    <div class="settings-row">
+      <div class="settings-label" id="rescheduleTargetLabel">Rescheduling Slot</div>
+      <input class="settings-input" id="rescheduleDateTime" type="datetime-local">
+      <div class="settings-hint">Select a new date and time for this schedule item.</div>
+    </div>
+    <button class="btn btn-gold full" onclick="saveNewTime()">Save New Time</button>
+    <button class="btn btn-ghost full" onclick="closeRescheduleModal()" style="margin-top:10px;">Cancel</button>
   </div>
 </div>
 
@@ -1101,116 +1355,152 @@ function reActivateLeadEarly(idx) {
   renderAll();
 }
 
+function selectTrackerStage(stageKey, el) {
+  appState.activeTrackerStage = stageKey;
+  
+  // Highlight stage box
+  document.querySelectorAll('.tracker-stage-box').forEach(box => box.classList.remove('active'));
+  
+  let targetEl = el;
+  if (!targetEl) {
+    const boxIds = {
+      'qualified': 'boxStagePre',
+      'finance-pending': 'boxStagePending',
+      'valuation': 'boxStageValuation',
+      'gameplan': 'boxStageGameplan'
+    };
+    targetEl = document.getElementById(boxIds[stageKey]);
+  }
+  
+  if (targetEl) targetEl.classList.add('active');
+  
+  // Update leads title
+  const titles = {
+    'qualified': 'Pre-Mortgage Broker Files',
+    'finance-pending': 'Finance Pending Files',
+    'valuation': 'Valuation Pending Files',
+    'gameplan': 'Gameplan Meeting Files'
+  };
+  const titleEl = document.getElementById('trackerLeadsTitle');
+  if (titleEl) titleEl.textContent = titles[stageKey] || 'Buyer Files';
+  
+  const hintEl = document.getElementById('trackerLeadsHint');
+  if (hintEl) hintEl.textContent = `List of buyer files currently in the ${titles[stageKey] || 'selected'} process.`;
+  
+  // Slide in panel
+  const panel = document.getElementById('trackerLeadsPanel');
+  if (panel) {
+    panel.classList.remove('visible');
+    // Trigger reflow and add visible class for pop out animation
+    setTimeout(() => {
+      panel.classList.add('visible');
+    }, 20);
+  }
+  
+  renderTrackerLeads();
+}
+
+function renderTrackerLeads() {
+  const container = document.getElementById('trackerLeadsContainer');
+  const emptyEl = document.getElementById('trackerLeadsEmpty');
+  
+  if (!container || !emptyEl) return;
+  
+  const stage = appState.activeTrackerStage || 'qualified';
+  const leads = appState.leads || [];
+  
+  const list = leads.filter(l => l.stage === stage);
+  
+  if (list.length === 0) {
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  
+  emptyEl.style.display = 'none';
+  
+  container.innerHTML = list.map((l, idx) => {
+    const leadIdx = leads.indexOf(l);
+    const score = l.score || scoreLead(l);
+    const scoreClass = getScoreClass(score);
+    
+    let actionButtons = '';
+    if (stage === 'qualified') {
+      actionButtons = `
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'qualified')">Approved (Finance Pending)</button>
+          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
+        </div>
+      `;
+    } else if (stage === 'finance-pending') {
+      actionButtons = `
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'finance-pending')">Approved (Valuation)</button>
+          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
+        </div>
+      `;
+    } else if (stage === 'valuation') {
+      actionButtons = `
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'valuation')">Approved (Sold)</button>
+          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
+        </div>
+      `;
+    } else if (stage === 'gameplan') {
+      actionButtons = `
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold);" onclick="reEvaluateLead(${leadIdx})">Restart (Pre-Broker)</button>
+          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px;" onclick="moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
+        </div>
+      `;
+    }
+    
+    return `
+      <div class="lead-card tracker-lead-card-anim" style="cursor: default; padding: 14px; margin-bottom: 4px; animation-delay: ${idx * 0.05}s;" onclick="openLeadDetail(${leadIdx})">
+        <div class="lead-header" style="margin-bottom: 8px;">
+          <div class="lead-info-main">
+            <div class="lead-initials ${scoreClass}" style="width:30px; height:30px; font-size:12px;">${initials(l.name)}</div>
+            <div>
+              <div class="lead-name" style="font-size:14px;">${l.name}</div>
+              <div class="lead-meta-sub" style="font-size:10px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
+            </div>
+          </div>
+          <span class="badge ${scoreClass}" style="font-size: 9px; padding: 2px 6px;">Score: ${score}/10</span>
+        </div>
+        <div class="lead-details-text" style="font-size: 11px; margin-bottom: 8px; line-height: 1.4;">
+          Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}
+        </div>
+        ${actionButtons}
+      </div>
+    `;
+  }).join('');
+}
+
 function renderTracker() {
   const leads = appState.leads || [];
   
-  const stagesConfig = [
-    { key: 'qualified', elementId: 'trackerStagePre', countId: 'trackerCountPre', emptyId: 'trackerEmptyPre' },
-    { key: 'finance-pending', elementId: 'trackerStagePending', countId: 'trackerCountPending', emptyId: 'trackerEmptyPending' },
-    { key: 'valuation', elementId: 'trackerStageValuation', countId: 'trackerCountValuation', emptyId: 'trackerEmptyValuation' },
-    { key: 'gameplan', elementId: 'trackerStageGameplan', countId: 'trackerCountGameplan', emptyId: 'trackerEmptyGameplan' },
-    { key: 'sold', elementId: 'trackerStageSold', countId: 'trackerCountSold', emptyId: 'trackerEmptySold' }
-  ];
+  const stages = ['qualified', 'finance-pending', 'valuation', 'gameplan'];
+  const countIds = {
+    'qualified': 'trackerCountPre',
+    'finance-pending': 'trackerCountPending',
+    'valuation': 'trackerCountValuation',
+    'gameplan': 'trackerCountGameplan'
+  };
   
-  stagesConfig.forEach(cfg => {
-    const list = leads.filter(l => l.stage === cfg.key);
-    
-    // Update count label
-    const countEl = document.getElementById(cfg.countId);
+  stages.forEach(stage => {
+    const list = leads.filter(l => l.stage === stage);
+    const countEl = document.getElementById(countIds[stage]);
     if (countEl) {
       countEl.textContent = list.length === 1 ? '1 lead' : `${list.length} leads`;
     }
-    
-    const container = document.getElementById(cfg.elementId);
-    const emptyEl = document.getElementById(cfg.emptyId);
-    
-    if (list.length === 0) {
-      if (container) container.innerHTML = '';
-      if (emptyEl) emptyEl.style.display = 'block';
-      return;
-    }
-    
-    if (emptyEl) emptyEl.style.display = 'none';
-    
-    if (container) {
-      container.innerHTML = list.map(l => {
-        const leadIdx = leads.indexOf(l);
-        const score = l.score || scoreLead(l);
-        const scoreClass = getScoreClass(score);
-        
-        let actionButtons = '';
-        if (cfg.key === 'qualified') {
-          actionButtons = `
-            <div style="display: flex; gap: 8px; margin-top: 12px;">
-              <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'qualified')">Approved (Finance Pending)</button>
-              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
-            </div>
-          `;
-        } else if (cfg.key === 'finance-pending') {
-          actionButtons = `
-            <div style="display: flex; gap: 8px; margin-top: 12px;">
-              <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'finance-pending')">Approved (Valuation)</button>
-              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
-            </div>
-          `;
-        } else if (cfg.key === 'valuation') {
-          actionButtons = `
-            <div style="display: flex; gap: 8px; margin-top: 12px;">
-              <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'valuation')">Approved (Sold)</button>
-              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
-            </div>
-          `;
-        } else if (cfg.key === 'gameplan') {
-          actionButtons = `
-            <div style="display: flex; gap: 8px; margin-top: 12px;">
-              <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold);" onclick="reEvaluateLead(${leadIdx})">Restart (Pre-Broker)</button>
-              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px;" onclick="moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
-            </div>
-          `;
-        } else if (cfg.key === 'sold') {
-          const soldDateStr = l.soldDate ? new Date(l.soldDate).toLocaleDateString('en-NZ') : 'N/A';
-          let holdText = '1-Year Hold';
-          if (l.soldDate) {
-            const ageMs = Date.now() - new Date(l.soldDate).getTime();
-            const daysRemaining = Math.max(0, 365 - Math.floor(ageMs / (1000 * 60 * 60 * 24)));
-            holdText = `${daysRemaining} days remaining on hold`;
-          }
-          
-          const waMessage = encodeURIComponent(`Hi ${l.name.split(' ')[0]}, happy anniversary in your home! How has the first year been? -Sopo`);
-          const waUrl = `https://wa.me/${l.phone.replace(/[^0-9]/g, '')}?text=${waMessage}`;
-          
-          actionButtons = `
-            <div style="font-size: 11px; color: var(--gold); margin-top: 8px; font-style: italic;">
-              Settled: ${soldDateStr} · ${holdText}
-            </div>
-            <div style="display: flex; gap: 8px; margin-top: 12px;">
-              <a href="${waUrl}" target="_blank" class="lead-act-btn call" style="text-decoration:none; text-align:center; background: #25D366; color: white;">WhatsApp Anniversary Message</a>
-              <button class="lead-act-btn sms" style="background: var(--blue-dim); color: var(--blue);" onclick="reActivateLeadEarly(${leadIdx})">Reactivate Early</button>
-            </div>
-          `;
-        }
-        
-        return `
-          <div class="lead-card" style="cursor: default; padding: 14px; margin-bottom: 4px;" onclick="openLeadDetail(${leadIdx})">
-            <div class="lead-header" style="margin-bottom: 8px;">
-              <div class="lead-info-main">
-                <div class="lead-initials ${scoreClass}" style="width:30px; height:30px; font-size:12px;">${initials(l.name)}</div>
-                <div>
-                  <div class="lead-name" style="font-size:14px;">${l.name}</div>
-                  <div class="lead-meta-sub" style="font-size:10px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
-                </div>
-              </div>
-              <span class="badge ${scoreClass}" style="font-size: 9px; padding: 2px 6px;">Score: ${score}/10</span>
-            </div>
-            <div class="lead-details-text" style="font-size: 11px; margin-bottom: 8px; line-height: 1.4;">
-              Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}
-            </div>
-            ${actionButtons}
-          </div>
-        `;
-      }).join('');
-    }
   });
+  
+  // Make sure we select the active stage
+  if (!appState.activeTrackerStage) {
+    appState.activeTrackerStage = 'qualified';
+  }
+  
+  selectTrackerStage(appState.activeTrackerStage);
 }
 
 // ===== RESPONSIVE DRAWER SIDEBAR =====
@@ -1458,44 +1748,179 @@ window.addEventListener('storage', e => {
       }
     } catch(err) {
       console.error(err);
-      loadState();
-      renderAll();
     }
+  } else if (e.key === 'sopo_state_v2' && e.newValue) {
+    loadState();
+    renderAll();
   }
 });
 
-// ===== CALENDAR MODULE =====
+// ===== CALENDAR & RESCHEDULING MODULE =====
+let calendarState = {
+  selectedDate: new Date(2026, 5, 6), // Saturday, June 6, 2026 as selected
+  currentYear: 2026,
+  currentMonth: 5 // June is index 5
+};
+
 function renderCalendar() {
-  const container = document.getElementById('appointmentContainer');
-  const empty = document.getElementById('appointmentsEmpty');
+  renderCalendarGrid();
+  renderDaySchedules(calendarState.selectedDate);
+}
+
+function renderCalendarGrid() {
+  const grid = document.getElementById('calendarWidgetGrid');
+  const monthYearLabel = document.getElementById('calendarWidgetMonthYear');
+  
+  if (!grid || !monthYearLabel) return;
+  
+  grid.innerHTML = '';
+  
+  const year = calendarState.currentYear;
+  const month = calendarState.currentMonth;
+  
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  monthYearLabel.textContent = `${monthNames[month]} ${year}`;
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  
+  // Padding from previous month
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const dayNum = prevMonthDays - i;
+    const prevDate = new Date(month === 0 ? year - 1 : year, month === 0 ? 11 : month - 1, dayNum);
+    grid.appendChild(createDayCell(prevDate, dayNum, true));
+  }
+  
+  // Current month days
+  for (let i = 1; i <= daysInMonth; i++) {
+    const currentDate = new Date(year, month, i);
+    grid.appendChild(createDayCell(currentDate, i, false));
+  }
+  
+  // Padding from next month (42 cells total for grid consistency)
+  const totalCells = 42;
+  const renderedCells = firstDay + daysInMonth;
+  const nextMonthPadding = totalCells - renderedCells;
+  
+  for (let i = 1; i <= nextMonthPadding; i++) {
+    const nextDate = new Date(month === 11 ? year + 1 : year, month === 11 ? 0 : month + 1, i);
+    grid.appendChild(createDayCell(nextDate, i, true));
+  }
+}
+
+function createDayCell(date, dayNum, isOtherMonth) {
+  const el = document.createElement('div');
+  el.className = 'calendar-widget-day';
+  if (isOtherMonth) el.classList.add('other-month');
+  
+  el.textContent = dayNum;
+  
+  const today = new Date();
+  if (date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
+    el.classList.add('today');
+  }
+  
+  const sel = calendarState.selectedDate;
+  if (sel && date.getDate() === sel.getDate() && date.getMonth() === sel.getMonth() && date.getFullYear() === sel.getFullYear()) {
+    el.classList.add('selected');
+  }
+  
+  if (checkDayHasEvents(date)) {
+    el.classList.add('has-events');
+  }
+  
+  el.onclick = () => {
+    calendarState.selectedDate = date;
+    renderCalendarGrid();
+    renderDaySchedules(date);
+  };
+  
+  return el;
+}
+
+function checkDayHasEvents(date) {
+  const leads = appState.leads || [];
+  const hasLeadAppt = leads.some(l => {
+    if (['qualified', 'finance-pending', 'valuation', 'gameplan'].includes(l.stage)) {
+      const d = new Date(l.bookingTime || l.timestamp);
+      return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+    }
+    return false;
+  });
+  
+  if (hasLeadAppt) return true;
+  
+  const blocks = appState.calendarBlocks || [];
+  const hasBlock = blocks.some(b => {
+    const d = new Date(b.datetime);
+    return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+  });
+  
+  return hasBlock;
+}
+
+function prevMonth() {
+  calendarState.currentMonth--;
+  if (calendarState.currentMonth < 0) {
+    calendarState.currentMonth = 11;
+    calendarState.currentYear--;
+  }
+  renderCalendarGrid();
+}
+
+function nextMonth() {
+  calendarState.currentMonth++;
+  if (calendarState.currentMonth > 11) {
+    calendarState.currentMonth = 0;
+    calendarState.currentYear++;
+  }
+  renderCalendarGrid();
+}
+
+function renderDaySchedules(date) {
+  const container = document.getElementById('selectedDayAppointmentContainer');
+  const empty = document.getElementById('selectedDayAppointmentsEmpty');
+  const title = document.getElementById('selectedDayTitle');
+  
+  if (!container || !empty || !title) return;
+  
+  const options = { weekday: 'long', month: 'long', day: 'numeric' };
+  title.textContent = date.toLocaleDateString('en-NZ', options);
   
   const events = [];
   const leads = appState.leads || [];
   leads.forEach(l => {
     if (['qualified', 'finance-pending', 'valuation', 'gameplan'].includes(l.stage)) {
-      events.push({
-        type: 'lead',
-        date: new Date(l.bookingTime || l.timestamp),
-        title: `Strategy Call: ${l.name}`,
-        subtitle: `Hamilton Area: ${l.area || 'General'} · Deposit: ${l.deposit || 'N/A'}`,
-        badgeText: l.stage === 'qualified' ? 'Pre-Broker' : l.stage === 'finance-pending' ? 'Finance Pending' : l.stage === 'valuation' ? 'Valuation' : 'Gameplan',
-        badgeClass: l.stage === 'qualified' ? 'warm' : l.stage === 'finance-pending' ? 'hot' : l.stage === 'valuation' ? 'settled' : 'cold',
-        leadIndex: leads.indexOf(l)
-      });
+      const d = new Date(l.bookingTime || l.timestamp);
+      if (d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear()) {
+        events.push({
+          type: 'lead',
+          date: d,
+          title: `Strategy Call: ${l.name}`,
+          subtitle: `Hamilton Area: ${l.area || 'General'} · Deposit: ${l.deposit || 'N/A'}`,
+          badgeText: l.stage === 'qualified' ? 'Pre-Broker' : l.stage === 'finance-pending' ? 'Finance Pending' : l.stage === 'valuation' ? 'Valuation' : 'Gameplan',
+          badgeClass: l.stage === 'qualified' ? 'warm' : l.stage === 'finance-pending' ? 'hot' : l.stage === 'valuation' ? 'settled' : 'cold',
+          leadIndex: leads.indexOf(l)
+        });
+      }
     }
   });
   
   const blocks = appState.calendarBlocks || [];
   blocks.forEach(b => {
-    events.push({
-      type: 'block',
-      date: new Date(b.datetime),
-      title: `Blocked: ${b.label}`,
-      subtitle: `Personal Time`,
-      badgeText: 'Personal Block',
-      badgeClass: 'new',
-      blockId: b.id
-    });
+    const d = new Date(b.datetime);
+    if (d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear()) {
+      events.push({
+        type: 'block',
+        date: d,
+        title: `Blocked: ${b.label}`,
+        subtitle: `Personal Time`,
+        badgeText: 'Personal Block',
+        badgeClass: 'new',
+        blockId: b.id
+      });
+    }
   });
   
   events.sort((a, b) => a.date - b.date);
@@ -1509,62 +1934,71 @@ function renderCalendar() {
   empty.style.display = 'none';
   
   container.innerHTML = events.map(ev => {
-    const day = ev.date.getDate();
-    const month = ev.date.toLocaleDateString('en-NZ', {month:'short'});
     const time = ev.date.toLocaleTimeString('en-NZ', {hour:'numeric',minute:'2-digit'});
     
-    let actionBtn = '';
+    let actionButtons = '';
     if (ev.type === 'lead') {
-      actionBtn = `<button class="btn btn-ghost" style="padding: 4px 8px; font-size:11px;" onclick="openLeadDetail(${ev.leadIndex})">Details</button>`;
+      actionButtons = `
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="openLeadDetail(${ev.leadIndex})">Details</button>
+          <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px; border-color:var(--gold-border); color:var(--gold);" onclick="openRescheduleModal(${ev.leadIndex}, 'lead', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
+        </div>
+      `;
     } else {
-      actionBtn = `<button class="btn btn-red" style="padding: 4px 8px; font-size:11px; background:var(--red-dim); color:var(--red);" onclick="deleteCalendarBlock(${ev.blockId})">Delete</button>`;
+      actionButtons = `
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-red" style="padding:4px 8px; font-size:10px; background:var(--red-dim); color:var(--red);" onclick="deleteCalendarBlock(${ev.blockId})">Delete</button>
+          <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px; border-color:var(--gold-border); color:var(--gold);" onclick="openRescheduleModal(${ev.blockId}, 'block', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
+        </div>
+      `;
     }
     
     return `
-      <div class="appt-card">
-        <div class="appt-date-block">
-          <div class="appt-day">${day}</div>
-          <div class="appt-month">${month}</div>
-        </div>
-        <div class="appt-info">
+      <div class="appt-card" style="padding: 12px; margin-bottom: 8px;">
+        <div class="appt-info" style="flex:1;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div class="appt-title">${ev.title}</div>
-            <span class="badge ${ev.badgeClass}">${ev.badgeText}</span>
+            <div class="appt-title" style="font-size:14px; font-weight:700;">${ev.title}</div>
+            <span class="badge ${ev.badgeClass}" style="font-size:8px; padding:2px 6px;">${ev.badgeText}</span>
           </div>
-          <div class="appt-time">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div class="appt-time" style="font-size:11px; margin-top:4px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             ${time}
           </div>
-          <div class="appt-details">${ev.subtitle}</div>
-        </div>
-        <div style="margin-left: 12px;">
-          ${actionBtn}
+          <div class="appt-details" style="font-size:11px; margin-top:2px;">${ev.subtitle}</div>
+          <div style="margin-top:8px;">
+            ${actionButtons}
+          </div>
         </div>
       </div>
     `;
   }).join('');
 }
 
-function addCalendarBlock() {
+function addCalendarBlockForSelectedDay() {
   const label = document.getElementById('blockTimeLabel').value.trim();
-  const dateStr = document.getElementById('blockTimeDate').value;
-  if (!label || !dateStr) {
-    alert('Please enter both a reason and a date/time.');
+  const timeStr = document.getElementById('blockTimeHour').value;
+  
+  if (!label || !timeStr) {
+    alert('Please enter a reason and a time.');
     return;
   }
+  
+  const selDate = calendarState.selectedDate || new Date();
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const blockDate = new Date(selDate.getFullYear(), selDate.getMonth(), selDate.getDate(), hours, minutes);
   
   if (!appState.calendarBlocks) appState.calendarBlocks = [];
   appState.calendarBlocks.push({
     id: Date.now(),
     label: label,
-    datetime: dateStr
+    datetime: blockDate.toISOString()
   });
   
   saveState();
   renderAll();
   
   document.getElementById('blockTimeLabel').value = '';
-  document.getElementById('blockTimeDate').value = '';
+  document.getElementById('blockTimeHour').value = '';
 }
 
 function deleteCalendarBlock(id) {
@@ -1573,6 +2007,61 @@ function deleteCalendarBlock(id) {
     saveState();
     renderAll();
   }
+}
+
+function openRescheduleModal(idOrIndex, type, currentDateTime, label) {
+  document.getElementById('rescheduleTargetId').value = idOrIndex;
+  document.getElementById('rescheduleTargetType').value = type;
+  document.getElementById('rescheduleTargetLabel').textContent = `Rescheduling: ${label}`;
+  
+  // Format ISO string to YYYY-MM-DDThh:mm for datetime-local
+  let dt = new Date(currentDateTime);
+  const tzOffset = dt.getTimezoneOffset() * 60000;
+  const localDt = new Date(dt.getTime() - tzOffset);
+  const formattedDt = localDt.toISOString().slice(0, 16);
+  
+  document.getElementById('rescheduleDateTime').value = formattedDt;
+  document.getElementById('rescheduleModal').classList.add('open');
+}
+
+function closeRescheduleModal() {
+  document.getElementById('rescheduleModal').classList.remove('open');
+}
+
+document.getElementById('rescheduleModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('rescheduleModal')) {
+    closeRescheduleModal();
+  }
+});
+
+function saveNewTime() {
+  const idOrIndex = document.getElementById('rescheduleTargetId').value;
+  const type = document.getElementById('rescheduleTargetType').value;
+  const newDateTimeStr = document.getElementById('rescheduleDateTime').value;
+  
+  if (!newDateTimeStr) {
+    alert('Please select a valid date and time.');
+    return;
+  }
+  
+  const newDate = new Date(newDateTimeStr);
+  
+  if (type === 'lead') {
+    const idx = parseInt(idOrIndex, 10);
+    if (appState.leads[idx]) {
+      appState.leads[idx].bookingTime = newDate.toISOString();
+    }
+  } else if (type === 'block') {
+    const blockId = parseInt(idOrIndex, 10);
+    const block = appState.calendarBlocks.find(b => b.id === blockId);
+    if (block) {
+      block.datetime = newDate.toISOString();
+    }
+  }
+  
+  saveState();
+  closeRescheduleModal();
+  renderAll();
 }
 
 // ===== MEETINGS & RECORDING MODULE =====
@@ -1788,28 +2277,30 @@ function selectTranscript(id) {
 function renderEmailLists() {
   const leads = appState.leads || [];
   
-  const savingList = leads.filter(l => {
+  const cultivationList = leads.filter(l => {
     const s = l.score || scoreLead(l);
-    return s >= 1 && s <= 6;
+    return s >= 1 && s <= 6 && l.stage !== 'sold' && l.stage !== 'reactivation';
   });
+  
+  const soldYearList = leads.filter(l => l.stage === 'sold');
+  
   const reactivationList = leads.filter(l => l.stage === 'reactivation');
   
   const countSavingEl = document.getElementById('countSaving');
-  if (countSavingEl) countSavingEl.textContent = savingList.length;
+  if (countSavingEl) countSavingEl.textContent = cultivationList.length;
+  
+  const countSoldYearEl = document.getElementById('countSoldYear');
+  if (countSoldYearEl) countSoldYearEl.textContent = soldYearList.length;
   
   const countReactivationEl = document.getElementById('countReactivation');
   if (countReactivationEl) countReactivationEl.textContent = reactivationList.length;
   
-  const renderList = (arr, containerId, isReact = false) => {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    if (arr.length === 0) {
-      container.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">No leads segmented in this list yet.</div>';
-      return;
-    }
-    container.innerHTML = arr.map(l => {
-      const note = l.note || (l.soldDate ? `Settled: ${new Date(l.soldDate).toLocaleDateString('en-NZ')} (${l.area || 'Hamilton'} property)` : 'Past settled client');
-      return `
+  const prospectsSaving = document.getElementById('prospectsSaving');
+  if (prospectsSaving) {
+    if (cultivationList.length === 0) {
+      prospectsSaving.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">No leads in Cultivation.</div>';
+    } else {
+      prospectsSaving.innerHTML = cultivationList.map(l => `
         <div class="list-prospect-row" style="margin-bottom:6px; flex-direction:column; align-items:stretch; gap:6px;">
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
             <div style="flex:1;">
@@ -1818,14 +2309,67 @@ function renderEmailLists() {
             </div>
             <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
           </div>
-          ${isReact ? `<div style="font-size:10px; color:var(--gold); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px; font-style:italic;">${note}</div>` : ''}
         </div>
-      `;
-    }).join('');
-  };
+      `).join('');
+    }
+  }
   
-  renderList(savingList, 'prospectsSaving');
-  renderList(reactivationList, 'prospectsReactivation', true);
+  const prospectsSoldYear = document.getElementById('prospectsSoldYear');
+  if (prospectsSoldYear) {
+    if (soldYearList.length === 0) {
+      prospectsSoldYear.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">No sold leads on hold.</div>';
+    } else {
+      prospectsSoldYear.innerHTML = soldYearList.map(l => {
+        const leadIdx = leads.indexOf(l);
+        const soldDate = new Date(l.soldDate || l.timestamp);
+        const ageMs = Date.now() - soldDate.getTime();
+        const ageDays = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+        const daysRemaining = Math.max(0, 365 - ageDays);
+        const waMsg = encodeURIComponent(`Hi ${l.name}, happy settlement anniversary! Just checking in to see how you are enjoying your home in ${l.area || 'Hamilton'}. Hope everything is going well! - Sopo`);
+        const waUrl = `https://api.whatsapp.com/send?phone=${l.phone || ''}&text=${waMsg}`;
+        return `
+          <div class="list-prospect-row" style="margin-bottom:6px; flex-direction:column; align-items:stretch; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <div style="flex:1;">
+                <div class="prospect-info">${l.name}</div>
+                <div class="prospect-sub">${l.email || 'No Email'}</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <a href="${waUrl}" target="_blank" class="btn btn-ghost" style="padding:4px 8px; font-size:10px; border-color:var(--green); color:var(--green); text-decoration:none;">WhatsApp</a>
+                <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px; border-color:var(--gold); color:var(--gold);" onclick="reActivateLeadEarly(${leadIdx})">Reactivate</button>
+              </div>
+            </div>
+            <div style="font-size:10px; color:var(--muted); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px;">
+              Sold: ${soldDate.toLocaleDateString('en-NZ')} · <span style="color:var(--orange); font-weight:600;">${daysRemaining} days on hold</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+  
+  const prospectsReactivation = document.getElementById('prospectsReactivation');
+  if (prospectsReactivation) {
+    if (reactivationList.length === 0) {
+      prospectsReactivation.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">No leads in Reactivation.</div>';
+    } else {
+      prospectsReactivation.innerHTML = reactivationList.map(l => {
+        const note = l.note || (l.soldDate ? `Settled: ${new Date(l.soldDate).toLocaleDateString('en-NZ')} (${l.area || 'Hamilton'} property)` : 'Past settled client');
+        return `
+          <div class="list-prospect-row" style="margin-bottom:6px; flex-direction:column; align-items:stretch; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <div style="flex:1;">
+                <div class="prospect-info">${l.name}</div>
+                <div class="prospect-sub">${l.email || 'No Email'}</div>
+              </div>
+              <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+            </div>
+            <div style="font-size:10px; color:var(--gold); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px; font-style:italic;">${note}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
 }
 
 function copyProspectInfo(name, email) {
