@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -502,105 +502,66 @@ body {
   100% { box-shadow: 0 0 0 0 rgba(230,57,70,0); }
 }
 
-/* ===== TRACKER SPLIT SUB-NAV SYSTEM ===== */
-.tracker-layout {
+/* ===== TRACKER KANBAN BOARD SYSTEM ===== */
+.tracker-kanban-board {
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   height: calc(100vh - 120px);
-  overflow: hidden;
+  overflow-x: auto;
+  padding-bottom: 10px;
 }
-@media (max-width: 768px) {
-  .tracker-layout {
-    grid-template-columns: 1fr;
+@media (max-width: 1024px) {
+  .tracker-kanban-board {
+    grid-template-columns: repeat(2, 1fr);
+    overflow-y: auto;
     height: auto;
-    overflow: visible;
   }
 }
-.tracker-sidebar-stages {
+@media (max-width: 600px) {
+  .tracker-kanban-board {
+    grid-template-columns: 1fr;
+  }
+}
+.tracker-kanban-column {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-.tracker-stage-box {
-  background: var(--glass-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px 20px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(-20px);
-  opacity: 0;
-  animation: slideInRight 0.4s forwards;
-}
-.tracker-stage-box:nth-child(1) { animation-delay: 0.05s; }
-.tracker-stage-box:nth-child(2) { animation-delay: 0.12s; }
-.tracker-stage-box:nth-child(3) { animation-delay: 0.19s; }
-.tracker-stage-box:nth-child(4) { animation-delay: 0.26s; }
-
-@keyframes slideInRight {
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.tracker-stage-box:hover {
-  border-color: rgba(201, 169, 110, 0.3);
-  background: rgba(255, 255, 255, 0.03);
-}
-.tracker-stage-box.active {
-  background: var(--gold-dim);
-  border-color: var(--gold);
-  box-shadow: 0 0 12px rgba(201, 169, 110, 0.15);
-}
-.stage-box-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--white);
-  letter-spacing: 0.5px;
-}
-.tracker-stage-box.active .stage-box-title {
-  color: var(--gold-bright);
-}
-.stage-box-count {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-.tracker-leads-panel {
-  display: flex;
-  flex-direction: column;
-  background: rgba(13, 22, 33, 0.3);
+  background: rgba(13, 22, 33, 0.4);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
-  overflow: hidden;
-  height: 100%;
-  transform: translateX(30px);
-  opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.tracker-leads-panel.visible {
-  transform: translateX(0);
-  opacity: 1;
-}
-.tracker-leads-header {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-}
-.tracker-leads-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--white);
-}
-.tracker-leads-container {
-  flex: 1;
+  padding: 16px;
+  max-height: 100%;
   overflow-y: auto;
+  min-width: 250px;
+}
+.kanban-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1.5px solid var(--border-gold);
+  padding-bottom: 8px;
+}
+.kanban-column-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.kanban-column-count {
+  font-size: 11px;
+  color: var(--white);
+  background: var(--gold-dim);
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-weight: 600;
+}
+.kanban-column-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-right: 4px;
+  gap: 10px;
+  flex: 1;
 }
 .tracker-lead-card-anim {
   opacity: 0;
@@ -611,7 +572,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ===== CALENDAR SPLIT MONTH GRID ===== */
+/* ===== CALENDAR SPLIT MONTH GRID & TIMELINE ===== */
 .calendar-split-layout {
   display: grid;
   grid-template-columns: 340px 1fr;
@@ -727,9 +688,58 @@ body {
 .calendar-day-schedules {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   height: 100%;
-  padding-right: 4px;
+  overflow: hidden;
+}
+.calendar-timeline {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(13, 22, 33, 0.2);
+  height: 480px;
+  overflow-y: auto;
+  padding: 10px;
+}
+.timeline-hour-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  min-height: 60px;
+  position: relative;
+}
+.timeline-hour-label {
+  font-size: 11px;
+  color: var(--muted);
+  padding-top: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-right: 1px solid var(--border);
+  padding-right: 8px;
+  text-align: right;
+  user-select: none;
+}
+.timeline-hour-events {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  justify-content: center;
+}
+
+/* ===== NEW STYLES ===== */
+#viewCalendar.active {
+  background: radial-gradient(circle at 50% 50%, #E09677 0%, #C97858 100%) !important;
+  border-radius: var(--radius);
+  padding: 24px;
+}
+@keyframes voicePulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+.voice-pulse-ring {
+  animation: voicePulse 1.5s infinite;
 }
 </style>
 </head>
@@ -843,35 +853,41 @@ body {
 
       <!-- TRACKER PIPELINE VIEW -->
       <div class="panel-view" id="viewTracker">
-        <div class="tracker-layout">
-          <!-- Left stage selector boxes -->
-          <div class="tracker-sidebar-stages">
-            <div class="tracker-stage-box" id="boxStagePre" onclick="selectTrackerStage('qualified', this)">
-              <div class="stage-box-title">Pre-Mortgage Broker</div>
-              <div class="stage-box-count" id="trackerCountPre">0 leads</div>
+        <div class="tracker-kanban-board">
+          <!-- Column: Pre-Mortgage Broker -->
+          <div class="tracker-kanban-column">
+            <div class="kanban-column-header">
+              <span class="kanban-column-title">Pre-Mortgage Broker</span>
+              <span class="kanban-column-count" id="countTrackerPre">0</span>
             </div>
-            <div class="tracker-stage-box" id="boxStagePending" onclick="selectTrackerStage('finance-pending', this)">
-              <div class="stage-box-title">Finance Pending</div>
-              <div class="stage-box-count" id="trackerCountPending">0 leads</div>
-            </div>
-            <div class="tracker-stage-box" id="boxStageValuation" onclick="selectTrackerStage('valuation', this)">
-              <div class="stage-box-title">Valuation</div>
-              <div class="stage-box-count" id="trackerCountValuation">0 leads</div>
-            </div>
-            <div class="tracker-stage-box" id="boxStageGameplan" onclick="selectTrackerStage('gameplan', this)">
-              <div class="stage-box-title">Gameplan Meeting</div>
-              <div class="stage-box-count" id="trackerCountGameplan">0 leads</div>
-            </div>
+            <div class="kanban-column-content" id="containerTrackerPre"></div>
           </div>
-          
-          <!-- Right customer card panel -->
-          <div class="tracker-leads-panel" id="trackerLeadsPanel">
-            <div class="tracker-leads-header">
-              <div class="tracker-leads-title" id="trackerLeadsTitle">Select a Stage</div>
-              <div class="settings-hint" id="trackerLeadsHint">Click a stage on the left to view active buyer files.</div>
+
+          <!-- Column: Finance Pending -->
+          <div class="tracker-kanban-column">
+            <div class="kanban-column-header">
+              <span class="kanban-column-title">Finance Pending</span>
+              <span class="kanban-column-count" id="countTrackerPending">0</span>
             </div>
-            <div class="tracker-leads-container" id="trackerLeadsContainer"></div>
-            <div class="settings-hint" id="trackerLeadsEmpty" style="text-align:center; padding:40px 20px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads active in this stage.</div>
+            <div class="kanban-column-content" id="containerTrackerPending"></div>
+          </div>
+
+          <!-- Column: Valuation -->
+          <div class="tracker-kanban-column">
+            <div class="kanban-column-header">
+              <span class="kanban-column-title">Valuation</span>
+              <span class="kanban-column-count" id="countTrackerValuation">0</span>
+            </div>
+            <div class="kanban-column-content" id="containerTrackerValuation"></div>
+          </div>
+
+          <!-- Column: Gameplan Meeting -->
+          <div class="tracker-kanban-column">
+            <div class="kanban-column-header">
+              <span class="kanban-column-title">Gameplan Meeting</span>
+              <span class="kanban-column-count" id="countTrackerGameplan">0</span>
+            </div>
+            <div class="kanban-column-content" id="containerTrackerGameplan"></div>
           </div>
         </div>
       </div>
@@ -1059,8 +1075,127 @@ body {
       <input class="settings-input" id="rescheduleDateTime" type="datetime-local">
       <div class="settings-hint">Select a new date and time for this schedule item.</div>
     </div>
+    <div class="settings-row">
+      <div class="settings-label">Situation Note / Postpone Reason (Optional)</div>
+      <input class="settings-input" id="rescheduleReason" placeholder="e.g. sick child, keys handover">
+      <div class="settings-hint">If set, Sopo will be reminded to ask about this on the rescheduled date.</div>
+    </div>
     <button class="btn btn-gold full" onclick="saveNewTime()">Save New Time</button>
     <button class="btn btn-ghost full" onclick="closeRescheduleModal()" style="margin-top:10px;">Cancel</button>
+  </div>
+</div>
+
+<!-- VOICE AGENT CALL MODAL -->
+<div class="modal-overlay" id="voiceCallModal">
+  <div class="modal-sheet" style="max-width: 400px; text-align: center;">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="justify-content: center; font-size: 16px; letter-spacing: 1px;">Sina Voice Agent</div>
+    
+    <div style="padding: 20px 0;">
+      <!-- Call Status Animation -->
+      <div class="voice-status-container" style="position: relative; width: 100px; height: 100px; margin: 0 auto 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+        <div class="voice-pulse-ring" id="voicePulseRing" style="position: absolute; inset: 0; border: 2px solid var(--gold); border-radius: 50%;"></div>
+        <div style="width: 70px; height: 70px; border-radius: 50%; background: var(--gold-dim); border: 1px solid var(--border-gold); display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+      </div>
+      
+      <div id="voiceCallName" style="font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 8px;">Tane Williams</div>
+      <div id="voiceCallPhone" style="font-size: 13px; color: var(--muted); margin-bottom: 24px;">021555789</div>
+      
+      <div id="voiceCallStatus" style="font-size: 14px; font-weight: 600; color: var(--gold); letter-spacing: 2px; text-transform: uppercase;">Dialing...</div>
+      
+      <!-- Simulated call transcript console -->
+      <div id="voiceCallTranscript" style="display: none; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; text-align: left; font-size: 12px; color: #cbd5e1; height: 120px; overflow-y: auto; margin-top: 15px; font-style: italic;">
+      </div>
+    </div>
+    
+    <!-- Controls during dialing -->
+    <div id="voiceCallDialingControls" style="display: flex; gap: 10px; margin-top: 10px;">
+      <button class="btn btn-gold" style="flex: 1;" onclick="simulateCallConnected()">Simulate Answer</button>
+      <button class="btn btn-red" style="flex: 1; background: var(--red-dim); color: var(--red);" onclick="simulateCallNoAnswer()">No Answer</button>
+    </div>
+    
+    <!-- Controls during call / simulation -->
+    <div id="voiceCallConnectedControls" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px; width: 100%;">
+      <button class="btn btn-gold" style="width: 100%;" onclick="simulateCallBooked()">Simulate Book Slot</button>
+      <button class="btn btn-red" style="width: 100%; background: var(--red-dim); color: var(--red);" onclick="hangUpVoiceCall()">Hang Up</button>
+    </div>
+    
+    <!-- Close button for results -->
+    <button id="voiceCallCloseBtn" class="btn btn-ghost full" style="display: none; margin-top: 10px;" onclick="closeVoiceCallModal()">Close</button>
+  </div>
+</div>
+
+<!-- BOOK NOW MODAL (QUICK BOOKING CONSOLE) -->
+<div class="modal-overlay" id="quickBookingModal">
+  <div class="modal-sheet" style="max-width: 450px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Quick Booking Console</div>
+    
+    <!-- Tab navigation inside booking console -->
+    <div style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+      <div class="filter-chip active" id="tabBookClientBtn" style="border-radius: 0; border: none; background: none; border-bottom: 2px solid var(--gold); padding: 8px 16px; cursor: pointer; color: var(--gold);" onclick="switchQuickBookingTab('client')">Book Client</div>
+      <div class="filter-chip" id="tabBlockTimeBtn" style="border-radius: 0; border: none; background: none; border-bottom: 2px solid transparent; padding: 8px 16px; cursor: pointer; color: var(--muted);" onclick="switchQuickBookingTab('time')">Block Personal Time</div>
+    </div>
+    
+    <!-- Tab 1: Book Client -->
+    <div id="quickBookingClientForm">
+      <div class="settings-row">
+        <div class="settings-label">Select Client</div>
+        <select class="settings-input" id="quickBookingLeadSelect">
+          <!-- Filled dynamically -->
+        </select>
+      </div>
+      <div class="settings-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <div class="settings-label">Date</div>
+          <input class="settings-input" type="date" id="quickBookingDate">
+        </div>
+        <div>
+          <div class="settings-label">Time</div>
+          <input class="settings-input" type="time" id="quickBookingTime">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Meeting Type</div>
+        <select class="settings-input" id="quickBookingType">
+          <option value="zoom">Zoom Video Call</option>
+          <option value="coffee">Face-to-Face Coffee</option>
+        </select>
+      </div>
+      <button class="btn btn-gold full" onclick="submitQuickClientBooking()">Book Strategy Call</button>
+    </div>
+    
+    <!-- Tab 2: Block Personal Time -->
+    <div id="quickBookingBlockForm" style="display: none;">
+      <div class="settings-row">
+        <div class="settings-label">Block Reason</div>
+        <input type="text" class="settings-input" id="quickBlockLabel" placeholder="e.g. Lunch, Dentist, Blake's lessons">
+      </div>
+      <div class="settings-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <div class="settings-label">Date</div>
+          <input class="settings-input" type="date" id="quickBlockDate">
+        </div>
+        <div>
+          <div class="settings-label">Time</div>
+          <input class="settings-input" type="time" id="quickBlockTime">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Color Theme</div>
+        <select class="settings-input" id="quickBlockColor">
+          <option value="green">Green (Holiday/Meeting)</option>
+          <option value="yellow">Yellow (Social/Content)</option>
+          <option value="orange">Orange (Personal/Lessons)</option>
+          <option value="new">Default Slate</option>
+        </select>
+      </div>
+      <button class="btn btn-gold full" onclick="submitQuickTimeBlock()">Block Slot</button>
+    </div>
+    
+    <button class="btn btn-ghost full" style="margin-top: 10px;" onclick="closeQuickBookingModal()">Cancel</button>
   </div>
 </div>
 
@@ -1084,7 +1219,10 @@ const DEFAULT_LEADS = [
     source: "Instagram",
     stage: "qualified", // Pre-Mortgage Broker
     bookingTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    score: 9
+    score: 9,
+    birthdayHusband: "1991-03-12",
+    birthdayWife: "1993-06-06", // Birthday Today
+    birthdayKids: "Hemi: 2018-09-22"
   },
   {
     name: "Hemi & Kiri Taylor",
@@ -1099,7 +1237,10 @@ const DEFAULT_LEADS = [
     timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Facebook",
     stage: "finance-pending", // Finance Pending
-    score: 7
+    score: 7,
+    birthdayHusband: "1988-08-14",
+    birthdayWife: "1990-11-20",
+    birthdayKids: "Rawiri: 2015-04-12, Kiri: 2017-08-05"
   },
   {
     name: "John & Sarah Miller",
@@ -1114,7 +1255,10 @@ const DEFAULT_LEADS = [
     timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Open Home",
     stage: "valuation", // Valuation
-    score: 10
+    score: 10,
+    birthdayHusband: "1989-11-04",
+    birthdayWife: "1991-06-06", // Birthday Today
+    birthdayKids: "Leo: 2018-06-06, Mia: 2021-12-15" // Leo Birthday Today
   },
   {
     name: "Sione & Mele Tupou",
@@ -1130,7 +1274,10 @@ const DEFAULT_LEADS = [
     source: "Referral",
     stage: "reactivation",
     soldDate: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
-    score: 9
+    score: 9,
+    birthdayHusband: "1985-02-14",
+    birthdayWife: "1987-10-09",
+    birthdayKids: "Sione Jr: 2012-07-25"
   },
   {
     name: "Wiremu Kingi",
@@ -1146,7 +1293,10 @@ const DEFAULT_LEADS = [
     source: "Open Home",
     stage: "reactivation",
     soldDate: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(),
-    score: 7
+    score: 7,
+    birthdayHusband: "1994-07-12",
+    birthdayWife: "1996-01-29",
+    birthdayKids: ""
   },
   {
     name: "Lani & Vaea Faletau",
@@ -1162,7 +1312,10 @@ const DEFAULT_LEADS = [
     source: "Referral",
     stage: "reactivation",
     soldDate: new Date(Date.now() - 450 * 24 * 60 * 60 * 1000).toISOString(),
-    score: 8
+    score: 8,
+    birthdayHusband: "1990-12-04",
+    birthdayWife: "1992-04-18",
+    birthdayKids: "Vaea Jr: 2019-03-30"
   },
   {
     name: "Peni & Losa Havili",
@@ -1177,7 +1330,10 @@ const DEFAULT_LEADS = [
     timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Open Home",
     stage: "gameplan", // Gameplan Meeting
-    score: 3
+    score: 3,
+    birthdayHusband: "1995-09-02",
+    birthdayWife: "1997-05-15",
+    birthdayKids: "Tevita: 2022-01-14"
   },
   {
     name: "David & Anna Watson",
@@ -1193,7 +1349,10 @@ const DEFAULT_LEADS = [
     source: "Open Home",
     stage: "sold", // Sold (held under 1 year)
     soldDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(), // Sold 25 days ago
-    score: 9
+    score: 9,
+    birthdayHusband: "1988-05-28",
+    birthdayWife: "1989-12-09",
+    birthdayKids: "Emma: 2016-10-04, Jack: 2019-07-19"
   }
 ];
 
@@ -1231,8 +1390,34 @@ function loadState() {
   if (!appState.leads || appState.leads.length === 0) {
     appState.leads = DEFAULT_LEADS;
   }
-  if (!appState.calendarBlocks) {
-    appState.calendarBlocks = [];
+  if (!appState.calendarBlocks || appState.calendarBlocks.length === 0) {
+    // Seed default blocks from the mockup for Saturday, June 6, 2026
+    appState.calendarBlocks = [
+      {
+        id: 10001,
+        label: "King's Birthday",
+        datetime: new Date('2026-06-06T00:00:00').toISOString(),
+        theme: 'green'
+      },
+      {
+        id: 10002,
+        label: "TNG Hamilton - Waikato (Aaron Court Motor Inn - 250 Ulster St, Whitiora, Hamilton 3200)",
+        datetime: new Date('2026-06-06T09:00:00').toISOString(),
+        theme: 'green'
+      },
+      {
+        id: 10003,
+        label: "YouTube post - Tuesday 9:30am",
+        datetime: new Date('2026-06-06T09:30:00').toISOString(),
+        theme: 'yellow'
+      },
+      {
+        id: 10004,
+        label: "Blake's lessons",
+        datetime: new Date('2026-06-06T16:30:00').toISOString(),
+        theme: 'orange'
+      }
+    ];
   }
   
   // Sweep dustbin (delete items older than 3 days)
@@ -1355,152 +1540,108 @@ function reActivateLeadEarly(idx) {
   renderAll();
 }
 
-function selectTrackerStage(stageKey, el) {
-  appState.activeTrackerStage = stageKey;
-  
-  // Highlight stage box
-  document.querySelectorAll('.tracker-stage-box').forEach(box => box.classList.remove('active'));
-  
-  let targetEl = el;
-  if (!targetEl) {
-    const boxIds = {
-      'qualified': 'boxStagePre',
-      'finance-pending': 'boxStagePending',
-      'valuation': 'boxStageValuation',
-      'gameplan': 'boxStageGameplan'
-    };
-    targetEl = document.getElementById(boxIds[stageKey]);
-  }
-  
-  if (targetEl) targetEl.classList.add('active');
-  
-  // Update leads title
-  const titles = {
-    'qualified': 'Pre-Mortgage Broker Files',
-    'finance-pending': 'Finance Pending Files',
-    'valuation': 'Valuation Pending Files',
-    'gameplan': 'Gameplan Meeting Files'
-  };
-  const titleEl = document.getElementById('trackerLeadsTitle');
-  if (titleEl) titleEl.textContent = titles[stageKey] || 'Buyer Files';
-  
-  const hintEl = document.getElementById('trackerLeadsHint');
-  if (hintEl) hintEl.textContent = `List of buyer files currently in the ${titles[stageKey] || 'selected'} process.`;
-  
-  // Slide in panel
-  const panel = document.getElementById('trackerLeadsPanel');
-  if (panel) {
-    panel.classList.remove('visible');
-    // Trigger reflow and add visible class for pop out animation
-    setTimeout(() => {
-      panel.classList.add('visible');
-    }, 20);
-  }
-  
-  renderTrackerLeads();
-}
-
-function renderTrackerLeads() {
-  const container = document.getElementById('trackerLeadsContainer');
-  const emptyEl = document.getElementById('trackerLeadsEmpty');
-  
-  if (!container || !emptyEl) return;
-  
-  const stage = appState.activeTrackerStage || 'qualified';
-  const leads = appState.leads || [];
-  
-  const list = leads.filter(l => l.stage === stage);
-  
-  if (list.length === 0) {
-    container.innerHTML = '';
-    emptyEl.style.display = 'block';
-    return;
-  }
-  
-  emptyEl.style.display = 'none';
-  
-  container.innerHTML = list.map((l, idx) => {
-    const leadIdx = leads.indexOf(l);
-    const score = l.score || scoreLead(l);
-    const scoreClass = getScoreClass(score);
-    
-    let actionButtons = '';
-    if (stage === 'qualified') {
-      actionButtons = `
-        <div style="display: flex; gap: 8px; margin-top: 12px;">
-          <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'qualified')">Approved (Finance Pending)</button>
-          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
-        </div>
-      `;
-    } else if (stage === 'finance-pending') {
-      actionButtons = `
-        <div style="display: flex; gap: 8px; margin-top: 12px;">
-          <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'finance-pending')">Approved (Valuation)</button>
-          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
-        </div>
-      `;
-    } else if (stage === 'valuation') {
-      actionButtons = `
-        <div style="display: flex; gap: 8px; margin-top: 12px;">
-          <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'valuation')">Approved (Sold)</button>
-          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
-        </div>
-      `;
-    } else if (stage === 'gameplan') {
-      actionButtons = `
-        <div style="display: flex; gap: 8px; margin-top: 12px;">
-          <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold);" onclick="reEvaluateLead(${leadIdx})">Restart (Pre-Broker)</button>
-          <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px;" onclick="moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
-        </div>
-      `;
-    }
-    
-    return `
-      <div class="lead-card tracker-lead-card-anim" style="cursor: default; padding: 14px; margin-bottom: 4px; animation-delay: ${idx * 0.05}s;" onclick="openLeadDetail(${leadIdx})">
-        <div class="lead-header" style="margin-bottom: 8px;">
-          <div class="lead-info-main">
-            <div class="lead-initials ${scoreClass}" style="width:30px; height:30px; font-size:12px;">${initials(l.name)}</div>
-            <div>
-              <div class="lead-name" style="font-size:14px;">${l.name}</div>
-              <div class="lead-meta-sub" style="font-size:10px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
-            </div>
-          </div>
-          <span class="badge ${scoreClass}" style="font-size: 9px; padding: 2px 6px;">Score: ${score}/10</span>
-        </div>
-        <div class="lead-details-text" style="font-size: 11px; margin-bottom: 8px; line-height: 1.4;">
-          Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}
-        </div>
-        ${actionButtons}
-      </div>
-    `;
-  }).join('');
-}
-
 function renderTracker() {
   const leads = appState.leads || [];
   
-  const stages = ['qualified', 'finance-pending', 'valuation', 'gameplan'];
-  const countIds = {
-    'qualified': 'trackerCountPre',
-    'finance-pending': 'trackerCountPending',
-    'valuation': 'trackerCountValuation',
-    'gameplan': 'trackerCountGameplan'
-  };
+  const stages = [
+    { key: 'qualified', countId: 'countTrackerPre', containerId: 'containerTrackerPre' },
+    { key: 'finance-pending', countId: 'countTrackerPending', containerId: 'containerTrackerPending' },
+    { key: 'valuation', countId: 'countTrackerValuation', containerId: 'containerTrackerValuation' },
+    { key: 'gameplan', countId: 'countTrackerGameplan', containerId: 'containerTrackerGameplan' }
+  ];
   
   stages.forEach(stage => {
-    const list = leads.filter(l => l.stage === stage);
-    const countEl = document.getElementById(countIds[stage]);
-    if (countEl) {
-      countEl.textContent = list.length === 1 ? '1 lead' : `${list.length} leads`;
+    const list = leads.filter(l => l.stage === stage.key);
+    
+    // Update count label
+    const countEl = document.getElementById(stage.countId);
+    if (countEl) countEl.textContent = list.length;
+    
+    const container = document.getElementById(stage.containerId);
+    if (!container) return;
+    
+    if (list.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:30px 10px; color:var(--muted); font-size:12px; border:1px dashed var(--border); border-radius:var(--radius-sm);">
+          No files active
+        </div>
+      `;
+      return;
     }
+    
+    container.innerHTML = list.map((l, idx) => {
+      const leadIdx = leads.indexOf(l);
+      const score = l.score || scoreLead(l);
+      const scoreClass = getScoreClass(score);
+      
+      let actionButtons = '';
+      if (stage.key === 'qualified') {
+        actionButtons = `
+          <div style="display: flex; gap: 6px; margin-top: 10px;">
+            <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green; padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'qualified')">Approve</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx})">Deny</button>
+          </div>
+        `;
+      } else if (stage.key === 'finance-pending') {
+        actionButtons = `
+          <div style="display: flex; gap: 6px; margin-top: 10px;">
+            <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green); padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'finance-pending')">Approve</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx})">Deny</button>
+          </div>
+        `;
+      } else if (stage.key === 'valuation') {
+        actionButtons = `
+          <div style="display: flex; gap: 6px; margin-top: 10px;">
+            <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green); padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'valuation')">Approve</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx})">Deny</button>
+          </div>
+        `;
+      } else if (stage.key === 'gameplan') {
+        actionButtons = `
+          <div style="display: flex; gap: 6px; margin-top: 10px;">
+            <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold); padding: 6px;" onclick="event.stopPropagation(); reEvaluateLead(${leadIdx})">Restart</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px; padding: 6px;" onclick="event.stopPropagation(); moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
+          </div>
+        `;
+      }
+      
+      // Check birthdays today
+      const todayBirthdays = getTodayBirthdays(l);
+      let birthdayBanners = '';
+      if (todayBirthdays.length > 0) {
+        birthdayBanners = todayBirthdays.map(b => {
+          const bdayMsg = encodeURIComponent("You're older than what you were, but as young as you'll ever be. Happy birthday from Sopo and the team!");
+          const bdayWaUrl = `https://api.whatsapp.com/send?phone=${l.phone || ''}&text=${bdayMsg}`;
+          return `
+            <div style="margin-top: 8px; padding: 4px 8px; background: rgba(16,185,129,0.1); border: 1.2px solid var(--green); border-radius: var(--radius-xs); font-size: 10px; display: flex; justify-content: space-between; align-items: center;" onclick="event.stopPropagation();">
+              <span style="color: var(--green); font-weight:600;">🎂 ${b.relation} Today!</span>
+              <a href="${bdayWaUrl}" target="_blank" class="btn btn-ghost" style="padding: 1px 4px; font-size: 8px; border-color: var(--green); color: var(--green); text-decoration: none;">WhatsApp Bday</a>
+            </div>
+          `;
+        }).join('');
+      }
+
+      return `
+        <div class="lead-card tracker-lead-card-anim" style="padding: 12px; margin-bottom: 8px; animation-delay: ${idx * 0.05}s;" onclick="openLeadDetail(${leadIdx})">
+          <div class="lead-header" style="margin-bottom: 6px;">
+            <div class="lead-info-main">
+              <div class="lead-initials ${scoreClass}" style="width:26px; height:26px; font-size:11px;">${initials(l.name)}</div>
+              <div>
+                <div class="lead-name" style="font-size:13px; font-weight:600;">${l.name}</div>
+                <div class="lead-meta-sub" style="font-size:9px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
+              </div>
+            </div>
+            <span class="badge ${scoreClass}" style="font-size: 8px; padding: 2px 4px;">Score: ${score}</span>
+          </div>
+          <div class="lead-details-text" style="font-size: 10px; margin-bottom: 6px; line-height: 1.3;">
+            Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}
+          </div>
+          ${birthdayBanners}
+          ${actionButtons}
+        </div>
+      `;
+    }).join('');
   });
-  
-  // Make sure we select the active stage
-  if (!appState.activeTrackerStage) {
-    appState.activeTrackerStage = 'qualified';
-  }
-  
-  selectTrackerStage(appState.activeTrackerStage);
 }
 
 // ===== RESPONSIVE DRAWER SIDEBAR =====
@@ -1625,6 +1766,23 @@ function renderLeads() {
     const score = l.score || scoreLead(l);
     const scoreClass = getScoreClass(score);
     const av = l.source || 'Open Home';
+    
+    // Check birthdays today
+    const todayBirthdays = getTodayBirthdays(l);
+    let birthdayBanners = '';
+    if (todayBirthdays.length > 0) {
+      birthdayBanners = todayBirthdays.map(b => {
+        const bdayMsg = encodeURIComponent("You're older than what you were, but as young as you'll ever be. Happy birthday from Sopo and the team!");
+        const bdayWaUrl = `https://api.whatsapp.com/send?phone=${l.phone || ''}&text=${bdayMsg}`;
+        return `
+          <div style="margin-top: 8px; padding: 6px 10px; background: rgba(16,185,129,0.1); border: 1.5px solid var(--green); border-radius: var(--radius-xs); font-size: 11px; display: flex; justify-content: space-between; align-items: center;" onclick="event.stopPropagation();">
+            <span style="color: var(--green); font-weight:600;">🎂 ${b.relation} Birthday Today!</span>
+            <a href="${bdayWaUrl}" target="_blank" class="btn btn-ghost" style="padding: 2px 6px; font-size: 9px; border-color: var(--green); color: var(--green); text-decoration: none;">WhatsApp Bday</a>
+          </div>
+        `;
+      }).join('');
+    }
+
     return `
     <div class="lead-card" onclick="openLeadDetail(${appState.leads.indexOf(l)})">
       <div class="lead-header">
@@ -1641,7 +1799,8 @@ function renderLeads() {
         Income: ${l.income || 'N/A'}<br>
         Deposit: ${l.deposit || 'N/A'}
       </div>
-      <div class="lead-actions-row">
+      ${birthdayBanners}
+      <div class="lead-actions-row" style="margin-top: 10px;">
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); smsLead('${l.phone}')">SMS</button>
         <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
@@ -1652,6 +1811,37 @@ function renderLeads() {
 
 function callLead(phone) { if (phone) window.location.href = 'tel:' + phone; }
 function smsLead(phone) { if (phone) window.location.href = 'sms:' + phone; }
+
+function getTodayBirthdays(l) {
+  const today = new Date();
+  const tM = today.getMonth();
+  const tD = today.getDate();
+  
+  const check = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d.getDate() === tD && d.getMonth() === tM;
+  };
+  
+  const list = [];
+  if (check(l.birthdayHusband)) list.push({ relation: 'Husband', date: l.birthdayHusband });
+  if (check(l.birthdayWife)) list.push({ relation: 'Wife', date: l.birthdayWife });
+  
+  if (l.birthdayKids) {
+    const kidNames = l.birthdayKids.split(',').map(s => s.trim());
+    kidNames.forEach(k => {
+      const parts = k.split(':');
+      if (parts.length === 2) {
+        const name = parts[0].trim();
+        const dateVal = parts[1].trim();
+        if (check(dateVal)) {
+          list.push({ relation: `Kid (${name})`, date: dateVal });
+        }
+      }
+    });
+  }
+  return list;
+}
 
 function openLeadDetail(idx) {
   const l = appState.leads[idx];
@@ -1664,30 +1854,93 @@ function openLeadDetail(idx) {
   document.getElementById('leadModalContent').innerHTML = `
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
       <div class="lead-initials ${scoreClass}" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
-      <div>
-        <div style="font-size:18px; font-weight:700;">${l.name || 'Unknown'}</div>
-        <span class="badge ${scoreClass}">Score: ${score}/10</span>
+      <div style="flex:1;">
+        <input type="text" class="settings-input" id="editLeadName" value="${l.name || ''}" style="font-size:16px; font-weight:700; padding:6px 10px; width:100%;">
+        <span class="badge ${scoreClass}" style="margin-top:4px;">Score: ${score}/10</span>
       </div>
     </div>
-    <div class="lead-info-grid">
-      <div class="lead-info-item"><div class="lead-info-label">Phone</div><div class="lead-info-val">${l.phone || 'N/A'}</div></div>
-      <div class="lead-info-item"><div class="lead-info-label">Email</div><div class="lead-info-val" style="font-size:11px;">${l.email || 'N/A'}</div></div>
-      <div class="lead-info-item"><div class="lead-info-label">Income</div><div class="lead-info-val" style="font-size:11px;">${l.income || 'N/A'}</div></div>
-      <div class="lead-info-item"><div class="lead-info-label">Deposit</div><div class="lead-info-val" style="font-size:11px;">${l.deposit || 'N/A'}</div></div>
-      <div class="lead-info-item"><div class="lead-info-label">Area</div><div class="lead-info-val">${l.area || 'N/A'}</div></div>
-      <div class="lead-info-item"><div class="lead-info-label">Timeframe</div><div class="lead-info-val" style="font-size:11px;">${l.timeFrame || 'N/A'}</div></div>
-      <div class="lead-info-item" style="grid-column: 1/-1;"><div class="lead-info-label">Lead Avenue</div><div class="lead-info-val">${l.source || 'Open Home'}</div></div>
+    <div class="lead-info-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+      <div class="lead-info-item">
+        <div class="lead-info-label">Phone</div>
+        <input type="text" class="settings-input" id="editLeadPhone" value="${l.phone || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item">
+        <div class="lead-info-label">Email</div>
+        <input type="text" class="settings-input" id="editLeadEmail" value="${l.email || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item">
+        <div class="lead-info-label">Income</div>
+        <input type="text" class="settings-input" id="editLeadIncome" value="${l.income || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item">
+        <div class="lead-info-label">Deposit</div>
+        <input type="text" class="settings-input" id="editLeadDeposit" value="${l.deposit || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item">
+        <div class="lead-info-label">Area</div>
+        <input type="text" class="settings-input" id="editLeadArea" value="${l.area || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item">
+        <div class="lead-info-label">Timeframe</div>
+        <input type="text" class="settings-input" id="editLeadTimeframe" value="${l.timeFrame || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item" style="grid-column: 1/-1;">
+        <div class="lead-info-label">Lead Avenue</div>
+        <input type="text" class="settings-input" id="editLeadSource" value="${l.source || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
     </div>
-    <div class="settings-label">Pipeline Stage</div>
+    
+    <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">Birthdays</div>
+    <div class="lead-info-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+      <div class="lead-info-item">
+        <div class="lead-info-label">Husband Birthday</div>
+        <input type="date" class="settings-input" id="editLeadBdayHusband" value="${l.birthdayHusband || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item">
+        <div class="lead-info-label">Wife Birthday</div>
+        <input type="date" class="settings-input" id="editLeadBdayWife" value="${l.birthdayWife || ''}" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+      <div class="lead-info-item" style="grid-column: 1/-1;">
+        <div class="lead-info-label">Kids Birthdays</div>
+        <input type="text" class="settings-input" id="editLeadBdayKids" value="${l.birthdayKids || ''}" placeholder="e.g. Leo: 2018-06-06, Mia: 2021-12-15" style="padding:6px; font-size:12px; width:100%;">
+      </div>
+    </div>
+    
+    <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">Pipeline Stage</div>
     <div class="stage-selector">
       ${stages.map((s,i) => `<button class="stage-btn ${(l.stage||'new')===s?'active':''}" onclick="updateLeadStage(${idx},'${s}',this)">${stageLabels[i]}</button>`).join('')}
     </div>
+    
     <div style="display:flex; gap:10px; margin-top:20px;">
-      <button class="btn btn-gold" style="flex:1;" onclick="callLead('${l.phone}')">Call Buyer</button>
+      <button class="btn btn-gold" style="flex:1;" onclick="saveLeadDetails(${idx})">Save Changes</button>
+      <button class="btn btn-ghost" style="flex:1;" onclick="callLead('${l.phone}')">Call Buyer</button>
       <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
     </div>
   `;
   document.getElementById('leadModal').classList.add('open');
+}
+
+function saveLeadDetails(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  l.name = document.getElementById('editLeadName').value.trim();
+  l.phone = document.getElementById('editLeadPhone').value.trim();
+  l.email = document.getElementById('editLeadEmail').value.trim();
+  l.income = document.getElementById('editLeadIncome').value.trim();
+  l.deposit = document.getElementById('editLeadDeposit').value.trim();
+  l.area = document.getElementById('editLeadArea').value.trim();
+  l.timeFrame = document.getElementById('editLeadTimeframe').value.trim();
+  l.source = document.getElementById('editLeadSource').value.trim();
+  l.birthdayHusband = document.getElementById('editLeadBdayHusband').value;
+  l.birthdayWife = document.getElementById('editLeadBdayWife').value;
+  l.birthdayKids = document.getElementById('editLeadBdayKids').value.trim();
+  
+  l.score = scoreLead(l); // Recalculate score
+  
+  saveState();
+  closeLeadModal();
+  renderAll();
 }
 
 function updateLeadStage(idx, stage, btn) {
@@ -1880,10 +2133,9 @@ function nextMonth() {
 
 function renderDaySchedules(date) {
   const container = document.getElementById('selectedDayAppointmentContainer');
-  const empty = document.getElementById('selectedDayAppointmentsEmpty');
   const title = document.getElementById('selectedDayTitle');
   
-  if (!container || !empty || !title) return;
+  if (!container || !title) return;
   
   const options = { weekday: 'long', month: 'long', day: 'numeric' };
   title.textContent = date.toLocaleDateString('en-NZ', options);
@@ -1911,75 +2163,117 @@ function renderDaySchedules(date) {
   blocks.forEach(b => {
     const d = new Date(b.datetime);
     if (d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear()) {
+      let badgeClass = 'new';
+      if (b.theme === 'green') badgeClass = 'settled';
+      else if (b.theme === 'yellow') badgeClass = 'warm';
+      else if (b.theme === 'orange') badgeClass = 'hot';
+
       events.push({
         type: 'block',
         date: d,
-        title: `Blocked: ${b.label}`,
+        title: b.label || 'Blocked Time',
         subtitle: `Personal Time`,
-        badgeText: 'Personal Block',
-        badgeClass: 'new',
-        blockId: b.id
+        badgeText: b.theme === 'green' ? 'Holiday / Event' : b.theme === 'yellow' ? 'Social Block' : b.theme === 'orange' ? 'Personal Block' : 'Personal Block',
+        badgeClass: badgeClass,
+        blockId: b.id,
+        theme: b.theme || 'new'
       });
     }
   });
   
-  events.sort((a, b) => a.date - b.date);
+  // Group events by hour (0 to 23)
+  const eventsByHour = Array.from({ length: 24 }, () => []);
+  events.forEach(ev => {
+    const hour = ev.date.getHours();
+    eventsByHour[hour].push(ev);
+  });
   
-  if (events.length === 0) {
-    container.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
+  // Build timeline HTML
+  let html = `<div class="calendar-timeline">`;
   
-  empty.style.display = 'none';
-  
-  container.innerHTML = events.map(ev => {
-    const time = ev.date.toLocaleTimeString('en-NZ', {hour:'numeric',minute:'2-digit'});
+  for (let h = 0; h < 24; h++) {
+    const period = h < 12 ? 'AM' : 'PM';
+    const displayHour = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+    const hourLabel = `${displayHour} ${period}`;
     
-    let actionButtons = '';
-    if (ev.type === 'lead') {
-      actionButtons = `
-        <div style="display:flex; gap:6px;">
-          <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="openLeadDetail(${ev.leadIndex})">Details</button>
-          <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px; border-color:var(--gold-border); color:var(--gold);" onclick="openRescheduleModal(${ev.leadIndex}, 'lead', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
+    const hourEvents = eventsByHour[h];
+    const eventsHtml = hourEvents.map(ev => {
+      const timeStr = ev.date.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' });
+      const badgeHtml = `<span class="badge ${ev.badgeClass}" style="font-size:8px; padding:2px 6px;">${ev.badgeText}</span>`;
+      
+      let actionButtons = '';
+      let detailsClick = '';
+      if (ev.type === 'lead') {
+        detailsClick = `onclick="openLeadDetail(${ev.leadIndex})"`;
+        actionButtons = `
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <button class="btn btn-ghost" style="padding:2px 6px; font-size:9px; border-color:var(--gold-border); color:var(--gold);" onclick="event.stopPropagation(); openRescheduleModal(${ev.leadIndex}, 'lead', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
+          </div>
+        `;
+      } else {
+        detailsClick = '';
+        actionButtons = `
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <button class="btn btn-ghost" style="padding:2px 6px; font-size:9px; border-color:var(--gold-border); color:var(--gold);" onclick="event.stopPropagation(); openRescheduleModal(${ev.blockId}, 'block', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
+            <button class="btn btn-red" style="padding:2px 6px; font-size:9px; background:var(--red-dim); color:var(--red);" onclick="event.stopPropagation(); deleteCalendarBlock(${ev.blockId})">Delete</button>
+          </div>
+        `;
+      }
+      
+      const postponeReminder = (ev.type === 'lead' && appState.leads[ev.leadIndex].postponeReason) ? `
+        <div style="margin-top: 6px; padding: 6px 10px; background: var(--gold-dim); border: 1.5px dashed var(--border-gold); border-radius: var(--radius-xs); font-size: 10px; color: var(--gold-bright);">
+          💡 Ask: How did it go with "${appState.leads[ev.leadIndex].postponeReason}"?
+        </div>
+      ` : '';
+      
+      return `
+        <div class="appt-card" ${detailsClick} style="padding: 10px 14px; margin: 0; cursor: pointer; border-left: 3.5px solid var(--gold); border-radius: 6px; background: var(--navy-light); width: 100%;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+            <div class="appt-title" style="font-size:13px; font-weight:700; color:var(--white);">${ev.title}</div>
+            ${badgeHtml}
+          </div>
+          <div class="appt-time" style="font-size:11px; color:var(--gold); margin-top:4px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px; vertical-align:middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${timeStr} · ${ev.subtitle}
+          </div>
+          ${postponeReminder}
+          ${actionButtons}
         </div>
       `;
-    } else {
-      actionButtons = `
-        <div style="display:flex; gap:6px;">
-          <button class="btn btn-red" style="padding:4px 8px; font-size:10px; background:var(--red-dim); color:var(--red);" onclick="deleteCalendarBlock(${ev.blockId})">Delete</button>
-          <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px; border-color:var(--gold-border); color:var(--gold);" onclick="openRescheduleModal(${ev.blockId}, 'block', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
-        </div>
-      `;
-    }
+    }).join('');
     
-    return `
-      <div class="appt-card" style="padding: 12px; margin-bottom: 8px;">
-        <div class="appt-info" style="flex:1;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div class="appt-title" style="font-size:14px; font-weight:700;">${ev.title}</div>
-            <span class="badge ${ev.badgeClass}" style="font-size:8px; padding:2px 6px;">${ev.badgeText}</span>
-          </div>
-          <div class="appt-time" style="font-size:11px; margin-top:4px;">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            ${time}
-          </div>
-          <div class="appt-details" style="font-size:11px; margin-top:2px;">${ev.subtitle}</div>
-          <div style="margin-top:8px;">
-            ${actionButtons}
-          </div>
-        </div>
+    html += `
+      <div class="timeline-hour-row">
+        <div class="timeline-hour-label">${hourLabel}</div>
+        <div class="timeline-hour-events">${eventsHtml}</div>
       </div>
     `;
-  }).join('');
+  }
+  
+  html += `</div>`;
+  container.innerHTML = html;
+  
+  // Auto scroll timeline to first event or 8 AM (approx 480px down)
+  setTimeout(() => {
+    const timeline = container.querySelector('.calendar-timeline');
+    if (timeline) {
+      const firstEvent = timeline.querySelector('.appt-card');
+      if (firstEvent) {
+        firstEvent.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      } else {
+        timeline.scrollTop = 480;
+      }
+    }
+  }, 100);
 }
 
 function addCalendarBlockForSelectedDay() {
-  const label = document.getElementById('blockTimeLabel').value.trim();
+  const labelInput = document.getElementById('blockTimeLabel').value.trim();
+  const label = labelInput || 'Blocked Time';
   const timeStr = document.getElementById('blockTimeHour').value;
   
-  if (!label || !timeStr) {
-    alert('Please enter a reason and a time.');
+  if (!timeStr) {
+    alert('Please select a time.');
     return;
   }
   
@@ -2021,6 +2315,21 @@ function openRescheduleModal(idOrIndex, type, currentDateTime, label) {
   const formattedDt = localDt.toISOString().slice(0, 16);
   
   document.getElementById('rescheduleDateTime').value = formattedDt;
+  
+  // Set reschedule reason input value
+  const reasonInput = document.getElementById('rescheduleReason');
+  if (type === 'lead') {
+    const idx = parseInt(idOrIndex, 10);
+    const l = appState.leads[idx];
+    reasonInput.value = l ? (l.postponeReason || '') : '';
+  } else if (type === 'block') {
+    const blockId = parseInt(idOrIndex, 10);
+    const b = appState.calendarBlocks.find(x => x.id === blockId);
+    reasonInput.value = b ? (b.label || '') : '';
+  } else {
+    reasonInput.value = '';
+  }
+  
   document.getElementById('rescheduleModal').classList.add('open');
 }
 
@@ -2038,6 +2347,7 @@ function saveNewTime() {
   const idOrIndex = document.getElementById('rescheduleTargetId').value;
   const type = document.getElementById('rescheduleTargetType').value;
   const newDateTimeStr = document.getElementById('rescheduleDateTime').value;
+  const reason = document.getElementById('rescheduleReason').value.trim();
   
   if (!newDateTimeStr) {
     alert('Please select a valid date and time.');
@@ -2050,12 +2360,14 @@ function saveNewTime() {
     const idx = parseInt(idOrIndex, 10);
     if (appState.leads[idx]) {
       appState.leads[idx].bookingTime = newDate.toISOString();
+      appState.leads[idx].postponeReason = reason;
     }
   } else if (type === 'block') {
     const blockId = parseInt(idOrIndex, 10);
     const block = appState.calendarBlocks.find(b => b.id === blockId);
     if (block) {
       block.datetime = newDate.toISOString();
+      block.label = reason || 'Blocked Time';
     }
   }
   
@@ -2295,6 +2607,22 @@ function renderEmailLists() {
   const countReactivationEl = document.getElementById('countReactivation');
   if (countReactivationEl) countReactivationEl.textContent = reactivationList.length;
   
+  // Helper to render birthday alert banner
+  const makeBirthdayBanner = (l) => {
+    const todayBirthdays = getTodayBirthdays(l);
+    if (todayBirthdays.length === 0) return '';
+    return todayBirthdays.map(b => {
+      const bdayMsg = encodeURIComponent("You're older than what you were, but as young as you'll ever be. Happy birthday from Sopo and the team!");
+      const bdayWaUrl = `https://api.whatsapp.com/send?phone=${l.phone || ''}&text=${bdayMsg}`;
+      return `
+        <div style="margin-top: 6px; padding: 4px 8px; background: rgba(16,185,129,0.1); border: 1.2px solid var(--green); border-radius: var(--radius-xs); font-size: 10px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--green); font-weight:600;">🎂 ${b.relation} Today!</span>
+          <a href="${bdayWaUrl}" target="_blank" class="btn btn-ghost" style="padding: 1px 4px; font-size: 8px; border-color: var(--green); color: var(--green); text-decoration: none;">WhatsApp Bday</a>
+        </div>
+      `;
+    }).join('');
+  };
+
   const prospectsSaving = document.getElementById('prospectsSaving');
   if (prospectsSaving) {
     if (cultivationList.length === 0) {
@@ -2309,6 +2637,7 @@ function renderEmailLists() {
             </div>
             <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
           </div>
+          ${makeBirthdayBanner(l)}
         </div>
       `).join('');
     }
@@ -2339,6 +2668,7 @@ function renderEmailLists() {
                 <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px; border-color:var(--gold); color:var(--gold);" onclick="reActivateLeadEarly(${leadIdx})">Reactivate</button>
               </div>
             </div>
+            ${makeBirthdayBanner(l)}
             <div style="font-size:10px; color:var(--muted); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px;">
               Sold: ${soldDate.toLocaleDateString('en-NZ')} · <span style="color:var(--orange); font-weight:600;">${daysRemaining} days on hold</span>
             </div>
@@ -2364,6 +2694,7 @@ function renderEmailLists() {
               </div>
               <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
             </div>
+            ${makeBirthdayBanner(l)}
             <div style="font-size:10px; color:var(--gold); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px; font-style:italic;">${note}</div>
           </div>
         `;
@@ -2529,6 +2860,306 @@ function saveSettings() {
   closeSettingsModal();
   renderAll();
   alert('Settings saved successfully.');
+}
+
+// ===== MANUAL LEAD STAGE ROUTING =====
+function proceedLeadStage(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  const stages = ['new', 'contacted', 'qualified', 'finance-pending', 'valuation', 'gameplan', 'sold', 'reactivation'];
+  const currentIdx = stages.indexOf(l.stage || 'new');
+  
+  if (currentIdx !== -1 && currentIdx < stages.length - 2) {
+    l.stage = stages[currentIdx + 1];
+  }
+  
+  saveState();
+  renderAll();
+}
+
+// ===== VOICE CALL DIALER SIMULATOR =====
+let currentContactLeadIndex = null;
+let dialingTimeout = null;
+
+function startAIContact(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  currentContactLeadIndex = idx;
+  
+  // Set modal details
+  document.getElementById('voiceCallName').textContent = l.name;
+  document.getElementById('voiceCallPhone').textContent = l.phone || 'No phone number';
+  document.getElementById('voiceCallStatus').textContent = 'Dialing...';
+  document.getElementById('voiceCallTranscript').style.display = 'none';
+  document.getElementById('voiceCallTranscript').innerHTML = '';
+  
+  // Setup controls
+  document.getElementById('voiceCallDialingControls').style.display = 'flex';
+  document.getElementById('voiceCallConnectedControls').style.display = 'none';
+  document.getElementById('voiceCallCloseBtn').style.display = 'none';
+  
+  // Start pulsating ring animation
+  const ring = document.getElementById('voicePulseRing');
+  if (ring) {
+    ring.style.animation = 'voicePulse 1.5s infinite';
+  }
+  
+  // Open modal
+  document.getElementById('voiceCallModal').classList.add('open');
+  
+  // After 2.5 seconds, automatically transition from "Dialing" to "Ringing"
+  dialingTimeout = setTimeout(() => {
+    document.getElementById('voiceCallStatus').textContent = 'Ringing...';
+    // Ring for another 6 seconds, if no input, automatically fail to No Answer
+    dialingTimeout = setTimeout(() => {
+      simulateCallNoAnswer();
+    }, 6000);
+  }, 2500);
+}
+
+function simulateCallConnected() {
+  clearTimeout(dialingTimeout);
+  
+  const l = appState.leads[currentContactLeadIndex];
+  
+  document.getElementById('voiceCallStatus').textContent = 'Connected';
+  document.getElementById('voiceCallDialingControls').style.display = 'none';
+  document.getElementById('voiceCallConnectedControls').style.display = 'flex';
+  
+  // Disable ring animation
+  const ring = document.getElementById('voicePulseRing');
+  if (ring) ring.style.animation = 'none';
+  
+  // Display simulated transcript
+  const transcriptDiv = document.getElementById('voiceCallTranscript');
+  transcriptDiv.style.display = 'block';
+  
+  const conversation = [
+    { speaker: 'Sina', text: `Hi, is this ${l.name}? I'm Sina, calling from Sopo FuiFui's office.` },
+    { speaker: l.name, text: 'Hi! Yes it is. How can I help?' },
+    { speaker: 'Sina', text: "I saw you recently filled out our open home check-in sheet. We've reviewed your preliminary details and Sopo would love to book a sit-down with you." },
+    { speaker: l.name, text: "Oh, that's great. We are quite keen." },
+    { speaker: 'Sina', text: 'Excellent. We can either do a face-to-face coffee meeting in Hamilton or jump on a quick Zoom call. What suits you better?' },
+    { speaker: l.name, text: 'A Zoom call would probably be easier for us.' },
+    { speaker: 'Sina', text: "Perfect. Let's schedule that in. Sopo has openings next week." }
+  ];
+  
+  let delay = 500;
+  conversation.forEach((msg, index) => {
+    setTimeout(() => {
+      const p = document.createElement('p');
+      p.style.margin = '4px 0';
+      p.innerHTML = `<strong>${msg.speaker}:</strong> ${msg.text}`;
+      transcriptDiv.appendChild(p);
+      transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+    }, delay);
+    delay += 1500;
+  });
+}
+
+function simulateCallNoAnswer() {
+  clearTimeout(dialingTimeout);
+  
+  const l = appState.leads[currentContactLeadIndex];
+  
+  document.getElementById('voiceCallStatus').textContent = 'No Answer';
+  document.getElementById('voiceCallDialingControls').style.display = 'none';
+  document.getElementById('voiceCallCloseBtn').style.display = 'block';
+  
+  const ring = document.getElementById('voicePulseRing');
+  if (ring) ring.style.animation = 'none';
+  
+  // Trigger SMS & Email Log
+  const smsText = "Couldn't make contact, please check your email.";
+  const emailText = `we have received your request and reviewed your preliminary info and would love to book a sit down with you, we can either meet for a coffee or do a zoom call, click the link below and get your booking slot and choice and we will be in touch.`;
+  const bookingUrl = `book_meeting.html?email=${encodeURIComponent(l.email || '')}`;
+  
+  // Log inside lead communications history
+  if (!l.communications) l.communications = [];
+  
+  l.communications.push({
+    type: 'SMS Sent',
+    text: smsText,
+    timestamp: new Date().toISOString()
+  });
+  
+  l.communications.push({
+    type: 'Email Sent',
+    text: `${emailText} Booking Link: ${bookingUrl}`,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Move to contacted stage
+  l.stage = 'contacted';
+  
+  saveState();
+  renderAll();
+  
+  // Show results in transcript div
+  const transcriptDiv = document.getElementById('voiceCallTranscript');
+  transcriptDiv.style.display = 'block';
+  transcriptDiv.innerHTML = `
+    <div style="color: var(--red); font-weight:700; margin-bottom: 8px;">Outbound Call Failed (No Contact)</div>
+    <div style="border-left: 2px solid var(--blue); padding-left: 8px; margin-bottom: 8px;">
+      <strong>SMS Sent:</strong> "${smsText}"
+    </div>
+    <div style="border-left: 2px solid var(--gold); padding-left: 8px;">
+      <strong>Email Sent:</strong> "${emailText}" <br>
+      <a href="${bookingUrl}" target="_blank" style="color: var(--gold-bright); font-weight: 700; text-decoration: underline;">Open Booking Link</a>
+    </div>
+  `;
+}
+
+function simulateCallBooked() {
+  const l = appState.leads[currentContactLeadIndex];
+  
+  // Simulating the user booking directly from the call
+  const nextMonday = new Date();
+  nextMonday.setDate(nextMonday.getDate() + ((1 + 7 - nextMonday.getDay()) % 7 || 7));
+  nextMonday.setHours(10, 30, 0, 0);
+  
+  l.hasBooked = true;
+  l.bookingTime = nextMonday.toISOString();
+  l.meetingType = 'zoom';
+  l.stage = 'qualified'; // pre-broker
+  
+  saveState();
+  renderAll();
+  
+  document.getElementById('voiceCallStatus').textContent = 'Booked';
+  document.getElementById('voiceCallConnectedControls').style.display = 'none';
+  document.getElementById('voiceCallCloseBtn').style.display = 'block';
+  
+  const transcriptDiv = document.getElementById('voiceCallTranscript');
+  transcriptDiv.innerHTML += `
+    <div style="color: var(--green); font-weight:700; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px;">
+      âœ“ Meeting Scheduled: Zoom Consultation on ${nextMonday.toLocaleString('en-NZ')}
+    </div>
+  `;
+}
+
+function hangUpVoiceCall() {
+  closeVoiceCallModal();
+}
+
+function closeVoiceCallModal() {
+  clearTimeout(dialingTimeout);
+  document.getElementById('voiceCallModal').classList.remove('open');
+}
+
+// ===== QUICK BOOKING CONSOLE =====
+function openQuickBookingModal() {
+  const select = document.getElementById('quickBookingLeadSelect');
+  if (select) {
+    select.innerHTML = appState.leads.map(l => `<option value="${l.email}">${l.name}</option>`).join('');
+  }
+  
+  // Set default date to selected date
+  const selDate = calendarState.selectedDate || new Date();
+  const dateStr = selDate.toISOString().split('T')[0];
+  
+  const dInput = document.getElementById('quickBookingDate');
+  const blockDInput = document.getElementById('quickBlockDate');
+  if (dInput) dInput.value = dateStr;
+  if (blockDInput) blockDInput.value = dateStr;
+  
+  // Open modal
+  document.getElementById('quickBookingModal').classList.add('open');
+  switchQuickBookingTab('client');
+}
+
+function closeQuickBookingModal() {
+  document.getElementById('quickBookingModal').classList.remove('open');
+}
+
+function switchQuickBookingTab(tab) {
+  const clientTab = document.getElementById('quickBookingClientForm');
+  const blockTab = document.getElementById('quickBookingBlockForm');
+  const clientBtn = document.getElementById('tabBookClientBtn');
+  const blockBtn = document.getElementById('tabBlockTimeBtn');
+  
+  if (!clientTab || !blockTab) return;
+  
+  if (tab === 'client') {
+    clientTab.style.display = 'block';
+    blockTab.style.display = 'none';
+    if (clientBtn) {
+      clientBtn.style.color = 'var(--gold)';
+      clientBtn.style.borderBottomColor = 'var(--gold)';
+    }
+    if (blockBtn) {
+      blockBtn.style.color = 'var(--muted)';
+      blockBtn.style.borderBottomColor = 'transparent';
+    }
+  } else {
+    clientTab.style.display = 'none';
+    blockTab.style.display = 'block';
+    if (blockBtn) {
+      blockBtn.style.color = 'var(--gold)';
+      blockBtn.style.borderBottomColor = 'var(--gold)';
+    }
+    if (clientBtn) {
+      clientBtn.style.color = 'var(--muted)';
+      clientBtn.style.borderBottomColor = 'transparent';
+    }
+  }
+}
+
+function submitQuickClientBooking() {
+  const email = document.getElementById('quickBookingLeadSelect').value;
+  const dateStr = document.getElementById('quickBookingDate').value;
+  const timeStr = document.getElementById('quickBookingTime').value;
+  const type = document.getElementById('quickBookingType').value;
+  
+  if (!dateStr || !timeStr) {
+    alert('Please enter both date and time.');
+    return;
+  }
+  
+  const dateTime = `${dateStr}T${timeStr}:00`;
+  const l = appState.leads.find(x => x.email === email);
+  if (l) {
+    l.hasBooked = true;
+    l.bookingTime = new Date(dateTime).toISOString();
+    l.meetingType = type;
+    l.stage = 'qualified'; // move to Pre-Broker
+    
+    saveState();
+    renderAll();
+    closeQuickBookingModal();
+  }
+}
+
+function submitQuickTimeBlock() {
+  const label = document.getElementById('quickBlockLabel').value.trim() || 'Blocked Time';
+  const dateStr = document.getElementById('quickBlockDate').value;
+  const timeStr = document.getElementById('quickBlockTime').value;
+  const theme = document.getElementById('quickBlockColor').value;
+  
+  if (!dateStr || !timeStr) {
+    alert('Please enter both date and time.');
+    return;
+  }
+  
+  const dateTime = `${dateStr}T${timeStr}:00`;
+  
+  if (!appState.calendarBlocks) appState.calendarBlocks = [];
+  appState.calendarBlocks.push({
+    id: Date.now(),
+    label: label,
+    datetime: new Date(dateTime).toISOString(),
+    theme: theme
+  });
+  
+  saveState();
+  renderAll();
+  closeQuickBookingModal();
+  
+  // Clear inputs
+  document.getElementById('quickBlockLabel').value = '';
+  document.getElementById('quickBlockTime').value = '';
 }
 
 // ===== REGISTER PWA SERVICE WORKER =====
