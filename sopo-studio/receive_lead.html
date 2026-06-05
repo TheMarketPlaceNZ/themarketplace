@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lead Receiver | Sopo's Studio</title>
+<style>body{background:#0d1621;color:#C9A96E;font-family:monospace;padding:40px;}</style>
+</head>
+<body>
+<h2>Sopo Studio — Lead Receiver</h2>
+<p id="status">Waiting for lead data...</p>
+<script>
+// This page receives lead data from Make.com via URL parameters
+// Make.com Scenario: After writing lead to Sheet, open this URL with lead data as query params
+// Example: /receive_lead.html?name=John&email=j@g.com&phone=021xxx&income=Over+120000&...
+// This page stores the lead in localStorage and closes
+
+function parseLeadFromURL() {
+  const p = new URLSearchParams(window.location.search);
+  if (!p.has('name') && !p.has('email')) {
+    document.getElementById('status').textContent = 'No lead data in URL.';
+    return;
+  }
+  const lead = {
+    name: p.get('name') || '',
+    email: p.get('email') || '',
+    phone: p.get('phone') || '',
+    firstHome: p.get('firstHome') || '',
+    employment: p.get('employment') || '',
+    income: p.get('income') || '',
+    deposit: p.get('deposit') || '',
+    area: p.get('area') || '',
+    timeFrame: p.get('timeFrame') || '',
+    timestamp: p.get('timestamp') || new Date().toISOString(),
+    source: p.get('source') || 'Open Home',
+    stage: 'new',
+    score: null
+  };
+  
+  // Score the lead (1-10 numerical scale)
+  const income = lead.income.toLowerCase();
+  const deposit = lead.deposit.toLowerCase();
+  const timeframe = lead.timeFrame.toLowerCase();
+  
+  let score = 1; // Base score
+  
+  // Income contribution (max 3 points)
+  if (income.includes('120') || income.includes('over')) score += 3;
+  else if (income.includes('80')) score += 2;
+  else if (income.includes('under') || income.length > 0) score += 1;
+  
+  // Deposit/KiwiSaver contribution (max 3 points)
+  if (deposit.includes('both')) score += 3;
+  else if (deposit.includes('deposit') || deposit.includes('kiwisaver')) score += 2;
+  else if (deposit.includes('saving') || deposit.includes('no')) score += 1;
+  
+  // Timeframe contribution (max 3 points)
+  if (timeframe.includes('immediately') || timeframe.includes('right away')) score += 3;
+  else if (timeframe.includes('3 month')) score += 2;
+  else if (timeframe.includes('6 month')) score += 1;
+  
+  lead.score = Math.min(10, score);
+  
+  // Save to localStorage so the main app picks it up
+  localStorage.setItem('sopo_new_lead', JSON.stringify(lead));
+  
+  // Also add directly to app state keys
+  try {
+    const key = localStorage.getItem('sopo_state_v2') ? 'sopo_state_v2' : 'sopo_state';
+    const state = JSON.parse(localStorage.getItem(key) || '{}');
+    state.leads = [lead, ...(state.leads || [])];
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch(e) {}
+  
+  document.getElementById('status').textContent = `Lead received: ${lead.name} (Score: ${lead.score}/10). Studio updated.`;
+  
+  // Auto-close after 2 seconds if opened by Make
+  setTimeout(() => { if (window.opener) window.close(); }, 2000);
+}
+
+parseLeadFromURL();
+</script>
+</body>
+</html>

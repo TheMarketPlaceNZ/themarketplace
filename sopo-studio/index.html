@@ -530,9 +530,13 @@ body {
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Leads Database
       </div>
+      <div class="menu-item" data-tab="viewTracker" onclick="switchView('viewTracker')">
+        <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Tracker
+      </div>
       <div class="menu-item" data-tab="viewCalendar" onclick="switchView('viewCalendar')">
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Nurture Calendar
+        Calendar
       </div>
       <div class="menu-item" data-tab="viewMeetings" onclick="switchView('viewMeetings')">
         <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
@@ -544,7 +548,7 @@ body {
       </div>
       <div class="menu-item" data-tab="viewEmailLists" onclick="switchView('viewEmailLists')">
         <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Nurture Email Lists
+        Email Lists
       </div>
     </nav>
     
@@ -556,7 +560,7 @@ body {
           <div class="mini-stat-item"><div class="mini-stat-val" id="miniHot" style="color:var(--red);">0</div><div class="mini-stat-lbl">Hot</div></div>
         </div>
       </div>
-      <button class="btn btn-ghost full" onclick="openSettingsModal()" style="padding: 10px; font-size:12px;">⚙️ Settings</button>
+      <button class="btn btn-ghost full" onclick="openSettingsModal()" style="padding: 10px; font-size:12px;">Settings</button>
     </div>
   </aside>
   
@@ -585,17 +589,17 @@ body {
         <div class="pipeline-funnel">
           <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageNew">0</div><div class="pipeline-stage-lbl">New</div></div>
           <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageContacted">0</div><div class="pipeline-stage-lbl">Contacted</div></div>
-          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageQualified">0</div><div class="pipeline-stage-lbl">Qualified</div></div>
-          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageOffer">0</div><div class="pipeline-stage-lbl">Offer</div></div>
-          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageSettled">0</div><div class="pipeline-stage-lbl">Settled</div></div>
+          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageQualified">0</div><div class="pipeline-stage-lbl">Pre-Broker</div></div>
+          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageOffer">0</div><div class="pipeline-stage-lbl">Active Deals</div></div>
+          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageSettled">0</div><div class="pipeline-stage-lbl">Sold</div></div>
         </div>
         
         <div class="filter-bar">
           <div class="filter-chips">
             <div class="filter-chip active" data-filter="all" onclick="filterLeads('all', this)">All</div>
-            <div class="filter-chip" data-filter="hot" onclick="filterLeads('hot', this)">⭐ 7-10 Active</div>
-            <div class="filter-chip" data-filter="warm" onclick="filterLeads('warm', this)">⭐ 4-6 Cultivating</div>
-            <div class="filter-chip" data-filter="cold" onclick="filterLeads('cold', this)">⭐ 1-3 Passive</div>
+            <div class="filter-chip" data-filter="hot" onclick="filterLeads('hot', this)">Active (Score 7-10)</div>
+            <div class="filter-chip" data-filter="warm" onclick="filterLeads('warm', this)">Cultivating (Score 4-6)</div>
+            <div class="filter-chip" data-filter="cold" onclick="filterLeads('cold', this)">Passive (Score 1-3)</div>
             <div class="filter-chip" data-filter="today" onclick="filterLeads('today', this)">Today</div>
           </div>
           <button class="btn btn-ghost" onclick="syncLeads()">
@@ -606,14 +610,85 @@ body {
         
         <div class="lead-grid" id="leadsContainer"></div>
       </div>
-      
+
+      <!-- TRACKER PIPELINE VIEW -->
+      <div class="panel-view" id="viewTracker">
+        <div class="card" style="margin-bottom: 20px; padding: 16px;">
+          <div class="section-title">Deal Tracker</div>
+          <div class="settings-hint">Track buyer progression through mortgage clearance, valuations, and settlement.</div>
+        </div>
+
+        <!-- Pre-Mortgage Broker Stage -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-weight:700; font-size:14px; color:var(--gold); letter-spacing:1px; text-transform:uppercase;">Pre-Mortgage Broker</span>
+            <span style="font-size:12px; color:var(--muted);" id="trackerCountPre">0 leads</span>
+          </div>
+          <div id="trackerStagePre" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div class="settings-hint" id="trackerEmptyPre" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Pre-Mortgage Broker stage.</div>
+        </div>
+        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
+
+        <!-- Finance Pending Stage -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-weight:700; font-size:14px; color:var(--gold); letter-spacing:1px; text-transform:uppercase;">Finance Pending (Bank Check)</span>
+            <span style="font-size:12px; color:var(--muted);" id="trackerCountPending">0 leads</span>
+          </div>
+          <div id="trackerStagePending" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div class="settings-hint" id="trackerEmptyPending" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Finance Pending stage.</div>
+        </div>
+        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
+
+        <!-- Valuation Stage -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-weight:700; font-size:14px; color:var(--gold); letter-spacing:1px; text-transform:uppercase;">Valuation Pending</span>
+            <span style="font-size:12px; color:var(--muted);" id="trackerCountValuation">0 leads</span>
+          </div>
+          <div id="trackerStageValuation" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div class="settings-hint" id="trackerEmptyValuation" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Valuation stage.</div>
+        </div>
+        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
+
+        <!-- Gameplan Meeting Stage -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-weight:700; font-size:14px; color:var(--red); letter-spacing:1px; text-transform:uppercase;">Gameplan Meeting (Denied Path)</span>
+            <span style="font-size:12px; color:var(--muted);" id="trackerCountGameplan">0 leads</span>
+          </div>
+          <div id="trackerStageGameplan" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div class="settings-hint" id="trackerEmptyGameplan" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No leads in Gameplan Meeting stage.</div>
+        </div>
+        <hr style="border:none; border-top:1px solid var(--border); margin:24px 0;">
+
+        <!-- Sold Stage -->
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-weight:700; font-size:14px; color:var(--green); letter-spacing:1px; text-transform:uppercase;">Sold & Settled</span>
+            <span style="font-size:12px; color:var(--muted);" id="trackerCountSold">0 settlements</span>
+          </div>
+          <div id="trackerStageSold" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div class="settings-hint" id="trackerEmptySold" style="text-align:center; padding:12px; border:1px dashed var(--border); border-radius:var(--radius-xs); display:none;">No sold settlements on record.</div>
+        </div>
+      </div>
+
       <!-- CALENDAR VIEW -->
       <div class="panel-view" id="viewCalendar">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="section-title">Block Time Slot</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+            <input type="text" class="settings-input" id="blockTimeLabel" placeholder="Reason (e.g. Family dinner, dentist)" style="flex:2; min-width:180px;">
+            <input type="datetime-local" class="settings-input" id="blockTimeDate" style="flex:1; min-width:140px;">
+            <button class="btn btn-gold" onclick="addCalendarBlock()">Block Slot</button>
+          </div>
+        </div>
+        
         <div class="card">
-          <div class="section-title">Whānau Strategy Bookings</div>
+          <div class="section-title">Calendar Schedule</div>
           <div class="appointment-list" id="appointmentContainer"></div>
           <div id="appointmentsEmpty" style="text-align:center; padding:40px; color:var(--muted); font-size:14px; display:none;">
-            No strategy calls scheduled. Sina will route qualified leads here once they book Sopo's calendar.
+            No appointments or time blocks scheduled. Sina will route qualified leads here, and you can block time above.
           </div>
         </div>
       </div>
@@ -660,31 +735,22 @@ body {
       
       <!-- EMAIL LISTS VIEW -->
       <div class="panel-view" id="viewEmailLists">
-        <div class="nurture-layout" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+        <div class="nurture-layout" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto;">
           <div class="list-segment-card">
             <div class="list-header">
-              <div class="list-title">🚀 Active Funnel (Score 7-10)</div>
-              <div class="list-count" id="countReady">0</div>
-            </div>
-            <div class="settings-hint" style="margin-bottom:12px;">Qualified leads ready for active listings and face-to-face bookings.</div>
-            <div class="list-prospects" id="prospectsReady"></div>
-          </div>
-          
-          <div class="list-segment-card">
-            <div class="list-header">
-              <div class="list-title">🌱 Cultivation List (Score 1-6)</div>
+              <div class="list-title">Cultivation List</div>
               <div class="list-count" id="countSaving">0</div>
             </div>
-            <div class="settings-hint" style="margin-bottom:12px;">Needs weekly financial tips. Sina does monthly check-ins to re-score.</div>
+            <div class="settings-hint" style="margin-bottom:12px;">Needs monthly cultivation check-ins. Keep this cultivation list.</div>
             <div class="list-prospects" id="prospectsSaving"></div>
           </div>
 
           <div class="list-segment-card">
             <div class="list-header">
-              <div class="list-title">🔁 Reactivation (Old Clients)</div>
+              <div class="list-title">Reactivation</div>
               <div class="list-count" id="countReactivation">0</div>
             </div>
-            <div class="settings-hint" style="margin-bottom:12px;">Past settlements (3+ years). Sina reaches out to find upgrade/downgrade opportunities.</div>
+            <div class="settings-hint" style="margin-bottom:12px;">Past settled clients. Follow up every 3 months to see if needs changed.</div>
             <div class="list-prospects" id="prospectsReactivation"></div>
           </div>
         </div>
@@ -749,11 +815,140 @@ body {
 const DEFAULT_PASSCODE = 'sopo2026';
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
+const DEFAULT_LEADS = [
+  {
+    name: "Tane & Aroha Williams",
+    email: "tane.aroha@gmail.com",
+    phone: "021555789",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Dinsdale",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Instagram",
+    stage: "qualified", // Pre-Mortgage Broker
+    bookingTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    score: 9
+  },
+  {
+    name: "Hemi & Kiri Taylor",
+    email: "hemi.taylor@gmail.com",
+    phone: "027333456",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "80000 to 120000",
+    deposit: "Yes KiwiSaver",
+    area: "Hamilton East",
+    timeFrame: "Within 3 Months",
+    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Facebook",
+    stage: "finance-pending", // Finance Pending
+    score: 7
+  },
+  {
+    name: "John & Sarah Miller",
+    email: "john.miller@yahoo.com",
+    phone: "022444901",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Rototuna",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Open Home",
+    stage: "valuation", // Valuation
+    score: 10
+  },
+  {
+    name: "Sione & Mele Tupou",
+    email: "sione.tupou@gmail.com",
+    phone: "021998112",
+    firstHome: "No",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Frankton",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(), // ~1.1 years ago
+    source: "Referral",
+    stage: "reactivation",
+    soldDate: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+    score: 9
+  },
+  {
+    name: "Wiremu Kingi",
+    email: "wiremu.k@outlook.co.nz",
+    phone: "022774883",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "80000 to 120000",
+    deposit: "Yes KiwiSaver",
+    area: "Dinsdale",
+    timeFrame: "Within 3 Months",
+    timestamp: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(), // ~1.3 years ago
+    source: "Open Home",
+    stage: "reactivation",
+    soldDate: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(),
+    score: 7
+  },
+  {
+    name: "Lani & Vaea Faletau",
+    email: "lani.faletau@yahoo.com",
+    phone: "027443992",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Melville",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 450 * 24 * 60 * 60 * 1000).toISOString(), // ~1.2 years ago
+    source: "Referral",
+    stage: "reactivation",
+    soldDate: new Date(Date.now() - 450 * 24 * 60 * 60 * 1000).toISOString(),
+    score: 8
+  },
+  {
+    name: "Peni & Losa Havili",
+    email: "peni.havili@gmail.com",
+    phone: "021666111",
+    firstHome: "Yes",
+    employment: "Part Time",
+    income: "Under 80000",
+    deposit: "No Still Saving",
+    area: "Melville",
+    timeFrame: "Just Looking",
+    timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Open Home",
+    stage: "gameplan", // Gameplan Meeting
+    score: 3
+  },
+  {
+    name: "David & Anna Watson",
+    email: "david.watson@gmail.com",
+    phone: "022888222",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "St Andrews",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Open Home",
+    stage: "sold", // Sold (held under 1 year)
+    soldDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(), // Sold 25 days ago
+    score: 9
+  }
+];
+
 let appState = {
   leads: [],
   meetings: [],
   tasks: [],
   dustbin: [], // Holds deleted items: { id, deletedAt, type, data }
+  calendarBlocks: [],
   currentFilter: 'all'
 };
 
@@ -770,9 +965,21 @@ function loadState() {
     } else {
       // Migrate from old state if exists
       const old = localStorage.getItem('sopo_state');
-      if (old) appState = { ...appState, ...JSON.parse(old) };
+      if (old) {
+        appState = { ...appState, ...JSON.parse(old) };
+      } else {
+        appState.leads = DEFAULT_LEADS;
+        appState.calendarBlocks = [];
+      }
     }
   } catch(e) {}
+  
+  if (!appState.leads || appState.leads.length === 0) {
+    appState.leads = DEFAULT_LEADS;
+  }
+  if (!appState.calendarBlocks) {
+    appState.calendarBlocks = [];
+  }
   
   // Sweep dustbin (delete items older than 3 days)
   sweepDustbin();
@@ -816,13 +1023,194 @@ function initApp() {
 }
 
 function renderAll() {
+  checkSoldHold();
   updateSidebarStats();
   renderLeads();
+  renderTracker();
   renderCalendar();
   renderMeetingsTab();
   renderTranscripts();
   renderEmailLists();
   renderDustbin();
+}
+
+// ===== TRACKER PIPELINE MODULE =====
+function checkSoldHold() {
+  const now = Date.now();
+  const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+  let changed = false;
+  
+  if (appState.leads) {
+    appState.leads.forEach(l => {
+      if (l.stage === 'sold' && l.soldDate) {
+        const age = now - new Date(l.soldDate).getTime();
+        if (age > oneYearMs) {
+          l.stage = 'reactivation';
+          changed = true;
+        }
+      }
+    });
+  }
+  
+  if (changed) {
+    saveState();
+  }
+}
+
+function approveLeadStage(idx, currentStage) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  if (currentStage === 'qualified') {
+    l.stage = 'finance-pending';
+  } else if (currentStage === 'finance-pending') {
+    l.stage = 'valuation';
+  } else if (currentStage === 'valuation') {
+    l.stage = 'sold';
+    l.soldDate = new Date().toISOString();
+  }
+  
+  saveState();
+  renderAll();
+}
+
+function denyLeadStage(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  l.stage = 'gameplan';
+  saveState();
+  renderAll();
+}
+
+function reEvaluateLead(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  l.stage = 'qualified';
+  saveState();
+  renderAll();
+}
+
+function reActivateLeadEarly(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  l.stage = 'reactivation';
+  saveState();
+  renderAll();
+}
+
+function renderTracker() {
+  const leads = appState.leads || [];
+  
+  const stagesConfig = [
+    { key: 'qualified', elementId: 'trackerStagePre', countId: 'trackerCountPre', emptyId: 'trackerEmptyPre' },
+    { key: 'finance-pending', elementId: 'trackerStagePending', countId: 'trackerCountPending', emptyId: 'trackerEmptyPending' },
+    { key: 'valuation', elementId: 'trackerStageValuation', countId: 'trackerCountValuation', emptyId: 'trackerEmptyValuation' },
+    { key: 'gameplan', elementId: 'trackerStageGameplan', countId: 'trackerCountGameplan', emptyId: 'trackerEmptyGameplan' },
+    { key: 'sold', elementId: 'trackerStageSold', countId: 'trackerCountSold', emptyId: 'trackerEmptySold' }
+  ];
+  
+  stagesConfig.forEach(cfg => {
+    const list = leads.filter(l => l.stage === cfg.key);
+    
+    // Update count label
+    const countEl = document.getElementById(cfg.countId);
+    if (countEl) {
+      countEl.textContent = list.length === 1 ? '1 lead' : `${list.length} leads`;
+    }
+    
+    const container = document.getElementById(cfg.elementId);
+    const emptyEl = document.getElementById(cfg.emptyId);
+    
+    if (list.length === 0) {
+      if (container) container.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+    
+    if (emptyEl) emptyEl.style.display = 'none';
+    
+    if (container) {
+      container.innerHTML = list.map(l => {
+        const leadIdx = leads.indexOf(l);
+        const score = l.score || scoreLead(l);
+        const scoreClass = getScoreClass(score);
+        
+        let actionButtons = '';
+        if (cfg.key === 'qualified') {
+          actionButtons = `
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'qualified')">Approved (Finance Pending)</button>
+              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
+            </div>
+          `;
+        } else if (cfg.key === 'finance-pending') {
+          actionButtons = `
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'finance-pending')">Approved (Valuation)</button>
+              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
+            </div>
+          `;
+        } else if (cfg.key === 'valuation') {
+          actionButtons = `
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green);" onclick="approveLeadStage(${leadIdx}, 'valuation')">Approved (Sold)</button>
+              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1;" onclick="denyLeadStage(${leadIdx})">Denied (Gameplan)</button>
+            </div>
+          `;
+        } else if (cfg.key === 'gameplan') {
+          actionButtons = `
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold);" onclick="reEvaluateLead(${leadIdx})">Restart (Pre-Broker)</button>
+              <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px;" onclick="moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
+            </div>
+          `;
+        } else if (cfg.key === 'sold') {
+          const soldDateStr = l.soldDate ? new Date(l.soldDate).toLocaleDateString('en-NZ') : 'N/A';
+          let holdText = '1-Year Hold';
+          if (l.soldDate) {
+            const ageMs = Date.now() - new Date(l.soldDate).getTime();
+            const daysRemaining = Math.max(0, 365 - Math.floor(ageMs / (1000 * 60 * 60 * 24)));
+            holdText = `${daysRemaining} days remaining on hold`;
+          }
+          
+          const waMessage = encodeURIComponent(`Hi ${l.name.split(' ')[0]}, happy anniversary in your home! How has the first year been? -Sopo`);
+          const waUrl = `https://wa.me/${l.phone.replace(/[^0-9]/g, '')}?text=${waMessage}`;
+          
+          actionButtons = `
+            <div style="font-size: 11px; color: var(--gold); margin-top: 8px; font-style: italic;">
+              Settled: ${soldDateStr} · ${holdText}
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <a href="${waUrl}" target="_blank" class="lead-act-btn call" style="text-decoration:none; text-align:center; background: #25D366; color: white;">WhatsApp Anniversary Message</a>
+              <button class="lead-act-btn sms" style="background: var(--blue-dim); color: var(--blue);" onclick="reActivateLeadEarly(${leadIdx})">Reactivate Early</button>
+            </div>
+          `;
+        }
+        
+        return `
+          <div class="lead-card" style="cursor: default; padding: 14px; margin-bottom: 4px;" onclick="openLeadDetail(${leadIdx})">
+            <div class="lead-header" style="margin-bottom: 8px;">
+              <div class="lead-info-main">
+                <div class="lead-initials ${scoreClass}" style="width:30px; height:30px; font-size:12px;">${initials(l.name)}</div>
+                <div>
+                  <div class="lead-name" style="font-size:14px;">${l.name}</div>
+                  <div class="lead-meta-sub" style="font-size:10px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
+                </div>
+              </div>
+              <span class="badge ${scoreClass}" style="font-size: 9px; padding: 2px 6px;">Score: ${score}/10</span>
+            </div>
+            <div class="lead-details-text" style="font-size: 11px; margin-bottom: 8px; line-height: 1.4;">
+              Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}
+            </div>
+            ${actionButtons}
+          </div>
+        `;
+      }).join('');
+    }
+  });
 }
 
 // ===== RESPONSIVE DRAWER SIDEBAR =====
@@ -843,10 +1231,11 @@ function switchView(tabId) {
   // Update Header Title
   const titles = {
     viewLeads: 'Leads Database',
-    viewCalendar: 'Nurture Calendar',
+    viewTracker: 'Tracker Pipeline',
+    viewCalendar: 'Calendar',
     viewMeetings: 'Voice Console',
     viewTranscripts: 'Meeting Transcripts',
-    viewEmailLists: 'Nurture Email Lists'
+    viewEmailLists: 'Email Lists'
   };
   document.getElementById('headerTitle').textContent = titles[tabId] || 'Portal';
   
@@ -875,8 +1264,8 @@ function updateSidebarStats() {
   document.getElementById('stageNew').textContent = leads.filter(l => (l.stage || 'new') === 'new').length;
   document.getElementById('stageContacted').textContent = leads.filter(l => l.stage === 'contacted').length;
   document.getElementById('stageQualified').textContent = leads.filter(l => l.stage === 'qualified').length;
-  document.getElementById('stageOffer').textContent = leads.filter(l => l.stage === 'under-offer').length;
-  document.getElementById('stageSettled').textContent = leads.filter(l => l.stage === 'settled').length;
+  document.getElementById('stageOffer').textContent = leads.filter(l => ['finance-pending', 'valuation'].includes(l.stage)).length;
+  document.getElementById('stageSettled').textContent = leads.filter(l => l.stage === 'sold').length;
 }
 
 // ===== LEADS MODULE =====
@@ -934,7 +1323,7 @@ function renderLeads() {
   if (leads.length === 0) {
     container.innerHTML = `
       <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted);">
-        <div style="font-size:48px; margin-bottom:12px;">👥</div>
+        <div style="font-size:16px; margin-bottom:12px; color:var(--gold); font-weight:600; text-transform:uppercase; letter-spacing:1px;">Leads</div>
         <div style="font-size:16px; font-weight:600; color:var(--white);">No Leads Found</div>
         <div style="font-size:13px; margin-top:4px;">No leads matching "${filter}" category.</div>
       </div>
@@ -956,16 +1345,16 @@ function renderLeads() {
             <div class="lead-meta-sub">${l.area || 'Hamilton'} · ${av}</div>
           </div>
         </div>
-        <span class="badge ${scoreClass}">⭐ ${score}/10</span>
+        <span class="badge ${scoreClass}">Score: ${score}/10</span>
       </div>
       <div class="lead-details-text">
-        💰 Income: ${l.income || 'N/A'}<br>
-        🏠 Deposit: ${l.deposit || 'N/A'}
+        Income: ${l.income || 'N/A'}<br>
+        Deposit: ${l.deposit || 'N/A'}
       </div>
       <div class="lead-actions-row">
-        <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">📞 Call</button>
-        <button class="lead-act-btn sms" onclick="event.stopPropagation(); smsLead('${l.phone}')">✉️ SMS</button>
-        <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">🗑️</button>
+        <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
+        <button class="lead-act-btn sms" onclick="event.stopPropagation(); smsLead('${l.phone}')">SMS</button>
+        <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
       </div>
     </div>
   `}).join('');
@@ -977,8 +1366,8 @@ function smsLead(phone) { if (phone) window.location.href = 'sms:' + phone; }
 function openLeadDetail(idx) {
   const l = appState.leads[idx];
   if (!l) return;
-  const stages = ['new','contacted','qualified','under-offer','settled'];
-  const stageLabels = ['New','Contacted','Qualified','Under Offer','Settled'];
+  const stages = ['new','contacted','qualified','finance-pending','valuation','gameplan','sold'];
+  const stageLabels = ['New','Contacted','Pre-Broker','Finance Pending','Valuation','Gameplan','Sold'];
   const score = l.score || scoreLead(l);
   const scoreClass = getScoreClass(score);
   
@@ -987,7 +1376,7 @@ function openLeadDetail(idx) {
       <div class="lead-initials ${scoreClass}" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
       <div>
         <div style="font-size:18px; font-weight:700;">${l.name || 'Unknown'}</div>
-        <span class="badge ${scoreClass}">⭐ ${score}/10</span>
+        <span class="badge ${scoreClass}">Score: ${score}/10</span>
       </div>
     </div>
     <div class="lead-info-grid">
@@ -1004,7 +1393,7 @@ function openLeadDetail(idx) {
       ${stages.map((s,i) => `<button class="stage-btn ${(l.stage||'new')===s?'active':''}" onclick="updateLeadStage(${idx},'${s}',this)">${stageLabels[i]}</button>`).join('')}
     </div>
     <div style="display:flex; gap:10px; margin-top:20px;">
-      <button class="btn btn-gold" style="flex:1;" onclick="callLead('${l.phone}')">📞 Call Buyer</button>
+      <button class="btn btn-gold" style="flex:1;" onclick="callLead('${l.phone}')">Call Buyer</button>
       <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
     </div>
   `;
@@ -1059,8 +1448,19 @@ async function syncLeads() {
 // Real-time receiver listener
 window.addEventListener('storage', e => {
   if (e.key === 'sopo_new_lead' && e.newValue) {
-    loadState();
-    renderAll();
+    try {
+      const newLead = JSON.parse(e.newValue);
+      const exists = appState.leads.some(l => l.email === newLead.email && l.phone === newLead.phone && l.timestamp === newLead.timestamp);
+      if (!exists) {
+        appState.leads.unshift(newLead);
+        saveState();
+        renderAll();
+      }
+    } catch(err) {
+      console.error(err);
+      loadState();
+      renderAll();
+    }
   }
 });
 
@@ -1069,21 +1469,57 @@ function renderCalendar() {
   const container = document.getElementById('appointmentContainer');
   const empty = document.getElementById('appointmentsEmpty');
   
-  // Filter qualified leads with 'qualified' stage or higher, and timestamp of booking
-  const appts = appState.leads.filter(l => ['qualified', 'under-offer'].includes(l.stage));
+  const events = [];
+  const leads = appState.leads || [];
+  leads.forEach(l => {
+    if (['qualified', 'finance-pending', 'valuation', 'gameplan'].includes(l.stage)) {
+      events.push({
+        type: 'lead',
+        date: new Date(l.bookingTime || l.timestamp),
+        title: `Strategy Call: ${l.name}`,
+        subtitle: `Hamilton Area: ${l.area || 'General'} · Deposit: ${l.deposit || 'N/A'}`,
+        badgeText: l.stage === 'qualified' ? 'Pre-Broker' : l.stage === 'finance-pending' ? 'Finance Pending' : l.stage === 'valuation' ? 'Valuation' : 'Gameplan',
+        badgeClass: l.stage === 'qualified' ? 'warm' : l.stage === 'finance-pending' ? 'hot' : l.stage === 'valuation' ? 'settled' : 'cold',
+        leadIndex: leads.indexOf(l)
+      });
+    }
+  });
   
-  if (appts.length === 0) {
+  const blocks = appState.calendarBlocks || [];
+  blocks.forEach(b => {
+    events.push({
+      type: 'block',
+      date: new Date(b.datetime),
+      title: `Blocked: ${b.label}`,
+      subtitle: `Personal Time`,
+      badgeText: 'Personal Block',
+      badgeClass: 'new',
+      blockId: b.id
+    });
+  });
+  
+  events.sort((a, b) => a.date - b.date);
+  
+  if (events.length === 0) {
     container.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
+  
   empty.style.display = 'none';
   
-  container.innerHTML = appts.map(l => {
-    const d = new Date(l.timestamp);
-    const day = d.getDate();
-    const month = d.toLocaleDateString('en-NZ', {month:'short'});
-    const time = d.toLocaleTimeString('en-NZ', {hour:'numeric',minute:'2-digit'});
+  container.innerHTML = events.map(ev => {
+    const day = ev.date.getDate();
+    const month = ev.date.toLocaleDateString('en-NZ', {month:'short'});
+    const time = ev.date.toLocaleTimeString('en-NZ', {hour:'numeric',minute:'2-digit'});
+    
+    let actionBtn = '';
+    if (ev.type === 'lead') {
+      actionBtn = `<button class="btn btn-ghost" style="padding: 4px 8px; font-size:11px;" onclick="openLeadDetail(${ev.leadIndex})">Details</button>`;
+    } else {
+      actionBtn = `<button class="btn btn-red" style="padding: 4px 8px; font-size:11px; background:var(--red-dim); color:var(--red);" onclick="deleteCalendarBlock(${ev.blockId})">Delete</button>`;
+    }
+    
     return `
       <div class="appt-card">
         <div class="appt-date-block">
@@ -1091,16 +1527,52 @@ function renderCalendar() {
           <div class="appt-month">${month}</div>
         </div>
         <div class="appt-info">
-          <div class="appt-title">Strategy Call: ${l.name}</div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div class="appt-title">${ev.title}</div>
+            <span class="badge ${ev.badgeClass}">${ev.badgeText}</span>
+          </div>
           <div class="appt-time">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            ${time} · Qualified Lead
+            ${time}
           </div>
-          <div class="appt-details">📍 Hamilton Area: ${l.area || 'General'} · Deposit: ${l.deposit}</div>
+          <div class="appt-details">${ev.subtitle}</div>
+        </div>
+        <div style="margin-left: 12px;">
+          ${actionBtn}
         </div>
       </div>
     `;
   }).join('');
+}
+
+function addCalendarBlock() {
+  const label = document.getElementById('blockTimeLabel').value.trim();
+  const dateStr = document.getElementById('blockTimeDate').value;
+  if (!label || !dateStr) {
+    alert('Please enter both a reason and a date/time.');
+    return;
+  }
+  
+  if (!appState.calendarBlocks) appState.calendarBlocks = [];
+  appState.calendarBlocks.push({
+    id: Date.now(),
+    label: label,
+    datetime: dateStr
+  });
+  
+  saveState();
+  renderAll();
+  
+  document.getElementById('blockTimeLabel').value = '';
+  document.getElementById('blockTimeDate').value = '';
+}
+
+function deleteCalendarBlock(id) {
+  if (confirm('Are you sure you want to remove this time block?')) {
+    appState.calendarBlocks = appState.calendarBlocks.filter(b => b.id !== id);
+    saveState();
+    renderAll();
+  }
 }
 
 // ===== MEETINGS & RECORDING MODULE =====
@@ -1301,7 +1773,7 @@ function renderTranscripts() {
         <div style="font-weight:700; color:var(--white); font-size:15px; margin-bottom:10px;">${selected.label}</div>
         <div style="font-size:12px; color:var(--gold); margin-bottom:16px;">Date: ${new Date(selected.date).toLocaleString('en-NZ')}</div>
         <div style="white-space:pre-wrap; font-family:inherit;">${selected.transcript || "No transcript text available."}</div>
-        <button class="btn btn-red" style="margin-top:20px; font-size:12px;" onclick="moveMeetingToDustbin(${selected.id})">🗑️ Move Meeting to Dustbin</button>
+        <button class="btn btn-red" style="margin-top:20px; font-size:12px;" onclick="moveMeetingToDustbin(${selected.id})">Move Meeting to Dustbin</button>
       `;
     }
   }
@@ -1313,50 +1785,45 @@ function selectTranscript(id) {
 }
 
 // ===== EMAIL LISTS MODULE =====
-const MOCK_REACTIVATION = [
-  { name: "Sione & Mele Tupou", email: "sione.tupou@gmail.com", phone: "021998112", note: "Settled: April 2023 (Frankton 3-bed). Outgrowing space." },
-  { name: "Wiremu Kingi", email: "wiremu.k@outlook.co.nz", phone: "022774883", note: "Settled: Nov 2022 (Dinsdale 2-bed). Ready for trade up." },
-  { name: "Lani & Vaea Faletau", email: "lani.faletau@yahoo.com", phone: "027443992", note: "Settled: June 2023 (Melville 3-bed). Upgrade potential." }
-];
-
 function renderEmailLists() {
   const leads = appState.leads || [];
   
-  const readyList = leads.filter(l => {
-    const s = l.score || scoreLead(l);
-    return s >= 7;
-  });
   const savingList = leads.filter(l => {
     const s = l.score || scoreLead(l);
     return s >= 1 && s <= 6;
   });
-  const reactivationList = MOCK_REACTIVATION;
+  const reactivationList = leads.filter(l => l.stage === 'reactivation');
   
-  document.getElementById('countReady').textContent = readyList.length;
-  document.getElementById('countSaving').textContent = savingList.length;
-  document.getElementById('countReactivation').textContent = reactivationList.length;
+  const countSavingEl = document.getElementById('countSaving');
+  if (countSavingEl) countSavingEl.textContent = savingList.length;
+  
+  const countReactivationEl = document.getElementById('countReactivation');
+  if (countReactivationEl) countReactivationEl.textContent = reactivationList.length;
   
   const renderList = (arr, containerId, isReact = false) => {
     const container = document.getElementById(containerId);
+    if (!container) return;
     if (arr.length === 0) {
       container.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">No leads segmented in this list yet.</div>';
       return;
     }
-    container.innerHTML = arr.map(l => `
-      <div class="list-prospect-row" style="margin-bottom:6px; flex-direction:column; align-items:stretch; gap:6px;">
-        <div style="display:flex; justify-content:between; align-items:center; width:100%;">
-          <div style="flex:1;">
-            <div class="prospect-info">${l.name}</div>
-            <div class="prospect-sub">${l.email || 'No Email'}</div>
+    container.innerHTML = arr.map(l => {
+      const note = l.note || (l.soldDate ? `Settled: ${new Date(l.soldDate).toLocaleDateString('en-NZ')} (${l.area || 'Hamilton'} property)` : 'Past settled client');
+      return `
+        <div class="list-prospect-row" style="margin-bottom:6px; flex-direction:column; align-items:stretch; gap:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <div style="flex:1;">
+              <div class="prospect-info">${l.name}</div>
+              <div class="prospect-sub">${l.email || 'No Email'}</div>
+            </div>
+            <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
           </div>
-          <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">📋 Copy</button>
+          ${isReact ? `<div style="font-size:10px; color:var(--gold); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px; font-style:italic;">${note}</div>` : ''}
         </div>
-        ${isReact ? `<div style="font-size:10px; color:var(--gold); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px; font-style:italic;">${l.note}</div>` : ''}
-      </div>
-    `).join('');
+      `;
+    }).join('');
   };
   
-  renderList(readyList, 'prospectsReady');
   renderList(savingList, 'prospectsSaving');
   renderList(reactivationList, 'prospectsReactivation', true);
 }
@@ -1446,7 +1913,7 @@ function renderDustbin() {
       <div class="dustbin-item">
         <div class="dustbin-meta">
           <div class="dustbin-name">${label}</div>
-          <div class="dustbin-time-left">🗑️ ${remainingText}</div>
+          <div class="dustbin-time-left">Held: ${remainingText}</div>
         </div>
         <div class="dustbin-actions">
           <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="restoreDustbinItem(${idx})">Restore</button>
