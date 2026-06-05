@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book your Sit-Down with Sopo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #C9A96E;
+      --navy: #0D1621;
+      --cream: #FDFAF5;
+      --white: #FFFFFF;
+      --text: #0D1621;
+      --muted: #4A6274;
+      --border: rgba(201, 169, 110, 0.2);
+      --radius: 16px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at 50% 50%, #E09677 0%, #C97858 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .booking-card {
+      max-width: 520px;
+      width: 100%;
+      background: rgba(253, 250, 245, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: var(--radius);
+      padding: 40px 30px;
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+      transition: all 0.4s ease;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #b37e29;
+      margin-bottom: 8px;
+      letter-spacing: 0.1em;
+    }
+
+    .input-control {
+      width: 100%;
+      background: var(--white);
+      border: 1px solid rgba(28, 43, 58, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      color: var(--navy);
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-control:focus {
+      border-color: #C97858;
+      box-shadow: 0 0 0 3px rgba(201, 120, 88, 0.15);
+    }
+
+    select.input-control {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234A6274' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-submit:hover {
+      background: #17273a;
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:active {
+      transform: translateY(1px);
+    }
+
+    /* Glassmorphic Thank You Box */
+    .thankyou-box {
+      display: none;
+      text-align: center;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .thankyou-box h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 15px;
+    }
+
+    .thankyou-box p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    .thankyou-details {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-bottom: 25px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .thankyou-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      padding-bottom: 8px;
+    }
+
+    .thankyou-row:last-child {
+      margin-bottom: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .thankyou-label {
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+
+    .thankyou-val {
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .footer-brand {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="booking-card">
+    <!-- Form View -->
+    <form id="bookingForm" onsubmit="submitBooking(event)">
+      <div class="header">
+        <div class="logo-text">Sopo FuiFui</div>
+        <div class="subtitle">Book Your Consultation</div>
+      </div>
+
+      <div class="form-group">
+        <label for="clientEmail">Your Registered Email</label>
+        <input type="email" id="clientEmail" class="input-control" placeholder="enter your check-in email" required onchange="lookupClient()">
+      </div>
+
+      <div class="form-group">
+        <label for="clientName">Full Name</label>
+        <input type="text" id="clientName" class="input-control" placeholder="enter your name" required>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="bookingDate">Select Date</label>
+          <input type="date" id="bookingDate" class="input-control" required>
+        </div>
+        <div class="form-group">
+          <label for="bookingTime">Select Time Slot</label>
+          <select id="bookingTime" class="input-control" required>
+            <option value="">Choose a slot</option>
+            <option value="09:00">09:00 AM</option>
+            <option value="10:30">10:30 AM</option>
+            <option value="13:00">01:00 PM</option>
+            <option value="15:30">03:30 PM</option>
+            <option value="17:00">05:00 PM</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="meetingPreference">Meeting Option</label>
+        <select id="meetingPreference" class="input-control" required>
+          <option value="">Select zoom or face-to-face</option>
+          <option value="zoom">Zoom Video Call</option>
+          <option value="coffee">Face-to-Face Coffee Sit Down</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-submit">Book My Slot</button>
+    </form>
+
+    <!-- Thank You Glassmorphic View -->
+    <div id="thankYouView" class="thankyou-box">
+      <div class="header">
+        <div class="logo-text">Thank You</div>
+        <div class="subtitle">Booking Confirmed</div>
+      </div>
+      <p>We have successfully received your booking slot. Sopo has been notified and will be in touch with you shortly.</p>
+      
+      <div class="thankyou-details">
+        <div class="thankyou-row">
+          <span class="thankyou-label">Name</span>
+          <span id="summaryName" class="thankyou-val">-</span>
+        </div>
+        <div class="thankyou-row">
+          <span class="thankyou-label">Date & Time</span>
+          <span id="summaryDateTime" class="thankyou-val">-</span>
+        </div>
+        <div class="thankyou-row">
+          <span class="thankyou-label">Meeting Type</span>
+          <span id="summaryType" class="thankyou-val">-</span>
+        </div>
+        <div class="thankyou-row">
+          <span class="thankyou-label">Confirmation</span>
+          <span class="thankyou-val" style="color:#10B981;">Email Sent</span>
+        </div>
+      </div>
+
+      <p style="font-size:12px; margin-bottom: 0;">You can close this tab now.</p>
+    </div>
+  </div>
+
+  <div class="footer-brand">Powered by The MarketPlace</div>
+
+  <script>
+    // Load state on startup
+    let appState = { leads: [] };
+    
+    function loadState() {
+      try {
+        const s = localStorage.getItem('sopo_state_v2');
+        if (s) {
+          appState = JSON.parse(s);
+        }
+      } catch (e) {
+        console.error("Error loading state", e);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('sopo_state_v2', JSON.stringify(appState));
+    }
+
+    // Auto load email parameter if available
+    window.addEventListener('load', () => {
+      loadState();
+      
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get('email') || params.get('leadEmail');
+      if (email) {
+        document.getElementById('clientEmail').value = email;
+        lookupClient();
+      }
+      
+      // Default date to next Monday
+      const today = new Date();
+      const nextMonday = new Date();
+      nextMonday.setDate(today.getDate() + ((1 + 7 - today.getDay()) % 7 || 7));
+      document.getElementById('bookingDate').value = nextMonday.toISOString().split('T')[0];
+    });
+
+    function lookupClient() {
+      const email = document.getElementById('clientEmail').value.trim().toLowerCase();
+      if (!email) return;
+      
+      const client = appState.leads.find(l => (l.email || '').toLowerCase() === email);
+      if (client) {
+        document.getElementById('clientName').value = client.name;
+        document.getElementById('clientName').readOnly = true;
+      } else {
+        document.getElementById('clientName').readOnly = false;
+      }
+    }
+
+    function submitBooking(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('clientEmail').value.trim();
+      const name = document.getElementById('clientName').value.trim();
+      const dateVal = document.getElementById('bookingDate').value;
+      const timeVal = document.getElementById('bookingTime').value;
+      const preference = document.getElementById('meetingPreference').value;
+      
+      if (!email || !name || !dateVal || !timeVal || !preference) {
+        alert("Please fill out all fields.");
+        return;
+      }
+
+      const dateTimeStr = `${dateVal}T${timeVal}:00`;
+      const dateObj = new Date(dateTimeStr);
+      
+      loadState();
+      
+      let client = appState.leads.find(l => (l.email || '').toLowerCase() === email.toLowerCase());
+      
+      if (!client) {
+        // If client is not in state yet, create a new lead
+        client = {
+          name: name,
+          email: email,
+          phone: '',
+          firstHome: 'Yes',
+          employment: 'Full Time',
+          income: '80000 to 120000',
+          deposit: 'Yes Both',
+          area: 'Hamilton',
+          timeFrame: 'Immediately',
+          timestamp: new Date().toISOString(),
+          source: 'Social Agent',
+          stage: 'new',
+          score: 8
+        };
+        appState.leads.unshift(client);
+      }
+      
+      // Update client booking details
+      client.hasBooked = true;
+      client.bookingTime = dateObj.toISOString();
+      client.meetingType = preference;
+      
+      saveState();
+
+      // Trigger a storage event to notify index.html
+      localStorage.setItem('sopo_booking_completed', JSON.stringify({
+        email: email,
+        name: name,
+        bookingTime: dateObj.toISOString(),
+        meetingType: preference
+      }));
+
+      // Render thank you page
+      document.getElementById('bookingForm').style.display = 'none';
+      
+      document.getElementById('summaryName').textContent = name;
+      document.getElementById('summaryDateTime').textContent = dateObj.toLocaleString('en-NZ', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+      document.getElementById('summaryType').textContent = preference === 'zoom' ? 'Zoom Video Call' : 'Face-to-Face Coffee Sit Down';
+      
+      document.getElementById('thankYouView').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
