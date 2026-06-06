@@ -28,11 +28,12 @@ function parseLeadFromURL() {
     employment: p.get('employment') || '',
     income: p.get('income') || '',
     deposit: p.get('deposit') || '',
+    depositAmount: p.get('depositAmount') || '',
     area: p.get('area') || '',
     timeFrame: p.get('timeFrame') || '',
     timestamp: p.get('timestamp') || new Date().toISOString(),
     source: p.get('source') || 'Open Home',
-    stage: 'new',
+    stage: 'qualified',
     score: null
   };
   
@@ -67,6 +68,17 @@ function parseLeadFromURL() {
   try {
     const key = localStorage.getItem('sopo_state_v2') ? 'sopo_state_v2' : 'sopo_state';
     const state = JSON.parse(localStorage.getItem(key) || '{}');
+    
+    // Clear from deleted blocklist since they checked in again
+    if (state.deletedLeads) {
+      if (lead.email) {
+        state.deletedLeads = state.deletedLeads.filter(email => email !== lead.email.toLowerCase());
+      }
+      if (lead.phone) {
+        state.deletedLeads = state.deletedLeads.filter(phone => phone !== lead.phone);
+      }
+    }
+    
     state.leads = [lead, ...(state.leads || [])];
     localStorage.setItem(key, JSON.stringify(state));
   } catch(e) {}

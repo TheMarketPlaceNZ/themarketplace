@@ -328,9 +328,13 @@
       
       const params = new URLSearchParams(window.location.search);
       const email = params.get('email') || params.get('leadEmail');
+      const name = params.get('name') || params.get('leadName');
       if (email) {
         document.getElementById('clientEmail').value = email;
         lookupClient();
+      }
+      if (name) {
+        document.getElementById('clientName').value = name;
       }
       
       // Default date to next Monday
@@ -441,7 +445,7 @@
       let client = appState.leads.find(l => (l.email || '').toLowerCase() === email.toLowerCase());
       
       if (!client) {
-        // If client is not in state yet, create a new lead
+        // If client is not in state yet, create a new lead in Pre-Broker stage
         client = {
           name: name,
           email: email,
@@ -454,7 +458,7 @@
           timeFrame: 'Immediately',
           timestamp: new Date().toISOString(),
           source: 'Social Agent',
-          stage: 'new',
+          stage: 'qualified',
           score: 8
         };
         appState.leads.unshift(client);
@@ -466,6 +470,32 @@
       client.meetingType = preference;
       
       saveState();
+
+      // Submit booking details to Make.com Webhook
+      const webhookUrl = "https://hook.us2.make.com/placeholder_sopo_booking";
+      const payload = {
+        name: name,
+        email: email,
+        bookingTime: dateObj.toISOString(),
+        meetingType: preference,
+        allocatedDate: dateVal,
+        allocatedTime: timeVal,
+        source: 'Client Booking'
+      };
+
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => {
+        console.log("Booking successfully sent to Make.com Webhook");
+      })
+      .catch(error => {
+        console.warn("Booking webhook submission failed:", error.message);
+      });
 
       // Trigger a storage event to notify index.html
       localStorage.setItem('sopo_booking_completed', JSON.stringify({

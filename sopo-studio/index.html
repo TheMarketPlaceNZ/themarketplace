@@ -771,6 +771,91 @@ body {
 .voice-pulse-ring {
   animation: voicePulse 1.5s infinite;
 }
+
+/* Modal Tabs and AI Debrief Styling */
+.modal-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1.5px solid var(--border);
+  margin-bottom: 20px;
+}
+.modal-tab-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 4px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+.modal-tab-btn:hover {
+  color: var(--white);
+}
+.modal-tab-btn.active {
+  color: var(--gold);
+}
+.modal-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1.5px;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: var(--gold);
+}
+.modal-tab-pane {
+  display: none;
+}
+.modal-tab-pane.active {
+  display: block;
+}
+.debrief-item {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+.debrief-item:hover {
+  border-color: var(--gold);
+}
+.debrief-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.debrief-title {
+  font-size: 13.0px;
+  font-weight: 700;
+  color: var(--white);
+}
+.debrief-date {
+  font-size: 11px;
+  color: var(--muted);
+}
+.debrief-summary {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.debrief-transcript-box {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(0,0,0,0.25);
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  max-height: 150px;
+  overflow-y: auto;
+  border-left: 2.5px solid var(--gold);
+}
 </style>
 </head>
 <body>
@@ -807,14 +892,6 @@ body {
       <div class="menu-item" data-tab="viewCalendar" onclick="switchView('viewCalendar')">
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Calendar
-      </div>
-      <div class="menu-item" data-tab="viewMeetings" onclick="switchView('viewMeetings')">
-        <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-        Voice Console
-      </div>
-      <div class="menu-item" data-tab="viewTranscripts" onclick="switchView('viewTranscripts')">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Meeting Transcripts
       </div>
       <div class="menu-item" data-tab="viewEmailLists" onclick="switchView('viewEmailLists')">
         <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -861,11 +938,10 @@ body {
       
       <!-- LEADS DATABASE VIEW -->
       <div class="panel-view active" id="viewLeads">
-        <div class="pipeline-funnel">
-          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageNew">0</div><div class="pipeline-stage-lbl">New</div></div>
-          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageContacted">0</div><div class="pipeline-stage-lbl">Contacted</div></div>
+        <div class="pipeline-funnel" style="grid-template-columns: repeat(4, 1fr);">
           <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageQualified">0</div><div class="pipeline-stage-lbl">Pre-Broker</div></div>
-          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageOffer">0</div><div class="pipeline-stage-lbl">Active Deals</div></div>
+          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stagePending">0</div><div class="pipeline-stage-lbl">Finance Pending</div></div>
+          <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageValuation">0</div><div class="pipeline-stage-lbl">Valuation</div></div>
           <div class="pipeline-stage-card"><div class="pipeline-stage-num" id="stageSettled">0</div><div class="pipeline-stage-lbl">Sold</div></div>
         </div>
         
@@ -876,7 +952,7 @@ body {
             <span style="font-size: 8px; color: var(--muted); text-transform: none; letter-spacing: 0.5px;">Click to copy to clipboard</span>
           </div>
           <div style="background: rgba(255, 255, 255, 0.01); border: 1.2px dashed var(--border-gold); border-radius: var(--radius-sm); padding: 14px 100px 14px 14px; position: relative;">
-            <p id="inviteTextTemplate" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5; margin: 0;">Hey, thanks so much for reaching out! If you could click the link below and answer 9 questions (takes less than a minute), I'll be able to slot you in and we can see how to get you into your very own house. God bless! <span id="inviteLinkSpan" style="color:var(--gold-bright); text-decoration:underline; font-weight:600;">https://sopo-studio.netlify.app/checkin.html</span></p>
+            <p id="inviteTextTemplate" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5; margin: 0;">Hey, thanks so much for reaching out! If you could click the link below and answer 10 questions (takes less than a minute), I'll be able to slot you in and we can see how to get you into your very own house. God bless! <span id="inviteLinkSpan" style="color:var(--gold-bright); text-decoration:underline; font-weight:600;">https://sopo-studio.netlify.app/checkin.html</span></p>
             <button class="btn btn-gold" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding: 6px 12px; font-size: 11px; border-radius: var(--radius-xs);" onclick="copyInviteText()">Copy Text</button>
           </div>
         </div>
@@ -986,47 +1062,7 @@ body {
           </div>
         </div>
       </div>
-      
-      <!-- VOICE CONSOLE VIEW -->
-      <div class="panel-view" id="viewMeetings">
-        <div class="recorder-box">
-          <div class="rec-timer" id="recTimer">00:00</div>
-          <button class="record-btn" id="recordBtn" onclick="toggleRecording()">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" x2="12" y1="19" y2="22"/>
-            </svg>
-          </button>
-          <div class="rec-hint" id="recHint">Tap mic to record client strategy consultation</div>
-          <div class="rec-input-group">
-            <input type="text" class="rec-input" id="meetingLabel" placeholder="Enter meeting label (e.g. Tane Whānau debrief)">
-          </div>
-        </div>
-        
-        <div class="ai-spinner-box" id="aiSpinnerBox">
-          <div class="spinner"></div>
-          <div class="spinner-text" id="spinnerText">Sina is extracting action items...</div>
-        </div>
-        
-        <div class="card">
-          <div class="section-title">Actions Generated Today</div>
-          <div id="actionTasksList"></div>
-          <div id="actionTasksEmpty" style="text-align:center; padding:20px; color:var(--muted); font-size:13px;">
-            Checklists automatically populate here when you finish recording.
-          </div>
-        </div>
-      </div>
-      
-      <!-- TRANSCRIPTS VIEW -->
-      <div class="panel-view" id="viewTranscripts">
-        <div class="transcript-layout">
-          <div class="transcript-sidebar" id="transcriptSidebar"></div>
-          <div class="transcript-content-panel">
-            <div class="section-title">Raw Transcript Archives</div>
-            <div class="trans-bubble" id="transcriptOutput">Select a meeting from the left panel to review its raw transcript details.</div>
-          </div>
-        </div>
-      </div>
-      
+
       <!-- EMAIL LISTS VIEW -->
       <div class="panel-view" id="viewEmailLists">
         <div class="nurture-layout" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
@@ -1433,6 +1469,7 @@ let appState = {
   calendarBlocks: [],
   currentFilter: 'all'
 };
+let currentLeadIndex = null;
 
 // ===== DATABASE METHODS =====
 function saveState() {
@@ -1565,8 +1602,6 @@ function renderAll() {
   renderLeads();
   renderTracker();
   renderCalendar();
-  renderMeetingsTab();
-  renderTranscripts();
   renderEmailLists();
   renderDustbin();
 }
@@ -1732,7 +1767,7 @@ function renderTracker() {
             <span class="badge ${scoreClass}" style="font-size: 8px; padding: 2px 4px;">Score: ${score}</span>
           </div>
           <div class="lead-details-text" style="font-size: 10px; margin-bottom: 6px; line-height: 1.3;">
-            Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}
+            Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}
           </div>
           ${birthdayBanners}
           ${actionButtons}
@@ -1790,11 +1825,15 @@ function updateSidebarStats() {
   document.getElementById('miniHot').textContent = hot;
   
   // Update Pipeline funnels in leads tab
-  document.getElementById('stageNew').textContent = leads.filter(l => (l.stage || 'new') === 'new').length;
-  document.getElementById('stageContacted').textContent = leads.filter(l => l.stage === 'contacted').length;
-  document.getElementById('stageQualified').textContent = leads.filter(l => l.stage === 'qualified').length;
-  document.getElementById('stageOffer').textContent = leads.filter(l => ['finance-pending', 'valuation'].includes(l.stage)).length;
-  document.getElementById('stageSettled').textContent = leads.filter(l => l.stage === 'sold').length;
+  const stageQualifiedEl = document.getElementById('stageQualified');
+  const stagePendingEl = document.getElementById('stagePending');
+  const stageValuationEl = document.getElementById('stageValuation');
+  const stageSettledEl = document.getElementById('stageSettled');
+  
+  if (stageQualifiedEl) stageQualifiedEl.textContent = leads.filter(l => l.stage === 'qualified').length;
+  if (stagePendingEl) stagePendingEl.textContent = leads.filter(l => l.stage === 'finance-pending').length;
+  if (stageValuationEl) stageValuationEl.textContent = leads.filter(l => l.stage === 'valuation').length;
+  if (stageSettledEl) stageSettledEl.textContent = leads.filter(l => l.stage === 'sold').length;
 }
 
 // ===== LEADS MODULE =====
@@ -1895,7 +1934,7 @@ function renderLeads() {
       </div>
       <div class="lead-details-text">
         Income: ${l.income || 'N/A'}<br>
-        Deposit: ${l.deposit || 'N/A'}
+        Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}
       </div>
       ${birthdayBanners}
       <div class="lead-actions-row" style="margin-top: 10px;">
@@ -1944,8 +1983,9 @@ function getTodayBirthdays(l) {
 function openLeadDetail(idx) {
   const l = appState.leads[idx];
   if (!l) return;
-  const stages = ['new','contacted','qualified','finance-pending','valuation','gameplan','sold'];
-  const stageLabels = ['New','Contacted','Pre-Broker','Finance Pending','Valuation','Gameplan','Sold'];
+  currentLeadIndex = idx;
+  const stages = ['qualified','finance-pending','valuation','gameplan','sold'];
+  const stageLabels = ['Pre-Broker','Finance Pending','Valuation','Gameplan','Sold'];
   const score = l.score || scoreLead(l);
   const scoreClass = getScoreClass(score);
   
@@ -1957,62 +1997,103 @@ function openLeadDetail(idx) {
         <span class="badge ${scoreClass}" style="margin-top:4px;">Score: ${score}/10</span>
       </div>
     </div>
-    <div class="lead-info-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-      <div class="lead-info-item">
-        <div class="lead-info-label">Phone</div>
-        <input type="text" class="settings-input" id="editLeadPhone" value="${l.phone || ''}" style="padding:6px; font-size:12px; width:100%;">
+    
+    <div class="modal-tabs">
+      <button class="modal-tab-btn active" id="btnTabDetails" onclick="switchModalTab('details')">Client Details</button>
+      <button class="modal-tab-btn" id="btnTabDebrief" onclick="switchModalTab('debrief')">AI Debrief Folder</button>
+    </div>
+    
+    <div class="modal-tab-pane active" id="paneTabDetails">
+      <div class="lead-info-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div class="lead-info-item">
+          <div class="lead-info-label">Phone</div>
+          <input type="text" class="settings-input" id="editLeadPhone" value="${l.phone || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Email</div>
+          <input type="text" class="settings-input" id="editLeadEmail" value="${l.email || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Income</div>
+          <input type="text" class="settings-input" id="editLeadIncome" value="${l.income || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Deposit</div>
+          <input type="text" class="settings-input" id="editLeadDeposit" value="${l.deposit || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Deposit Amount</div>
+          <input type="text" class="settings-input" id="editLeadDepositAmount" value="${l.depositAmount || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Area</div>
+          <input type="text" class="settings-input" id="editLeadArea" value="${l.area || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Timeframe</div>
+          <input type="text" class="settings-input" id="editLeadTimeframe" value="${l.timeFrame || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item" style="grid-column: 1/-1;">
+          <div class="lead-info-label">Lead Avenue</div>
+          <input type="text" class="settings-input" id="editLeadSource" value="${l.source || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
       </div>
-      <div class="lead-info-item">
-        <div class="lead-info-label">Email</div>
-        <input type="text" class="settings-input" id="editLeadEmail" value="${l.email || ''}" style="padding:6px; font-size:12px; width:100%;">
+      
+      <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">Birthdays</div>
+      <div class="lead-info-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div class="lead-info-item">
+          <div class="lead-info-label">Husband Birthday</div>
+          <input type="date" class="settings-input" id="editLeadBdayHusband" value="${l.birthdayHusband || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Wife Birthday</div>
+          <input type="date" class="settings-input" id="editLeadBdayWife" value="${l.birthdayWife || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
+        <div class="lead-info-item" style="grid-column: 1/-1;">
+          <div class="lead-info-label">Kids Birthdays</div>
+          <input type="text" class="settings-input" id="editLeadBdayKids" value="${l.birthdayKids || ''}" placeholder="e.g. Leo: 2018-06-06, Mia: 2021-12-15" style="padding:6px; font-size:12px; width:100%;">
+        </div>
       </div>
-      <div class="lead-info-item">
-        <div class="lead-info-label">Income</div>
-        <input type="text" class="settings-input" id="editLeadIncome" value="${l.income || ''}" style="padding:6px; font-size:12px; width:100%;">
+      
+      <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">Pipeline Stage</div>
+      <div class="stage-selector">
+        ${stages.map((s,i) => `<button class="stage-btn ${(l.stage||'qualified')===s?'active':''}" onclick="updateLeadStage(${idx},'${s}',this)">${stageLabels[i]}</button>`).join('')}
       </div>
-      <div class="lead-info-item">
-        <div class="lead-info-label">Deposit</div>
-        <input type="text" class="settings-input" id="editLeadDeposit" value="${l.deposit || ''}" style="padding:6px; font-size:12px; width:100%;">
-      </div>
-      <div class="lead-info-item">
-        <div class="lead-info-label">Area</div>
-        <input type="text" class="settings-input" id="editLeadArea" value="${l.area || ''}" style="padding:6px; font-size:12px; width:100%;">
-      </div>
-      <div class="lead-info-item">
-        <div class="lead-info-label">Timeframe</div>
-        <input type="text" class="settings-input" id="editLeadTimeframe" value="${l.timeFrame || ''}" style="padding:6px; font-size:12px; width:100%;">
-      </div>
-      <div class="lead-info-item" style="grid-column: 1/-1;">
-        <div class="lead-info-label">Lead Avenue</div>
-        <input type="text" class="settings-input" id="editLeadSource" value="${l.source || ''}" style="padding:6px; font-size:12px; width:100%;">
+      
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-gold" style="flex:1;" onclick="saveLeadDetails(${idx})">Save Changes</button>
+        <button class="btn btn-ghost" style="flex:1;" onclick="callLead('${l.phone}')">Call Buyer</button>
+        <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
       </div>
     </div>
     
-    <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">Birthdays</div>
-    <div class="lead-info-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-      <div class="lead-info-item">
-        <div class="lead-info-label">Husband Birthday</div>
-        <input type="date" class="settings-input" id="editLeadBdayHusband" value="${l.birthdayHusband || ''}" style="padding:6px; font-size:12px; width:100%;">
+    <div class="modal-tab-pane" id="paneTabDebrief">
+      <div class="recorder-box" style="padding: 20px; max-width: 100%; margin-bottom: 15px;">
+        <div class="rec-timer" id="recTimer" style="font-size: 36px; margin-bottom: 10px;">00:00</div>
+        <button class="record-btn" id="recordBtn" onclick="toggleRecording()" style="width: 70px; height: 70px; margin-bottom: 10px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+        </button>
+        <div class="rec-hint" id="recHint" style="font-size: 12px;">Tap mic to record client strategy consultation</div>
+        <div class="rec-input-group" style="margin-top: 10px;">
+          <input type="text" class="rec-input" id="meetingLabel" placeholder="Enter meeting label (e.g. Consultation)" style="padding: 8px; font-size: 13px;">
+        </div>
       </div>
-      <div class="lead-info-item">
-        <div class="lead-info-label">Wife Birthday</div>
-        <input type="date" class="settings-input" id="editLeadBdayWife" value="${l.birthdayWife || ''}" style="padding:6px; font-size:12px; width:100%;">
+      
+      <div class="ai-spinner-box" id="aiSpinnerBox" style="padding: 15px; margin-bottom: 15px; max-width: 100%;">
+        <div class="spinner" style="width: 24px; height: 24px; border-width: 2.5px;"></div>
+        <div class="spinner-text" id="spinnerText" style="font-size: 12px;">Sina is extracting action items...</div>
       </div>
-      <div class="lead-info-item" style="grid-column: 1/-1;">
-        <div class="lead-info-label">Kids Birthdays</div>
-        <input type="text" class="settings-input" id="editLeadBdayKids" value="${l.birthdayKids || ''}" placeholder="e.g. Leo: 2018-06-06, Mia: 2021-12-15" style="padding:6px; font-size:12px; width:100%;">
+      
+      <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">AI Debrief History</div>
+      <div id="modalDebriefList" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;">
+        <!-- Filled dynamically -->
       </div>
-    </div>
-    
-    <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">Pipeline Stage</div>
-    <div class="stage-selector">
-      ${stages.map((s,i) => `<button class="stage-btn ${(l.stage||'new')===s?'active':''}" onclick="updateLeadStage(${idx},'${s}',this)">${stageLabels[i]}</button>`).join('')}
-    </div>
-    
-    <div style="display:flex; gap:10px; margin-top:20px;">
-      <button class="btn btn-gold" style="flex:1;" onclick="saveLeadDetails(${idx})">Save Changes</button>
-      <button class="btn btn-ghost" style="flex:1;" onclick="callLead('${l.phone}')">Call Buyer</button>
-      <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
+      
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
+      </div>
     </div>
   `;
   document.getElementById('leadModal').classList.add('open');
@@ -2027,6 +2108,7 @@ function saveLeadDetails(idx) {
   l.email = document.getElementById('editLeadEmail').value.trim();
   l.income = document.getElementById('editLeadIncome').value.trim();
   l.deposit = document.getElementById('editLeadDeposit').value.trim();
+  l.depositAmount = document.getElementById('editLeadDepositAmount').value.trim();
   l.area = document.getElementById('editLeadArea').value.trim();
   l.timeFrame = document.getElementById('editLeadTimeframe').value.trim();
   l.source = document.getElementById('editLeadSource').value.trim();
@@ -2048,7 +2130,12 @@ function updateLeadStage(idx, stage, btn) {
   btn.classList.add('active');
   renderAll();
 }
-function closeLeadModal() { document.getElementById('leadModal').classList.remove('open'); }
+function closeLeadModal() {
+  if (typeof isRecording !== 'undefined' && isRecording) {
+    toggleRecording();
+  }
+  document.getElementById('leadModal').classList.remove('open');
+}
 document.getElementById('leadModal').addEventListener('click', e => { if (e.target === document.getElementById('leadModal')) closeLeadModal(); });
 
 // ===== SYNC LEADS FROM GOOGLE SHEETS =====
@@ -2077,22 +2164,31 @@ async function syncLeads(silent = false) {
     if (!res.ok) throw new Error('Fetch failed');
     const csv = await res.text();
     const rows = csv.trim().split('\n').slice(1);
-    const newLeads = rows.map(row => {
+    const activeDeletedLeads = appState.deletedLeads || [];
+    const parsedNewLeads = rows.map(row => {
       const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
       return {
         name: cols[0] || '', email: cols[1] || '', phone: cols[2] || '',
         firstHome: cols[3] || '', employment: cols[4] || '',
         income: cols[5] || '', deposit: cols[6] || '',
-        area: cols[7] || '', timeFrame: cols[8] || '',
-        timestamp: cols[9] || new Date().toISOString(),
-        source: cols[10] || 'Open Home',
-        stage: 'new',
+        depositAmount: cols[7] || '',
+        area: cols[8] || '', timeFrame: cols[9] || '',
+        timestamp: cols[10] || new Date().toISOString(),
+        source: cols[11] || 'Open Home',
+        stage: 'qualified',
         score: null
       };
     }).map(l => ({ ...l, score: scoreLead(l) }));
     
+    // Filter out deleted leads to prevent them from re-importing
+    const filteredNewLeads = parsedNewLeads.filter(newL => {
+      const email = (newL.email || '').toLowerCase();
+      const phone = newL.phone || '';
+      return !activeDeletedLeads.includes(email) && !activeDeletedLeads.includes(phone);
+    });
+    
     // Merge new leads with existing appState leads to preserve stages/bookings
-    const mergedLeads = newLeads.map(newL => {
+    const mergedLeads = filteredNewLeads.map(newL => {
       const existing = appState.leads.find(oldL => oldL.email === newL.email || (oldL.phone && oldL.phone === newL.phone));
       if (existing) {
         return {
@@ -2134,6 +2230,17 @@ window.addEventListener('storage', e => {
   if (e.key === 'sopo_new_lead' && e.newValue) {
     try {
       const newLead = JSON.parse(e.newValue);
+      
+      // Clear from deleted blocklist since they checked in again
+      if (appState.deletedLeads) {
+        if (newLead.email) {
+          appState.deletedLeads = appState.deletedLeads.filter(email => email !== newLead.email.toLowerCase());
+        }
+        if (newLead.phone) {
+          appState.deletedLeads = appState.deletedLeads.filter(phone => phone !== newLead.phone);
+        }
+      }
+      
       const exists = appState.leads.some(l => l.email === newLead.email && l.phone === newLead.phone && l.timestamp === newLead.timestamp);
       if (!exists) {
         appState.leads.unshift(newLead);
@@ -2304,7 +2411,7 @@ function renderDaySchedules(date) {
           date: d,
           endDate: l.bookingEndTime ? new Date(l.bookingEndTime) : null,
           title: `Strategy Call: ${l.name}`,
-          subtitle: `Hamilton Area: ${l.area || 'General'} · Deposit: ${l.deposit || 'N/A'}`,
+          subtitle: `Hamilton Area: ${l.area || 'General'} · Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}`,
           badgeText: l.stage === 'qualified' ? 'Pre-Broker' : l.stage === 'finance-pending' ? 'Finance Pending' : l.stage === 'valuation' ? 'Valuation' : 'Gameplan',
           badgeClass: l.stage === 'qualified' ? 'warm' : l.stage === 'finance-pending' ? 'hot' : l.stage === 'valuation' ? 'settled' : 'cold',
           leadIndex: leads.indexOf(l)
@@ -2684,6 +2791,13 @@ Transcribe this client recording and return ONLY a valid JSON object containing:
 }
 
 function saveMeeting(label, blob, summary, tasks, transcript = "") {
+  const idx = currentLeadIndex;
+  const l = appState.leads[idx];
+  if (!l) {
+    console.error("No active lead open to attach meeting to.");
+    return;
+  }
+  
   const meeting = {
     id: Date.now(),
     label,
@@ -2695,15 +2809,25 @@ function saveMeeting(label, blob, summary, tasks, transcript = "") {
     audioUrl: URL.createObjectURL(blob)
   };
   
-  appState.meetings = [meeting, ...(appState.meetings || [])];
+  if (!l.meetings) l.meetings = [];
+  l.meetings.unshift(meeting);
   
   if (tasks && tasks.length > 0) {
-    const newTasks = tasks.map(t => ({ ...t, done: false, meetingId: meeting.id }));
+    const newTasks = tasks.map(t => ({ 
+      ...t, 
+      done: false, 
+      meetingId: meeting.id,
+      person: t.person || l.name 
+    }));
     appState.tasks = [...newTasks, ...(appState.tasks || [])];
   }
   
   saveState();
-  document.getElementById('meetingLabel').value = '';
+  const labelInput = document.getElementById('meetingLabel');
+  if (labelInput) labelInput.value = '';
+  
+  renderModalDebriefHistory();
+  renderAll();
 }
 
 function blobToBase64(blob) {
@@ -2715,73 +2839,101 @@ function blobToBase64(blob) {
   });
 }
 
-function renderMeetingsTab() {
-  const tasksContainer = document.getElementById('actionTasksList');
-  const tasksEmpty = document.getElementById('actionTasksEmpty');
-  const activeTasks = appState.tasks.filter(t => !t.done);
+function switchModalTab(tabId) {
+  document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.modal-tab-pane').forEach(pane => pane.classList.remove('active'));
   
-  if (activeTasks.length === 0) {
-    tasksContainer.innerHTML = '';
-    tasksEmpty.style.display = 'block';
-  } else {
-    tasksEmpty.style.display = 'none';
-    tasksContainer.innerHTML = activeTasks.map((t, idx) => `
-      <div class="checklist-item" style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);">
-        <div class="check-box" onclick="toggleTask(${appState.tasks.indexOf(t)})" style="width:20px; height:20px; border-radius:4px; border:2px solid var(--border-gold); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;"></div>
-        <div>
-          <div style="font-size:14px; font-weight:600; color:var(--white);">${t.task}</div>
-          ${t.person ? `<div style="font-size:11px; color:var(--muted); margin-top:2px;">Re: ${t.person}</div>` : ''}
-          <span class="badge cat-${(t.category||'followup').toLowerCase()}" style="margin-top:6px; font-size:9px; background:var(--gold-dim); color:var(--gold);">${t.category}</span>
-        </div>
-      </div>
-    `).join('');
+  if (tabId === 'details') {
+    document.getElementById('btnTabDetails').classList.add('active');
+    document.getElementById('paneTabDetails').classList.add('active');
+  } else if (tabId === 'debrief') {
+    document.getElementById('btnTabDebrief').classList.add('active');
+    document.getElementById('paneTabDebrief').classList.add('active');
+    renderModalDebriefHistory();
   }
 }
 
-function toggleTask(idx) {
-  if (appState.tasks[idx]) {
-    appState.tasks[idx].done = !appState.tasks[idx].done;
-    saveState();
-    renderAll();
-  }
-}
-
-// ===== TRANSCRIPTS MODULE =====
-let activeTranscriptId = null;
-
-function renderTranscripts() {
-  const sidebar = document.getElementById('transcriptSidebar');
-  const meetings = appState.meetings || [];
+function renderModalDebriefHistory() {
+  const container = document.getElementById('modalDebriefList');
+  if (!container) return;
   
+  const l = appState.leads[currentLeadIndex];
+  if (!l) return;
+  
+  const meetings = l.meetings || [];
   if (meetings.length === 0) {
-    sidebar.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px;">No transcripts yet.</div>';
-    document.getElementById('transcriptOutput').textContent = 'Select a meeting from the left panel to review its raw transcript details.';
+    container.innerHTML = `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No AI debriefs recorded for this client yet. Start recording above to qualify goals and auto-generate checklists.</div>`;
     return;
   }
   
-  sidebar.innerHTML = meetings.map(m => `
-    <div class="trans-sidebar-item ${activeTranscriptId === m.id ? 'active' : ''}" onclick="selectTranscript(${m.id})">
-      <div class="trans-title">${m.label}</div>
-      <div class="trans-date">${new Date(m.date).toLocaleDateString('en-NZ')}</div>
+  container.innerHTML = meetings.map((m, idx) => `
+    <div class="debrief-item">
+      <div class="debrief-header">
+        <span class="debrief-title">${m.label || 'Debrief'}</span>
+        <span class="debrief-date">${new Date(m.date).toLocaleDateString('en-NZ')} (${m.duration || '00:00'})</span>
+      </div>
+      ${m.summary ? `<div class="debrief-summary" style="margin-bottom:10px;">${m.summary}</div>` : ''}
+      
+      ${m.tasks && m.tasks.length > 0 ? `
+        <div class="debrief-tasks" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: var(--radius-xs); border: 1px solid var(--border);">
+          <div style="font-size: 11px; font-weight:700; color:var(--gold); text-transform:uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Tasks Generated</div>
+          ${m.tasks.map((t, tIdx) => `
+            <div class="checklist-item" style="display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+              <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleClientTask(${idx}, ${tIdx})" style="cursor:pointer; transform: scale(1.05);">
+              <span style="font-size:12px; color:${t.done ? 'var(--muted)' : 'var(--white)'}; text-decoration:${t.done ? 'line-through' : 'none'};">${t.task}</span>
+              <span class="badge cat-${(t.category||'followup').toLowerCase()}" style="font-size:8px; padding: 2px 4px; margin-left: auto;">${t.category}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-ghost" style="padding: 2px 8px; font-size: 11px;" onclick="toggleDebriefTranscript(${idx})">View Transcript</button>
+        <button class="btn btn-red" style="padding: 2px 8px; font-size: 11px; border: none; background: rgba(230, 57, 70, 0.1); color: var(--red);" onclick="deleteClientDebrief(${idx})">Delete</button>
+      </div>
+      <div id="debriefTransBox_${idx}" class="debrief-transcript-box" style="display:none; margin-top: 8px;">${m.transcript || 'No transcript text available.'}</div>
     </div>
   `).join('');
-  
-  if (activeTranscriptId) {
-    const selected = meetings.find(m => m.id === activeTranscriptId);
-    if (selected) {
-      document.getElementById('transcriptOutput').innerHTML = `
-        <div style="font-weight:700; color:var(--white); font-size:15px; margin-bottom:10px;">${selected.label}</div>
-        <div style="font-size:12px; color:var(--gold); margin-bottom:16px;">Date: ${new Date(selected.date).toLocaleString('en-NZ')}</div>
-        <div style="white-space:pre-wrap; font-family:inherit;">${selected.transcript || "No transcript text available."}</div>
-        <button class="btn btn-red" style="margin-top:20px; font-size:12px;" onclick="moveMeetingToDustbin(${selected.id})">Move Meeting to Dustbin</button>
-      `;
+}
+
+function toggleDebriefTranscript(idx) {
+  const box = document.getElementById(`debriefTransBox_${idx}`);
+  if (box) {
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function deleteClientDebrief(idx) {
+  if (confirm("Are you sure you want to delete this debrief? This will move it to the dustbin.")) {
+    const l = appState.leads[currentLeadIndex];
+    if (l && l.meetings) {
+      const m = l.meetings[idx];
+      const dustbinItem = {
+        id: Date.now(),
+        deletedAt: new Date().toISOString(),
+        type: 'client-meeting',
+        clientEmail: l.email,
+        data: m
+      };
+      appState.dustbin.push(dustbinItem);
+      l.meetings.splice(idx, 1);
+      saveState();
+      renderModalDebriefHistory();
+      renderAll();
     }
   }
 }
 
-function selectTranscript(id) {
-  activeTranscriptId = id;
-  renderTranscripts();
+function toggleClientTask(meetingIdx, taskIdx) {
+  const l = appState.leads[currentLeadIndex];
+  if (l && l.meetings && l.meetings[meetingIdx]) {
+    const meeting = l.meetings[meetingIdx];
+    if (meeting.tasks && meeting.tasks[taskIdx]) {
+      meeting.tasks[taskIdx].done = !meeting.tasks[taskIdx].done;
+      saveState();
+      renderModalDebriefHistory();
+    }
+  }
 }
 
 // ===== EMAIL LISTS MODULE =====
@@ -2932,6 +3084,12 @@ function moveLeadToDustbin(idx) {
   };
   
   appState.dustbin.push(dustbinItem);
+  
+  // Track in deleted blocklist to prevent sheets re-sync from importing again
+  if (!appState.deletedLeads) appState.deletedLeads = [];
+  if (l.email) appState.deletedLeads.push(l.email.toLowerCase());
+  if (l.phone) appState.deletedLeads.push(l.phone);
+  
   appState.leads.splice(idx, 1);
   saveState();
   renderAll();
@@ -2982,6 +3140,7 @@ function renderDustbin() {
     let label = '';
     if (item.type === 'lead') label = `Lead: ${item.data.name}`;
     else if (item.type === 'meeting') label = `Meeting: ${item.data.label}`;
+    else if (item.type === 'client-meeting') label = `Debrief: ${item.data.label} (Client: ${item.clientEmail || 'Unknown'})`;
     
     return `
       <div class="dustbin-item">
@@ -3004,8 +3163,26 @@ function restoreDustbinItem(idx) {
   
   if (item.type === 'lead') {
     appState.leads.unshift(item.data);
+    // Remove from deleted blocklist
+    if (appState.deletedLeads) {
+      if (item.data.email) {
+        appState.deletedLeads = appState.deletedLeads.filter(email => email !== item.data.email.toLowerCase());
+      }
+      if (item.data.phone) {
+        appState.deletedLeads = appState.deletedLeads.filter(phone => phone !== item.data.phone);
+      }
+    }
   } else if (item.type === 'meeting') {
     appState.meetings.unshift(item.data);
+  } else if (item.type === 'client-meeting') {
+    const client = appState.leads.find(l => l.email === item.clientEmail);
+    if (client) {
+      if (!client.meetings) client.meetings = [];
+      client.meetings.unshift(item.data);
+    } else {
+      alert("Cannot restore debrief: Client not found. Please restore the client lead first.");
+      return;
+    }
   }
   
   appState.dustbin.splice(idx, 1);
@@ -3072,8 +3249,8 @@ function proceedLeadStage(idx) {
   const l = appState.leads[idx];
   if (!l) return;
   
-  const stages = ['new', 'contacted', 'qualified', 'finance-pending', 'valuation', 'gameplan', 'sold', 'reactivation'];
-  const currentIdx = stages.indexOf(l.stage || 'new');
+  const stages = ['qualified', 'finance-pending', 'valuation', 'gameplan', 'sold', 'reactivation'];
+  const currentIdx = stages.indexOf(l.stage || 'qualified');
   
   if (currentIdx !== -1 && currentIdx < stages.length - 2) {
     l.stage = stages[currentIdx + 1];
@@ -3195,9 +3372,6 @@ function simulateCallNoAnswer() {
     text: `${emailText} Booking Link: ${bookingUrl}`,
     timestamp: new Date().toISOString()
   });
-  
-  // Move to contacted stage
-  l.stage = 'contacted';
   
   saveState();
   renderAll();

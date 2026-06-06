@@ -238,6 +238,11 @@
         </div>
 
         <div class="form-group">
+          <label for="depositAmount">Savings or KiwiSaver total amount</label>
+          <input type="text" id="depositAmount" required placeholder="e.g. $15,000 or $30k">
+        </div>
+
+        <div class="form-group">
           <label for="targetArea">What area in Hamilton are you looking to buy in?</label>
           <input type="text" id="targetArea" required placeholder="e.g. Norton, Frankton, Dinsdale">
         </div>
@@ -309,6 +314,7 @@
         employment: document.getElementById('employmentStatus').value,
         income: document.getElementById('householdIncome').value,
         deposit: document.getElementById('depositSaved').value,
+        depositAmount: document.getElementById('depositAmount').value.trim(),
         area: document.getElementById('targetArea').value.trim(),
         timeFrame: document.getElementById('purchaseTime').value,
         timestamp: new Date().toISOString(),
