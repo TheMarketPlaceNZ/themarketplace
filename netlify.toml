@@ -1,2 +1,17 @@
 [build]
   publish = "."
+
+[[redirects]]
+  from = "/checkin"
+  to = "/sopo-studio/checkin.html"
+  status = 302
+
+[[redirects]]
+  from = "/book"
+  to = "/sopo-studio/book_meeting.html"
+  status = 302
+
+[[redirects]]
+  from = "/sopo"
+  to = "/sopo-studio/index.html"
+  status = 302
