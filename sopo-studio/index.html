@@ -1532,7 +1532,7 @@ function initApp() {
   // Update invite link span with current hostname
   const inviteLinkSpan = document.getElementById('inviteLinkSpan');
   if (inviteLinkSpan) {
-    inviteLinkSpan.textContent = window.location.origin + '/checkin.html';
+    inviteLinkSpan.textContent = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/checkin.html';
   }
   
   // Auto sync sheets on load silently
