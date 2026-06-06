@@ -176,7 +176,7 @@
         </div>
         <div style="font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 2px;">Sopo FuiFui</div>
         <div style="font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 24px;">Wanna give it a go?</div>
-        <h1>Open Home Check-in</h1>
+        <h1>Check-in</h1>
         <p class="intro">Please fill out this quick form. It takes two minutes. This <strong>helps us</strong> see if we can <strong>get you into your new home</strong>.</p>
       </header>
       
@@ -264,8 +264,7 @@
         </svg>
       </div>
       <h2 class="success-title">Thank You</h2>
-      <p class="success-text">Sopo has received your details. We will check your options. Sopo will contact you within two days.</p>
-      <p class="success-text" style="font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--gold);">"Don't think it is possible to own a home? Wanna give it a go?"</p>
+      <p class="success-text">Sopo has received your details. Redirecting to schedule your meeting now...</p>
     </div>
   </div>
   
@@ -319,6 +318,9 @@
       // Submit to Sopo check in webhook
       const webhookUrl = "https://hook.us2.make.com/w5edk3kewavnrc9l0k05tj60ekvbbhwu";
       
+      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('successSection').style.display = 'block';
+      
       fetch(webhookUrl, {
         method: "POST",
         headers: {
@@ -328,13 +330,16 @@
       })
       .then(response => {
         console.log("Check in lead sent successfully");
+        setTimeout(() => {
+          window.location.href = `book_meeting.html?email=${encodeURIComponent(payload.email)}&name=${encodeURIComponent(payload.name)}`;
+        }, 1200);
       })
       .catch(error => {
         console.warn("Lead buffered locally:", error.message);
+        setTimeout(() => {
+          window.location.href = `book_meeting.html?email=${encodeURIComponent(payload.email)}&name=${encodeURIComponent(payload.name)}`;
+        }, 1200);
       });
-      
-      document.getElementById('formSection').style.display = 'none';
-      document.getElementById('successSection').style.display = 'block';
     }
   </script>
 </body>

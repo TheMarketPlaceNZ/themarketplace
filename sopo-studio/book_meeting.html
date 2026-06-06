@@ -338,7 +338,73 @@
       const nextMonday = new Date();
       nextMonday.setDate(today.getDate() + ((1 + 7 - today.getDay()) % 7 || 7));
       document.getElementById('bookingDate').value = nextMonday.toISOString().split('T')[0];
+      
+      // Setup slot availability update listeners
+      document.getElementById('bookingDate').addEventListener('change', updateAvailableSlots);
+      
+      updateAvailableSlots();
     });
+
+    function updateAvailableSlots() {
+      const dateVal = document.getElementById('bookingDate').value;
+      const select = document.getElementById('bookingTime');
+      if (!dateVal || !select) return;
+      
+      loadState();
+      
+      // Default slots Sopo offers
+      const slots = [
+        { value: "09:00", label: "09:00 AM" },
+        { value: "10:30", label: "10:30 AM" },
+        { value: "13:00", label: "01:00 PM" },
+        { value: "15:30", label: "03:30 PM" },
+        { value: "17:00", label: "05:00 PM" }
+      ];
+      
+      select.innerHTML = '<option value="">Choose a slot</option>';
+      
+      slots.forEach(slot => {
+        const slotStart = new Date(`${dateVal}T${slot.value}:00`);
+        const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1h slot length
+        
+        let isBlocked = false;
+        
+        // 1. Check personal calendar blocks
+        const blocks = appState.calendarBlocks || [];
+        blocks.forEach(b => {
+          if (b && b.datetime) {
+            const bStart = new Date(b.datetime);
+            const bEnd = b.endDatetime ? new Date(b.endDatetime) : new Date(bStart.getTime() + 60 * 60 * 1000); // 1h default
+            
+            // Overlap check
+            if (slotStart < bEnd && slotEnd > bStart) {
+              isBlocked = true;
+            }
+          }
+        });
+        
+        // 2. Check client bookings
+        const leads = appState.leads || [];
+        leads.forEach(l => {
+          if (l && l.hasBooked && l.bookingTime) {
+            const bStart = new Date(l.bookingTime);
+            const bEnd = l.bookingEndTime ? new Date(l.bookingEndTime) : new Date(bStart.getTime() + 60 * 60 * 1000); // 1h default
+            
+            if (slotStart < bEnd && slotEnd > bStart) {
+              isBlocked = true;
+            }
+          }
+        });
+        
+        const opt = document.createElement('option');
+        opt.value = slot.value;
+        opt.textContent = slot.label + (isBlocked ? ' (Unavailable)' : '');
+        if (isBlocked) {
+          opt.disabled = true;
+        }
+        select.appendChild(opt);
+      });
+    }
 
     function lookupClient() {
       const email = document.getElementById('clientEmail').value.trim().toLowerCase();
