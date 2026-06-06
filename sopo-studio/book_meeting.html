@@ -473,7 +473,7 @@
       saveState();
 
       // Submit booking details to Make.com Webhook
-      const webhookUrl = localStorage.getItem('sopo_bookingWebhookUrl') || "https://hook.us2.make.com/placeholder_sopo_booking";
+      const webhookUrl = localStorage.getItem('sopo_bookingWebhookUrl') || "https://hook.us2.make.com/tmsdp1hmap8purop15v2um1f3rcmum2c";
       const payload = {
         name: name,
         email: email,
@@ -481,6 +481,8 @@
         meetingType: preference,
         allocatedDate: dateVal,
         allocatedTime: timeVal,
+        date: dateVal,
+        time: timeVal,
         source: 'Client Booking'
       };
 
