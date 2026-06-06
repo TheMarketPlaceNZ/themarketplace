@@ -953,9 +953,13 @@ body {
             <!-- Time blocking form for selected day -->
             <div class="card" style="margin-bottom:16px; padding:16px;">
               <div class="section-title" style="font-size: 10px; margin-bottom: 8px;">Block Time Slot</div>
-              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items: center;">
                 <input type="text" class="settings-input" id="blockTimeLabel" placeholder="Reason (e.g. Dentist, lunch)" style="flex:2; min-width:180px;">
-                <input type="time" class="settings-input" id="blockTimeHour" style="flex:1; min-width:80px;">
+                <div style="display: flex; gap: 6px; align-items: center; flex: 1.5; min-width: 180px;">
+                  <input type="time" class="settings-input" id="blockTimeStartHour" title="Start Time" style="flex:1;">
+                  <span style="font-size:11px; color:var(--muted)">to</span>
+                  <input type="time" class="settings-input" id="blockTimeEndHour" title="End Time" style="flex:1;">
+                </div>
                 <button class="btn btn-gold" onclick="addCalendarBlockForSelectedDay()">Block Slot</button>
               </div>
             </div>
@@ -1188,14 +1192,20 @@ body {
           <!-- Filled dynamically -->
         </select>
       </div>
-      <div class="settings-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
+      <div class="settings-row" style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+        <div style="grid-column: 1 / span 2;">
           <div class="settings-label">Date</div>
           <input class="settings-input" type="date" id="quickBookingDate">
         </div>
+      </div>
+      <div class="settings-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
-          <div class="settings-label">Time</div>
+          <div class="settings-label">Start Time</div>
           <input class="settings-input" type="time" id="quickBookingTime">
+        </div>
+        <div>
+          <div class="settings-label">End Time (Optional)</div>
+          <input class="settings-input" type="time" id="quickBookingEndTime">
         </div>
       </div>
       <div class="settings-row">
@@ -1214,14 +1224,20 @@ body {
         <div class="settings-label">Block Reason</div>
         <input type="text" class="settings-input" id="quickBlockLabel" placeholder="e.g. Lunch, Dentist, Blake's lessons">
       </div>
-      <div class="settings-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
+      <div class="settings-row" style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+        <div style="grid-column: 1 / span 2;">
           <div class="settings-label">Date</div>
           <input class="settings-input" type="date" id="quickBlockDate">
         </div>
+      </div>
+      <div class="settings-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div>
-          <div class="settings-label">Time</div>
+          <div class="settings-label">Start Time</div>
           <input class="settings-input" type="time" id="quickBlockTime">
+        </div>
+        <div>
+          <div class="settings-label">End Time (Optional)</div>
+          <input class="settings-input" type="time" id="quickBlockEndTime">
         </div>
       </div>
       <div class="settings-row">
@@ -2253,6 +2269,7 @@ function renderDaySchedules(date) {
         events.push({
           type: 'lead',
           date: d,
+          endDate: l.bookingEndTime ? new Date(l.bookingEndTime) : null,
           title: `Strategy Call: ${l.name}`,
           subtitle: `Hamilton Area: ${l.area || 'General'} · Deposit: ${l.deposit || 'N/A'}`,
           badgeText: l.stage === 'qualified' ? 'Pre-Broker' : l.stage === 'finance-pending' ? 'Finance Pending' : l.stage === 'valuation' ? 'Valuation' : 'Gameplan',
@@ -2277,6 +2294,7 @@ function renderDaySchedules(date) {
         events.push({
           type: 'block',
           date: d,
+          endDate: b.endDatetime ? new Date(b.endDatetime) : null,
           title: b.label || 'Blocked Time',
           subtitle: `Personal Time`,
           badgeText: b.theme === 'green' ? 'Holiday / Event' : b.theme === 'yellow' ? 'Social Block' : b.theme === 'orange' ? 'Personal Block' : 'Personal Block',
@@ -2291,8 +2309,20 @@ function renderDaySchedules(date) {
   // Group events by hour (0 to 23)
   const eventsByHour = Array.from({ length: 24 }, () => []);
   events.forEach(ev => {
-    const hour = ev.date.getHours();
-    eventsByHour[hour].push(ev);
+    const startHour = ev.date.getHours();
+    let endHour = startHour;
+    if (ev.endDate && !isNaN(ev.endDate.getTime()) && ev.endDate.getDate() === ev.date.getDate()) {
+      const endMins = ev.endDate.getMinutes();
+      endHour = ev.endDate.getHours();
+      if (endMins === 0) {
+        endHour = Math.max(startHour, endHour - 1);
+      }
+    }
+    for (let h = startHour; h <= endHour; h++) {
+      if (h >= 0 && h < 24) {
+        eventsByHour[h].push(ev);
+      }
+    }
   });
   
   // Build timeline HTML
@@ -2305,7 +2335,12 @@ function renderDaySchedules(date) {
     
     const hourEvents = eventsByHour[h];
     const eventsHtml = hourEvents.map(ev => {
-      const timeStr = ev.date.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' });
+      const startStr = ev.date.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' });
+      let displayTime = startStr;
+      if (ev.endDate && !isNaN(ev.endDate.getTime())) {
+        const endStr = ev.endDate.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' });
+        displayTime = `${startStr} - ${endStr}`;
+      }
       const badgeHtml = `<span class="badge ${ev.badgeClass}" style="font-size:8px; padding:2px 6px;">${ev.badgeText}</span>`;
       
       let actionButtons = '';
@@ -2341,7 +2376,7 @@ function renderDaySchedules(date) {
           </div>
           <div class="appt-time" style="font-size:11px; margin-top:4px;">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px; vertical-align:middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            ${timeStr} · ${ev.subtitle}
+            ${displayTime} · ${ev.subtitle}
           </div>
           ${postponeReminder}
           ${actionButtons}
@@ -2377,29 +2412,39 @@ function renderDaySchedules(date) {
 function addCalendarBlockForSelectedDay() {
   const labelInput = document.getElementById('blockTimeLabel').value.trim();
   const label = labelInput || 'Blocked Time';
-  const timeStr = document.getElementById('blockTimeHour').value;
+  const startStr = document.getElementById('blockTimeStartHour').value;
+  const endStr = document.getElementById('blockTimeEndHour').value;
   
-  if (!timeStr) {
-    alert('Please select a time.');
+  if (!startStr) {
+    alert('Please select a start time.');
     return;
   }
   
   const selDate = calendarState.selectedDate || new Date();
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  const blockDate = new Date(selDate.getFullYear(), selDate.getMonth(), selDate.getDate(), hours, minutes);
+  const [sh, sm] = startStr.split(':').map(Number);
+  const blockStart = new Date(selDate.getFullYear(), selDate.getMonth(), selDate.getDate(), sh, sm);
+  
+  let endDatetime = null;
+  if (endStr) {
+    const [eh, em] = endStr.split(':').map(Number);
+    const blockEnd = new Date(selDate.getFullYear(), selDate.getMonth(), selDate.getDate(), eh, em);
+    endDatetime = blockEnd.toISOString();
+  }
   
   if (!appState.calendarBlocks) appState.calendarBlocks = [];
   appState.calendarBlocks.push({
     id: Date.now(),
     label: label,
-    datetime: blockDate.toISOString()
+    datetime: blockStart.toISOString(),
+    endDatetime: endDatetime
   });
   
   saveState();
   renderAll();
   
   document.getElementById('blockTimeLabel').value = '';
-  document.getElementById('blockTimeHour').value = '';
+  document.getElementById('blockTimeStartHour').value = '';
+  document.getElementById('blockTimeEndHour').value = '';
 }
 
 function deleteCalendarBlock(id) {
@@ -2466,14 +2511,28 @@ function saveNewTime() {
   if (type === 'lead') {
     const idx = parseInt(idOrIndex, 10);
     if (appState.leads[idx]) {
+      const oldStart = new Date(appState.leads[idx].bookingTime);
+      const oldEnd = appState.leads[idx].bookingEndTime ? new Date(appState.leads[idx].bookingEndTime) : null;
+      
       appState.leads[idx].bookingTime = newDate.toISOString();
+      if (oldEnd && !isNaN(oldEnd.getTime())) {
+        const duration = oldEnd.getTime() - oldStart.getTime();
+        appState.leads[idx].bookingEndTime = new Date(newDate.getTime() + duration).toISOString();
+      }
       appState.leads[idx].postponeReason = reason;
     }
   } else if (type === 'block') {
     const blockId = parseInt(idOrIndex, 10);
     const block = appState.calendarBlocks.find(b => b.id === blockId);
     if (block) {
+      const oldStart = new Date(block.datetime);
+      const oldEnd = block.endDatetime ? new Date(block.endDatetime) : null;
+      
       block.datetime = newDate.toISOString();
+      if (oldEnd && !isNaN(oldEnd.getTime())) {
+        const duration = oldEnd.getTime() - oldStart.getTime();
+        block.endDatetime = new Date(newDate.getTime() + duration).toISOString();
+      }
       block.label = reason || 'Blocked Time';
     }
   }
@@ -3224,18 +3283,25 @@ function submitQuickClientBooking() {
   const email = document.getElementById('quickBookingLeadSelect').value;
   const dateStr = document.getElementById('quickBookingDate').value;
   const timeStr = document.getElementById('quickBookingTime').value;
+  const endTimeStr = document.getElementById('quickBookingEndTime').value;
   const type = document.getElementById('quickBookingType').value;
   
   if (!dateStr || !timeStr) {
-    alert('Please enter both date and time.');
+    alert('Please enter both date and start time.');
     return;
   }
   
   const dateTime = `${dateStr}T${timeStr}:00`;
+  let endDateTimeISO = null;
+  if (endTimeStr) {
+    endDateTimeISO = new Date(`${dateStr}T${endTimeStr}:00`).toISOString();
+  }
+  
   const l = appState.leads.find(x => x.email === email);
   if (l) {
     l.hasBooked = true;
     l.bookingTime = new Date(dateTime).toISOString();
+    l.bookingEndTime = endDateTimeISO;
     l.meetingType = type;
     l.stage = 'qualified'; // move to Pre-Broker
     
@@ -3249,20 +3315,26 @@ function submitQuickTimeBlock() {
   const label = document.getElementById('quickBlockLabel').value.trim() || 'Blocked Time';
   const dateStr = document.getElementById('quickBlockDate').value;
   const timeStr = document.getElementById('quickBlockTime').value;
+  const endTimeStr = document.getElementById('quickBlockEndTime').value;
   const theme = document.getElementById('quickBlockColor').value;
   
   if (!dateStr || !timeStr) {
-    alert('Please enter both date and time.');
+    alert('Please enter both date and start time.');
     return;
   }
   
   const dateTime = `${dateStr}T${timeStr}:00`;
+  let endDateTimeISO = null;
+  if (endTimeStr) {
+    endDateTimeISO = new Date(`${dateStr}T${endTimeStr}:00`).toISOString();
+  }
   
   if (!appState.calendarBlocks) appState.calendarBlocks = [];
   appState.calendarBlocks.push({
     id: Date.now(),
     label: label,
     datetime: new Date(dateTime).toISOString(),
+    endDatetime: endDateTimeISO,
     theme: theme
   });
   
@@ -3273,6 +3345,7 @@ function submitQuickTimeBlock() {
   // Clear inputs
   document.getElementById('quickBlockLabel').value = '';
   document.getElementById('quickBlockTime').value = '';
+  document.getElementById('quickBlockEndTime').value = '';
 }
 
 // ===== REGISTER PWA SERVICE WORKER =====
