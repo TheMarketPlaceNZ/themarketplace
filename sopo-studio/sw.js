@@ -1,8 +1,10 @@
-const CACHE_NAME = 'sopo-studio-v11';
+const CACHE_NAME = 'sopo-studio-v13';
 const ASSETS = [
   'index.html',
   'checkin.html',
   'receive_lead.html',
+  'book_meeting.html',
+  'meetings.html',
   'manifest.json',
   'icon-192.png',
   'icon-512.png'

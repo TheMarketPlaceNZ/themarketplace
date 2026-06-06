@@ -468,11 +468,12 @@
       client.hasBooked = true;
       client.bookingTime = dateObj.toISOString();
       client.meetingType = preference;
+      client.stage = 'qualified'; // Force stage to Pre-broker
       
       saveState();
 
       // Submit booking details to Make.com Webhook
-      const webhookUrl = "https://hook.us2.make.com/placeholder_sopo_booking";
+      const webhookUrl = localStorage.getItem('sopo_bookingWebhookUrl') || "https://hook.us2.make.com/placeholder_sopo_booking";
       const payload = {
         name: name,
         email: email,
