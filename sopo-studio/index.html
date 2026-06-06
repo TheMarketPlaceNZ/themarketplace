@@ -203,6 +203,7 @@ body {
   height: 100%;
   overflow: hidden;
   position: relative;
+  background: var(--navy);
 }
 
 /* Header bar */
@@ -234,6 +235,7 @@ body {
   flex: 1;
   overflow: hidden;
   position: relative;
+  background: var(--navy-mid);
 }
 .panel-view {
   position: absolute;
@@ -247,8 +249,8 @@ body {
 
 /* ===== COMMON STYLES ===== */
 .card {
-  background: var(--glass-card);
-  border: 1px solid var(--border);
+  background: #141f2d;
+  border: 1.5px solid var(--border-gold);
   border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 16px;
@@ -548,8 +550,8 @@ body {
 .tracker-kanban-column {
   display: flex;
   flex-direction: column;
-  background: #0f2b5c; /* Rich premium royal blue background */
-  border: 1.5px solid rgba(59, 130, 246, 0.35); /* Subtle blue border */
+  background: var(--navy); /* Match left sidebar */
+  border: 1.2px solid var(--border-gold); /* Gold border */
   border-radius: var(--radius);
   padding: 16px;
   max-height: 100%;
@@ -610,8 +612,8 @@ body {
   }
 }
 .calendar-month-widget {
-  background: var(--glass-card);
-  border: 1px solid var(--border);
+  background: #141f2d;
+  border: 1.5px solid var(--border-gold);
   border-radius: var(--radius);
   padding: 20px;
   display: flex;
@@ -671,28 +673,35 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
-  color: var(--white); /* White for day numbers */
+  font-weight: 600;
+  color: var(--white);
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
   user-select: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
 }
 .calendar-widget-day:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--gold);
 }
 .calendar-widget-day.other-month {
-  color: rgba(255, 255, 255, 0.15); /* Muted grey for other month days */
+  color: rgba(255, 255, 255, 0.2);
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.03);
 }
 .calendar-widget-day.today {
-  border: 2px solid #0066cc; /* Royal blue border for today */
-  color: var(--white);
+  border: 2px solid var(--gold);
+  color: var(--gold-bright);
+  background: var(--gold-dim);
 }
 .calendar-widget-day.selected {
-  background: #0066cc !important; /* Royal blue background for selected day */
-  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--gold), var(--gold-bright)) !important;
+  color: var(--navy) !important;
+  border-color: var(--gold) !important;
   font-weight: 700;
 }
 .calendar-widget-day.has-events::after {
@@ -702,10 +711,10 @@ body {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #0066cc; /* Royal blue event indicator dot */
+  background: var(--gold);
 }
 .calendar-widget-day.selected.has-events::after {
-  background: #ffffff; /* White event indicator dot on selected day */
+  background: var(--navy);
 }
 .calendar-day-schedules {
   display: flex;
@@ -1618,7 +1627,7 @@ function renderTracker() {
       if (stage.key === 'qualified') {
         actionButtons = `
           <div style="display: flex; gap: 6px; margin-top: 10px;">
-            <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green; padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'qualified')">Approve</button>
+            <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green); padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'qualified')">Approve</button>
             <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx})">Deny</button>
           </div>
         `;
@@ -2330,7 +2339,7 @@ function renderDaySchedules(date) {
             <div class="appt-title" style="font-size:13px; font-weight:700; color:var(--white);">${ev.title}</div>
             ${badgeHtml}
           </div>
-          <div class="appt-time" style="font-size:11px; ${timeStyle} margin-top:4px;">
+          <div class="appt-time" style="font-size:11px; margin-top:4px;">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px; vertical-align:middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             ${timeStr} · ${ev.subtitle}
           </div>
