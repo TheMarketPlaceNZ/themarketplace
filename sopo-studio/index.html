@@ -834,7 +834,12 @@ body {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </div>
       <div class="top-title" id="headerTitle">Leads Database</div>
-      <div class="top-actions">
+      <div class="top-actions" style="display:flex;align-items:center;gap:16px;">
+        <!-- Sync Status Indicator -->
+        <div id="syncStatusIndicator" style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);">
+          <span id="syncStatusDot" style="width:6px;height:6px;border-radius:50%;background:#10B981;display:inline-block;transition:background 0.3s;"></span>
+          <span id="syncStatusText">Synced</span>
+        </div>
         <span style="font-size:12px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:6px">
           <span style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)"></span>
           Active
@@ -1486,6 +1491,14 @@ function initApp() {
   sessionStorage.setItem('sopo_authed', '1');
   loadState();
   renderAll();
+  
+  // Auto sync sheets on load silently
+  syncLeads(true);
+  
+  // Schedule background sync every 5 minutes (300,000 milliseconds)
+  setInterval(() => {
+    syncLeads(true);
+  }, 300000);
 }
 
 function renderAll() {
@@ -1981,15 +1994,29 @@ function closeLeadModal() { document.getElementById('leadModal').classList.remov
 document.getElementById('leadModal').addEventListener('click', e => { if (e.target === document.getElementById('leadModal')) closeLeadModal(); });
 
 // ===== SYNC LEADS FROM GOOGLE SHEETS =====
-async function syncLeads() {
+async function syncLeads(silent = false) {
   const url = getSetting('sheetUrl');
+  const dot = document.getElementById('syncStatusDot');
+  const text = document.getElementById('syncStatusText');
+  
   if (!url) {
-    alert('Please add your Google Sheets CSV URL in Settings first.');
-    openSettingsModal();
+    if (!silent) {
+      alert('Please add your Google Sheets CSV URL in Settings first.');
+      openSettingsModal();
+    }
+    if (text) text.textContent = 'No Sheet URL';
+    if (dot) dot.style.background = '#e63946'; // Red for error
     return;
   }
+  
+  if (dot) {
+    dot.style.background = '#F59E0B'; // Orange for syncing
+    if (text) text.textContent = 'Syncing...';
+  }
+  
   try {
     const res = await fetch(url);
+    if (!res.ok) throw new Error('Fetch failed');
     const csv = await res.text();
     const rows = csv.trim().split('\n').slice(1);
     const newLeads = rows.map(row => {
@@ -2005,13 +2032,42 @@ async function syncLeads() {
         score: null
       };
     }).map(l => ({ ...l, score: scoreLead(l) }));
-    appState.leads = newLeads;
+    
+    // Merge new leads with existing appState leads to preserve stages/bookings
+    const mergedLeads = newLeads.map(newL => {
+      const existing = appState.leads.find(oldL => oldL.email === newL.email || (oldL.phone && oldL.phone === newL.phone));
+      if (existing) {
+        return {
+          ...newL,
+          stage: existing.stage || newL.stage,
+          score: existing.score || newL.score,
+          hasBooked: existing.hasBooked || false,
+          bookingTime: existing.bookingTime || null,
+          meetingType: existing.meetingType || null,
+          postponeReason: existing.postponeReason || null
+        };
+      }
+      return newL;
+    });
+    
+    appState.leads = mergedLeads;
     saveState();
     renderAll();
-    alert(`Synced ${newLeads.length} leads successfully.`);
+    
+    const timeStr = new Date().toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' });
+    if (text) text.textContent = `Synced at ${timeStr}`;
+    if (dot) dot.style.background = '#10B981'; // Green for success
+    
+    if (!silent) {
+      alert(`Synced ${newLeads.length} leads successfully.`);
+    }
   } catch(e) {
     console.error(e);
-    alert('Sync failed. Make sure your Google Sheets URL is published to the web as CSV.');
+    if (text) text.textContent = 'Sync Failed';
+    if (dot) dot.style.background = '#e63946'; // Red for error
+    if (!silent) {
+      alert('Sync failed. Make sure your Google Sheets URL is published to the web as CSV.');
+    }
   }
 }
 
