@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sopo-studio-v7';
+const CACHE_NAME = 'sopo-studio-v8';
 const ASSETS = [
   'index.html',
   'checkin.html',
