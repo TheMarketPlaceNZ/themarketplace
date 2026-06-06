@@ -269,7 +269,7 @@
         </svg>
       </div>
       <h2 class="success-title">Thank You</h2>
-      <p class="success-text">Sopo has received your details. Redirecting to schedule your meeting now...</p>
+      <p class="success-text">Sopo has received your details. We have emailed you a calendar link, please check your email to book your strategy slot.</p>
     </div>
   </div>
   
@@ -336,15 +336,9 @@
       })
       .then(response => {
         console.log("Check in lead sent successfully");
-        setTimeout(() => {
-          window.location.href = `book_meeting.html?email=${encodeURIComponent(payload.email)}&name=${encodeURIComponent(payload.name)}`;
-        }, 1200);
       })
       .catch(error => {
         console.warn("Lead buffered locally:", error.message);
-        setTimeout(() => {
-          window.location.href = `book_meeting.html?email=${encodeURIComponent(payload.email)}&name=${encodeURIComponent(payload.name)}`;
-        }, 1200);
       });
     }
   </script>
