@@ -1497,15 +1497,18 @@ function loadState() {
       if (old) {
         appState = { ...appState, ...JSON.parse(old) };
       } else {
-        appState.leads = DEFAULT_LEADS;
+        // First ever install — seed demo leads once only
+        if (!localStorage.getItem('sopo_seeded')) {
+          appState.leads = DEFAULT_LEADS;
+          localStorage.setItem('sopo_seeded', 'true');
+        }
         appState.calendarBlocks = [];
       }
     }
   } catch(e) {}
-  
-  if (!appState.leads || appState.leads.length === 0) {
-    appState.leads = DEFAULT_LEADS;
-  }
+
+  // Removed: forced re-seed when leads is empty.
+  // Leads should stay empty if Sopo has deleted them all.
   if (!appState.calendarBlocks || appState.calendarBlocks.length === 0) {
     // Seed default blocks from the mockup for Saturday, June 6, 2026
     appState.calendarBlocks = [
