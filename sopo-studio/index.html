@@ -1140,6 +1140,11 @@ body {
       <div class="settings-hint">The Make.com webhook URL that processes booking confirmations and emails.</div>
     </div>
     <div class="settings-row">
+      <div class="settings-label">Lead Status Webhook URL</div>
+      <input class="settings-input" id="settingsStatusWebhookUrl" placeholder="https://hook.us2.make.com/...">
+      <div class="settings-hint">The Make.com webhook URL for the Sopo Lead Status Updater scenario. Marks deleted and email-list leads in the Google Sheet so they never re-appear on any device.</div>
+    </div>
+    <div class="settings-row">
       <div class="settings-label">Change Passcode</div>
       <input class="settings-input" id="settingsPasscode" type="password" placeholder="Leave blank to keep current">
     </div>
@@ -1953,6 +1958,7 @@ function renderLeads() {
       <div class="lead-actions-row" style="margin-top: 10px;">
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); smsLead('${l.phone}')">SMS</button>
+        <button class="lead-act-btn" onclick="event.stopPropagation(); moveLeadToEmailList(${appState.leads.indexOf(l)})" title="Graduate to email list" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Email List</button>
         <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
       </div>
     </div>
@@ -2181,6 +2187,9 @@ async function syncLeads(silent = false) {
     const parsedNewLeads = rows.map(row => {
       const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
       const hasBooking = cols[12] ? true : false;
+      const sheetStatus = (cols[14] || '').toLowerCase().trim();
+      // Skip rows marked as deleted or email-list in the sheet (cross-device permanent filter)
+      if (sheetStatus === 'deleted' || sheetStatus === 'email-list') return null;
       return {
         name: cols[0] || '', email: cols[1] || '', phone: cols[2] || '',
         firstHome: cols[3] || '', employment: cols[4] || '',
@@ -2195,9 +2204,9 @@ async function syncLeads(silent = false) {
         bookingTime: cols[12] || null,
         meetingType: cols[13] || null
       };
-    }).map(l => ({ ...l, score: scoreLead(l) }));
+    }).filter(l => l !== null).map(l => ({ ...l, score: scoreLead(l) }));
     
-    // Filter out deleted leads to prevent them from re-importing
+    // Also filter by local deleted leads blocklist (belt and braces)
     const filteredNewLeads = parsedNewLeads.filter(newL => {
       const email = (newL.email || '').toLowerCase();
       const phone = newL.phone || '';
@@ -3089,6 +3098,16 @@ function sweepDustbin() {
   }
 }
 
+function fireStatusWebhook(email, status) {
+  const webhookUrl = getSetting('statusWebhookUrl');
+  if (!webhookUrl || !email) return;
+  fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.toLowerCase(), status: status })
+  }).catch(() => {}); // Silent fail — local action always proceeds
+}
+
 function moveLeadToDustbin(idx) {
   const l = appState.leads[idx];
   if (!l) return;
@@ -3102,7 +3121,27 @@ function moveLeadToDustbin(idx) {
   
   appState.dustbin.push(dustbinItem);
   
-  // Track in deleted blocklist to prevent sheets re-sync from importing again
+  // Track in local deleted blocklist
+  if (!appState.deletedLeads) appState.deletedLeads = [];
+  if (l.email) appState.deletedLeads.push(l.email.toLowerCase());
+  if (l.phone) appState.deletedLeads.push(l.phone);
+  
+  // Mark as deleted in Google Sheet (cross-device permanent fix)
+  fireStatusWebhook(l.email, 'deleted');
+  
+  appState.leads.splice(idx, 1);
+  saveState();
+  renderAll();
+}
+
+function moveLeadToEmailList(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  // Mark as email-list in Google Sheet — stays off the app on any device
+  fireStatusWebhook(l.email, 'email-list');
+  
+  // Track in local deleted blocklist so it doesn't re-appear on this device either
   if (!appState.deletedLeads) appState.deletedLeads = [];
   if (l.email) appState.deletedLeads.push(l.email.toLowerCase());
   if (l.phone) appState.deletedLeads.push(l.phone);
@@ -3110,6 +3149,13 @@ function moveLeadToDustbin(idx) {
   appState.leads.splice(idx, 1);
   saveState();
   renderAll();
+  
+  // Show confirmation
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#C9A96E;color:#0d1621;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999;';
+  toast.textContent = (l.name || 'Lead') + ' moved to email list.';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
 
 function moveMeetingToDustbin(id) {
@@ -3237,6 +3283,7 @@ function openSettingsModal() {
   document.getElementById('settingsApiKey').value = getSetting('apiKey');
   document.getElementById('settingsSheetUrl').value = getSetting('sheetUrl');
   document.getElementById('settingsBookingWebhookUrl').value = getSetting('bookingWebhookUrl');
+  document.getElementById('settingsStatusWebhookUrl').value = getSetting('statusWebhookUrl');
   document.getElementById('settingsModal').classList.add('open');
 }
 function closeModal(id) {
@@ -3252,11 +3299,13 @@ function saveSettings() {
   const apiKey = document.getElementById('settingsApiKey').value.trim();
   const sheetUrl = document.getElementById('settingsSheetUrl').value.trim();
   const bookingWebhookUrl = document.getElementById('settingsBookingWebhookUrl').value.trim();
+  const statusWebhookUrl = document.getElementById('settingsStatusWebhookUrl').value.trim();
   const passcode = document.getElementById('settingsPasscode').value.trim();
   
   if (apiKey) setSetting('apiKey', apiKey);
   if (sheetUrl) setSetting('sheetUrl', sheetUrl);
   if (bookingWebhookUrl) setSetting('bookingWebhookUrl', bookingWebhookUrl);
+  if (statusWebhookUrl) setSetting('statusWebhookUrl', statusWebhookUrl);
   if (passcode) setSetting('passcode', passcode);
   
   closeSettingsModal();
