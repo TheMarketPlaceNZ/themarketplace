@@ -1591,8 +1591,10 @@ function initApp() {
     inviteLinkSpan.textContent = window.location.origin + '/checkin';
   }
   
-  // Auto sync sheets on load silently
-  syncLeads(true);
+  // Auto sync on load silently then start polling
+  syncLeads(true).then(() => {
+    startAirtablePolling();
+  });
   
   // Schedule background sync every 5 minutes (300,000 milliseconds)
   setInterval(() => {
@@ -3799,14 +3801,7 @@ function startAirtablePolling() {
 }
 
 // ===== INITIAL LOAD FROM AIRTABLE =====
-window.addEventListener('DOMContentLoaded', () => {
-  // Short delay so auth screen can appear first
-  setTimeout(() => {
-    syncLeads(true).then(() => {
-      startAirtablePolling();
-    });
-  }, 1500);
-});
+// Sync is triggered by initApp() after auth — no pre-auth sync needed.
 
 // ===== REGISTER PWA SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
