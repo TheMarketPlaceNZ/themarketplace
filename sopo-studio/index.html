@@ -953,7 +953,7 @@ body {
             <span style="font-size: 8px; color: var(--muted); text-transform: none; letter-spacing: 0.5px;">Click to copy to clipboard</span>
           </div>
           <div style="background: rgba(255, 255, 255, 0.01); border: 1.2px dashed var(--border-gold); border-radius: var(--radius-sm); padding: 14px 100px 14px 14px; position: relative;">
-            <p id="inviteTextTemplate" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5; margin: 0;">Hey, thanks so much for reaching out! If you could click the link below and answer 10 questions (takes less than a minute), I'll be able to slot you in and we can see how to get you into your very own house. God bless! <span id="inviteLinkSpan" style="color:var(--gold-bright); text-decoration:underline; font-weight:600;">https://sopo-studio.netlify.app/checkin.html</span></p>
+            <p id="inviteTextTemplate" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5; margin: 0;">Hey, thanks so much for reaching out! If you could click the link below and answer 10 questions (takes less than a minute), I'll be able to slot you in and we can see how to get you into your very own house. God bless! <span id="inviteLinkSpan" style="color:var(--gold-bright); text-decoration:underline; font-weight:600;">https://www.themarketplace.co.nz/checkin</span></p>
             <button class="btn btn-gold" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding: 6px 12px; font-size: 11px; border-radius: var(--radius-xs);" onclick="copyInviteText()">Copy Text</button>
           </div>
         </div>
@@ -1588,7 +1588,7 @@ function initApp() {
   // Update invite link span with current hostname
   const inviteLinkSpan = document.getElementById('inviteLinkSpan');
   if (inviteLinkSpan) {
-    inviteLinkSpan.textContent = window.location.origin + '/checkin';
+    inviteLinkSpan.textContent = 'https://www.themarketplace.co.nz/checkin';
   }
   
   // Auto sync on load silently then start polling
@@ -2254,6 +2254,7 @@ function atRecordToLead(record) {
     airtableStage: stage,
     score: parseInt(f[AT_FIELDS.score] || f['lead_score'] || scoreMatch?.[1] || '0') || null,
     agent_notes: notes,
+    ai_debrief: f['ai_debrief'] || null,
     timestamp: record.createdTime || new Date().toISOString(),
     hasBooked: !!(f['booking_time'] || f['meeting_choice']),
     bookingTime: f['booking_time'] || null,
@@ -2341,6 +2342,7 @@ async function syncLeads(silent = false) {
           bookingEndTime: existing.bookingEndTime || null,
           meetingType: fresh.meetingType || existing.meetingType || null,
           zoomLink: fresh.zoomLink || existing.zoomLink || null,
+          ai_debrief: fresh.ai_debrief || existing.ai_debrief || null,
           birthdayHusband: existing.birthdayHusband || '',
           birthdayWife: existing.birthdayWife || '',
           birthdayKids: existing.birthdayKids || '',
@@ -3015,14 +3017,37 @@ function renderModalDebriefHistory() {
   
   const l = appState.leads[currentLeadIndex];
   if (!l) return;
-  
+
+  let html = '';
+
+  // Show Airtable ai_debrief if it exists
+  if (l.ai_debrief) {
+    html += `
+      <div class="debrief-item" style="margin-bottom: 16px; border-color: rgba(201,169,110,0.3);">
+        <div class="debrief-header">
+          <span class="debrief-title" style="color: var(--gold);">📋 AI Strategy Debrief</span>
+          ${l.bookingTime ? `<span class="debrief-date">${new Date(l.bookingTime).toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'})}</span>` : ''}
+        </div>
+        ${l.meetingType ? `
+          <div style="margin: 8px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.35); color: var(--gold); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-transform: uppercase;">
+              ${l.meetingType === 'Zoom' ? '📹' : '🏠'} ${l.meetingType}
+            </span>
+            ${l.zoomLink ? `<a href="${l.zoomLink}" target="_blank" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35); color: #3B82F6; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-decoration: none;">🔗 Join Zoom</a>` : ''}
+          </div>
+        ` : ''}
+        <div class="debrief-transcript-box" style="display: block; margin-top: 10px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">${l.ai_debrief}</div>
+      </div>
+    `;
+  }
+
   const meetings = l.meetings || [];
-  if (meetings.length === 0) {
+  if (meetings.length === 0 && !l.ai_debrief) {
     container.innerHTML = `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No AI debriefs recorded for this client yet. Start recording above to qualify goals and auto-generate checklists.</div>`;
     return;
   }
   
-  container.innerHTML = meetings.map((m, idx) => `
+  html += meetings.map((m, idx) => `
     <div class="debrief-item">
       <div class="debrief-header">
         <span class="debrief-title">${m.label || 'Debrief'}</span>
@@ -3050,6 +3075,8 @@ function renderModalDebriefHistory() {
       <div id="debriefTransBox_${idx}" class="debrief-transcript-box" style="display:none; margin-top: 8px;">${m.transcript || 'No transcript text available.'}</div>
     </div>
   `).join('');
+
+  container.innerHTML = html;
 }
 
 function toggleDebriefTranscript(idx) {
