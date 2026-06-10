@@ -1957,6 +1957,15 @@ function renderLeads() {
         Income: ${l.income || 'N/A'}<br>
         Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}
       </div>
+      ${l.meetingType ? `
+        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.35); color: var(--gold); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.5px;">
+            ${l.meetingType === 'Zoom' ? '📹' : '🏠'} ${l.meetingType}
+          </span>
+          ${l.bookingTime ? `<span style="font-size: 11px; color: var(--muted);">${new Date(l.bookingTime).toLocaleDateString('en-NZ', {day:'numeric',month:'short',year:'numeric'})}</span>` : ''}
+          ${l.zoomLink ? `<a href="${l.zoomLink}" target="_blank" onclick="event.stopPropagation();" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35); color: #3B82F6; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">🔗 Join Zoom</a>` : ''}
+        </div>
+      ` : ''}
       ${birthdayBanners}
       <div class="lead-actions-row" style="margin-top: 10px;">
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
@@ -2246,9 +2255,10 @@ function atRecordToLead(record) {
     score: parseInt(f[AT_FIELDS.score] || f['lead_score'] || scoreMatch?.[1] || '0') || null,
     agent_notes: notes,
     timestamp: record.createdTime || new Date().toISOString(),
-    hasBooked: false,
-    bookingTime: null,
-    meetingType: null
+    hasBooked: !!(f['booking_time'] || f['meeting_choice']),
+    bookingTime: f['booking_time'] || null,
+    meetingType: f['meeting_choice'] || null,
+    zoomLink: f['zoom_link'] || null
   };
 }
 
@@ -2326,10 +2336,11 @@ async function syncLeads(silent = false) {
         return {
           ...fresh,
           // Preserve local-only fields that don't exist in Airtable yet
-          hasBooked: existing.hasBooked || false,
-          bookingTime: existing.bookingTime || null,
+          hasBooked: fresh.hasBooked || existing.hasBooked || false,
+          bookingTime: fresh.bookingTime || existing.bookingTime || null,
           bookingEndTime: existing.bookingEndTime || null,
-          meetingType: existing.meetingType || null,
+          meetingType: fresh.meetingType || existing.meetingType || null,
+          zoomLink: fresh.zoomLink || existing.zoomLink || null,
           birthdayHusband: existing.birthdayHusband || '',
           birthdayWife: existing.birthdayWife || '',
           birthdayKids: existing.birthdayKids || '',
