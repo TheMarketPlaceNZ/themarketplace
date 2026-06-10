@@ -1963,7 +1963,7 @@ function renderLeads() {
             ${l.meetingType === 'Zoom' ? '📹' : '🏠'} ${l.meetingType}
           </span>
           ${l.bookingTime ? `<span style="font-size: 11px; color: var(--muted);">${new Date(l.bookingTime).toLocaleDateString('en-NZ', {day:'numeric',month:'short',year:'numeric'})}</span>` : ''}
-          ${l.zoomLink ? `<a href="${l.zoomLink}" target="_blank" onclick="event.stopPropagation();" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35); color: #3B82F6; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">🔗 Join Zoom</a>` : ''}
+          ${l.zoomLink ? `<span style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35); color: #3B82F6; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; display: inline-flex; align-items: center; gap: 4px;">🔗 Zoom Booked</span>` : ''}
         </div>
       ` : ''}
       ${birthdayBanners}
@@ -2009,6 +2009,121 @@ function getTodayBirthdays(l) {
     });
   }
   return list;
+}
+
+// ===== AI DEBRIEF HISTORY RENDERER =====
+function renderDebriefHistory(aiDebrief, l) {
+  if (!aiDebrief || !aiDebrief.trim()) return '';
+
+  // Support multiple debriefs separated by "---DEBRIEF---" delimiter
+  // or treat the whole field as one debrief
+  let entries = [];
+  if (aiDebrief.includes('---DEBRIEF---')) {
+    entries = aiDebrief.split('---DEBRIEF---').filter(e => e.trim());
+  } else {
+    entries = [aiDebrief];
+  }
+
+  return entries.map((entry, i) => {
+    const entryId = `debrief_${Date.now()}_${i}`;
+
+    // Try to extract a label and date from the first line
+    // Expected format: "Pre-Mortgage Meeting | 12 Jun 2026" or just raw content
+    const lines = entry.trim().split('\n');
+    let label = 'AI Debrief';
+    let dateStr = '';
+    const firstLine = lines[0] || '';
+
+    if (firstLine.includes('|')) {
+      const parts = firstLine.split('|');
+      label = parts[0].trim();
+      dateStr = parts[1] ? parts[1].trim() : '';
+    } else if (l.bookingTime) {
+      label = `${l.meetingType || 'Strategy'} Meeting`;
+      dateStr = new Date(l.bookingTime).toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'});
+    } else {
+      label = 'Strategy Consultation';
+      dateStr = new Date(l.timestamp || Date.now()).toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'});
+    }
+
+    const bodyContent = entry.trim();
+
+    return `
+      <div style="border:1px solid var(--border); border-radius:12px; margin-bottom:10px; overflow:hidden; background:rgba(255,255,255,0.02);">
+        
+        <!-- Collapsed header row — always visible, click to toggle -->
+        <div onclick="toggleDebrief('${entryId}')" style="
+          display:flex; align-items:center; justify-content:space-between;
+          padding:14px 16px; cursor:pointer;
+          transition: background 0.2s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:8px; height:8px; border-radius:50%; background:var(--gold); flex-shrink:0;"></div>
+            <span style="font-size:13px; font-weight:600; color:var(--white);">${label}</span>
+            ${dateStr ? `<span style="font-size:11px; color:var(--muted); font-weight:400;">— ${dateStr}</span>` : ''}
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button onclick="event.stopPropagation(); downloadDebriefPDF('${entryId}', '${label}', '${dateStr}')" style="
+              background:rgba(201,169,110,0.1); border:1px solid rgba(201,169,110,0.25);
+              color:var(--gold); font-size:10px; font-weight:700; padding:4px 10px;
+              border-radius:6px; cursor:pointer; font-family:'Outfit',sans-serif;
+              letter-spacing:0.3px; transition:all 0.2s;
+            ">PDF</button>
+            <span id="chevron_${entryId}" style="color:var(--muted); font-size:16px; transition:transform 0.3s; display:inline-block;">›</span>
+          </div>
+        </div>
+
+        <!-- Expanded content — hidden by default -->
+        <div id="${entryId}" style="display:none; border-top:1px solid var(--border);">
+          <div style="padding:16px; font-size:13px; color:#cbd5e1; line-height:1.7; white-space:pre-wrap; max-height:400px; overflow-y:auto;">
+${bodyContent}
+          </div>
+        </div>
+
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleDebrief(id) {
+  const panel = document.getElementById(id);
+  const chevron = document.getElementById('chevron_' + id);
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
+function downloadDebriefPDF(entryId, label, dateStr) {
+  const panel = document.getElementById(entryId);
+  const content = panel ? panel.querySelector('div').innerText : '';
+  if (!content) return;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>${label} — ${dateStr}</title>
+      <style>
+        body { font-family: 'Georgia', serif; max-width: 700px; margin: 60px auto; color: #1a1a2e; font-size: 14px; line-height: 1.8; }
+        h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; border-bottom: 2px solid #C9A96E; padding-bottom: 10px; margin-bottom: 6px; }
+        .meta { font-size: 12px; color: #666; margin-bottom: 28px; }
+        .brand { font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 12px; margin-top: 40px; }
+        pre { white-space: pre-wrap; font-family: inherit; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <h1>${label}</h1>
+      <div class="meta">${dateStr} &nbsp;·&nbsp; Sopo's Studio — The MarketPlace NZ</div>
+      <pre>${content}</pre>
+      <div class="brand">Generated by Sopo's Studio · themarketplace.co.nz</div>
+      <script>window.onload = function() { window.print(); }<\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 function openLeadDetail(idx) {
@@ -2099,6 +2214,66 @@ function openLeadDetail(idx) {
     </div>
     
     <div class="modal-tab-pane" id="paneTabDebrief">
+
+      <!-- ===== ZOOM MEETING BOX ===== -->
+      <div id="zoomMeetingBox" style="
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 18px 20px;
+        margin-bottom: 18px;
+        position: relative;
+        overflow: hidden;
+      ">
+        <div style="position:absolute; inset:0; background: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(201,169,110,0.04) 100%); pointer-events:none; border-radius:16px;"></div>
+        <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:14px; position:relative;">Scheduled Meeting</div>
+        ${l.meetingType && l.bookingTime ? `
+          <div style="display:flex; align-items:center; gap:14px; position:relative;">
+            <div style="width:44px; height:44px; border-radius:12px; background:${l.meetingType === 'Zoom' ? 'rgba(59,130,246,0.15)' : 'rgba(201,169,110,0.12)'}; border:1px solid ${l.meetingType === 'Zoom' ? 'rgba(59,130,246,0.3)' : 'rgba(201,169,110,0.25)'}; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+              ${l.meetingType === 'Zoom' ? '📹' : '🏠'}
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:700; color:var(--white); margin-bottom:3px;">${l.meetingType} Meeting</div>
+              <div style="font-size:12px; color:var(--muted);">
+                ${new Date(l.bookingTime).toLocaleDateString('en-NZ', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}
+              </div>
+              <div style="font-size:12px; color:var(--gold); font-weight:600; margin-top:1px;">
+                ${new Date(l.bookingTime).toLocaleTimeString('en-NZ', {hour:'numeric', minute:'2-digit', hour12:true})}
+              </div>
+            </div>
+            ${l.zoomLink ? `
+              <a href="${l.zoomLink}" target="_blank" onclick="event.stopPropagation();" style="
+                background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(59,130,246,0.15));
+                border: 1px solid rgba(59,130,246,0.5);
+                color: #60A5FA;
+                font-size: 12px;
+                font-weight: 700;
+                padding: 10px 16px;
+                border-radius: 10px;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                flex-shrink: 0;
+                letter-spacing: 0.3px;
+                transition: all 0.2s;
+              ">🔗 Zoom Call</a>
+            ` : ''}
+          </div>
+        ` : `
+          <div style="display:flex; align-items:center; gap:12px; position:relative; opacity:0.5;">
+            <div style="width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">📅</div>
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--muted);">No meeting scheduled</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">Booking will appear here once confirmed</div>
+            </div>
+          </div>
+        `}
+      </div>
+
+      <!-- ===== MANUAL RECORDING BOX ===== -->
       <div class="recorder-box" style="padding: 20px; max-width: 100%; margin-bottom: 15px;">
         <div class="rec-timer" id="recTimer" style="font-size: 36px; margin-bottom: 10px;">00:00</div>
         <button class="record-btn" id="recordBtn" onclick="toggleRecording()" style="width: 70px; height: 70px; margin-bottom: 10px;">
@@ -2111,17 +2286,22 @@ function openLeadDetail(idx) {
           <input type="text" class="rec-input" id="meetingLabel" placeholder="Enter meeting label (e.g. Consultation)" style="padding: 8px; font-size: 13px;">
         </div>
       </div>
-      
+
       <div class="ai-spinner-box" id="aiSpinnerBox" style="padding: 15px; margin-bottom: 15px; max-width: 100%;">
         <div class="spinner" style="width: 24px; height: 24px; border-width: 2.5px;"></div>
         <div class="spinner-text" id="spinnerText" style="font-size: 12px;">Sina is extracting action items...</div>
       </div>
-      
-      <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">AI Debrief History</div>
-      <div id="modalDebriefList" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;">
-        <!-- Filled dynamically -->
+
+      <!-- ===== AI DEBRIEF HISTORY ===== -->
+      <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:10px;">AI Debrief History</div>
+      <div id="modalDebriefList" style="margin-bottom:10px;">
+        ${(l.ai_debrief && l.ai_debrief.trim()) ? renderDebriefHistory(l.ai_debrief, l) : `
+          <div style="padding:20px; text-align:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; color:var(--muted); font-size:13px; line-height:1.6;">
+            No AI debriefs recorded for this client yet.<br>Start recording above to qualify goals and auto-generate checklists.
+          </div>
+        `}
       </div>
-      
+
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
       </div>
