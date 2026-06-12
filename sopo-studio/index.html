@@ -2348,17 +2348,23 @@ const AT_FIELDS = {
   full_name:        'fldnzGt6AXI2GjIZX',
   agent_notes:      'fldWSLI44zO7tOxVl',
   pipeline_stage:   'fldqvVfQxdzK1nu0p',
-  email:            'fldEmail',
-  phone:            'fldPhone',
-  income:           'fldIncome',
-  deposit:          'fldDeposit',
-  deposit_amount:   'fldDepositAmt',
-  area:             'fldArea',
-  timeframe:        'fldTimeframe',
-  source:           'fldSource',
-  score:            'fldScore',
-  first_home:       'fldFirstHome',
-  employment:       'fldEmployment'
+  email:            'fldrYx9nQ8D2rwHBT',
+  phone:            'fldYibNPqZOw4KPZx',
+  income:           'fldaID5e17VCrWnK7',
+  deposit:          'fldrXMHE1zwg7aIzR',
+  deposit_amount:   'fldrXMHE1zwg7aIzR',
+  area:             'fldwfkBBgMT67Jks7',
+  timeframe:        'fld8NaNsskjLUKXyw',
+  source:           'fldGpiOssNfEnyvRs',
+  score:            'flduRoHoygVWZbfvn',
+  first_home:       'fldnzGt6AXI2GjIZX',
+  employment:       'fldWSLI44zO7tOxVl',
+  booking_time:     'fldcE5ZePycc97Bvm',
+  meeting_choice:   'fldbxFEIExMmHXrfL',
+  zoom_link:        'fldDr724XlOrFfgc1',
+  zoom_meeting_id:  'fldWGvS3W75nGpNLi',
+  ai_debrief:       'fldOqGQVLFDb1YEYe',
+  checkin_date:     'fldqj65o3Zcizdng8'
 };
 
 // Map Airtable pipeline_stage → internal appState stage key
@@ -2422,12 +2428,14 @@ function atRecordToLead(record) {
     airtableStage: stage,
     score: parseInt(f[AT_FIELDS.score] || f['lead_score'] || scoreMatch?.[1] || '0') || null,
     agent_notes: notes,
-    ai_debrief: f['ai_debrief'] || null,
+    ai_debrief: f[AT_FIELDS.ai_debrief] || f['ai_debrief'] || null,
     timestamp: record.createdTime || new Date().toISOString(),
-    hasBooked: !!(f['booking_time'] || f['meeting_choice']),
-    bookingTime: f['booking_time'] || null,
-    meetingType: f['meeting_choice'] || null,
-    zoomLink: f['zoom_link'] || null
+    hasBooked: !!(f[AT_FIELDS.booking_time] || f['booking_time'] || f[AT_FIELDS.meeting_choice] || f['meeting_choice']),
+    bookingTime: f[AT_FIELDS.booking_time] || f['booking_time'] || null,
+    meetingType: f[AT_FIELDS.meeting_choice] || f['meeting_choice'] || null,
+    zoomLink: f[AT_FIELDS.zoom_link] || f['zoom_link'] || null,
+    zoomMeetingId: f[AT_FIELDS.zoom_meeting_id] || f['zoom_meeting_id'] || null,
+    checkinDate: f[AT_FIELDS.checkin_date] || f['checkin_date'] || null
   };
 }
 
