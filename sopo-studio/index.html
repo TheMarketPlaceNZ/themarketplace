@@ -2230,7 +2230,7 @@ function openLeadDetail(idx) {
         <div style="position:absolute; inset:0; background: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(201,169,110,0.04) 100%); pointer-events:none; border-radius:16px;"></div>
         <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:14px; position:relative;">Scheduled Meeting</div>
         ${l.meetingType && l.bookingTime ? `
-          <a href="${l.zoomLink || '#'}" target="${l.zoomLink ? '_blank' : '_self'}" onclick="${l.zoomLink ? 'event.stopPropagation();' : 'event.preventDefault(); event.stopPropagation();'}" style="display:flex; align-items:center; gap:14px; position:relative; text-decoration:none; cursor:${l.zoomLink ? 'pointer' : 'default'};">
+          <a href="${l.zoomStartUrl || l.zoomLink || '#'}" target="${(l.zoomStartUrl || l.zoomLink) ? '_blank' : '_self'}" onclick="${(l.zoomStartUrl || l.zoomLink) ? 'event.stopPropagation();' : 'event.preventDefault(); event.stopPropagation();'}" style="display:flex; align-items:center; gap:14px; position:relative; text-decoration:none; cursor:${(l.zoomStartUrl || l.zoomLink) ? 'pointer' : 'default'};">
             <div style="width:44px; height:44px; border-radius:12px; background:${l.meetingType?.toLowerCase() === 'zoom' ? 'rgba(59,130,246,0.15)' : 'rgba(201,169,110,0.12)'}; border:1px solid ${l.meetingType?.toLowerCase() === 'zoom' ? 'rgba(59,130,246,0.3)' : 'rgba(201,169,110,0.25)'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
               ${l.meetingType?.toLowerCase() === 'zoom' ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>` : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`}
             </div>
@@ -2408,19 +2408,19 @@ function atRecordToLead(record) {
   return {
     airtableId: record.id,
     name: name,
-    email: f['email'] || '',
-    phone: f['Phone'] || f['phone'] || '',
-    income: f['income_range'] || (incomeMatch ? incomeMatch[0] : ''),
-    deposit: f['deposit_range'] || '',
-    depositAmount: f['deposit_range'] || '',
-    area: f['area_preference'] || '',
-    timeFrame: f['purchase_timeframe'] || '',
-    source: f['Lead_source'] || f['lead_source'] || 'Open Home',
-    firstHome: f['first_home_buyer'] || f['first_home'] || 'Yes',
-    employment: f['employment_status'] || f['employment'] || '',
+    email: f[AT_FIELDS.email] || f['email'] || '',
+    phone: f[AT_FIELDS.phone] || f['phone'] || '',
+    income: f[AT_FIELDS.income] || f['income'] || (incomeMatch ? incomeMatch[0] : ''),
+    deposit: f[AT_FIELDS.deposit] || f['deposit'] || '',
+    depositAmount: f[AT_FIELDS.deposit_amount] || f['deposit_amount'] || '',
+    area: f[AT_FIELDS.area] || f['area'] || 'Hamilton',
+    timeFrame: f[AT_FIELDS.timeframe] || f['timeframe'] || '',
+    source: f[AT_FIELDS.source] || f['source'] || 'Open Home',
+    firstHome: f[AT_FIELDS.first_home] || f['first_home_buyer'] || 'Yes',
+    employment: f[AT_FIELDS.employment] || f['employment_status'] || '',
     stage: atStageToInternal(stage),
     airtableStage: stage,
-    score: parseInt(f['lead_score'] || scoreMatch?.[1] || '0') || null,
+    score: parseInt(f[AT_FIELDS.score] || f['lead_score'] || scoreMatch?.[1] || '0') || null,
     agent_notes: notes,
     ai_debrief: f['ai_debrief'] || null,
     timestamp: record.createdTime || new Date().toISOString(),
@@ -2428,9 +2428,7 @@ function atRecordToLead(record) {
     bookingTime: f['booking_time'] || null,
     meetingType: f['meeting_choice'] || null,
     zoomLink: f['zoom_link'] || null,
-    zoomMeetingId: f['zoom_meeting_id'] || null,
-    zoomStartUrl: f['zoom_start_url'] || null,
-    checkinDate: f['checkin_date'] || null
+    zoomStartUrl: f['zoom_start_url'] || null
   };
 }
 
@@ -2513,6 +2511,7 @@ async function syncLeads(silent = false) {
           bookingEndTime: existing.bookingEndTime || null,
           meetingType: fresh.meetingType || existing.meetingType || null,
           zoomLink: fresh.zoomLink || existing.zoomLink || null,
+          zoomStartUrl: fresh.zoomStartUrl || existing.zoomStartUrl || null,
           ai_debrief: fresh.ai_debrief || existing.ai_debrief || null,
           birthdayHusband: existing.birthdayHusband || '',
           birthdayWife: existing.birthdayWife || '',
