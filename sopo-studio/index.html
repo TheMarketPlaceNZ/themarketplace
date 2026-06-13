@@ -1960,7 +1960,7 @@ function renderLeads() {
       ${l.meetingType ? `
         <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <span style="background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.35); color: var(--gold); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.5px;">
-            ${l.meetingType === 'Zoom' ? '📹' : '🏠'} ${l.meetingType}
+            ${l.meetingType?.toLowerCase() === 'zoom' ? '📹' : '🏠'} ${l.meetingType}
           </span>
           ${l.bookingTime ? `<span style="font-size: 11px; color: var(--muted);">${new Date(l.bookingTime).toLocaleDateString('en-NZ', {day:'numeric',month:'short',year:'numeric'})}</span>` : ''}
           ${l.zoomLink ? `<span style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35); color: #3B82F6; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; display: inline-flex; align-items: center; gap: 4px;">🔗 Zoom Booked</span>` : ''}
@@ -2231,11 +2231,11 @@ function openLeadDetail(idx) {
         <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:14px; position:relative;">Scheduled Meeting</div>
         ${l.meetingType && l.bookingTime ? `
           <a href="${l.zoomLink || '#'}" target="${l.zoomLink ? '_blank' : '_self'}" onclick="${l.zoomLink ? 'event.stopPropagation();' : 'event.preventDefault(); event.stopPropagation();'}" style="display:flex; align-items:center; gap:14px; position:relative; text-decoration:none; cursor:${l.zoomLink ? 'pointer' : 'default'};">
-            <div style="width:44px; height:44px; border-radius:12px; background:${l.meetingType === 'Zoom' ? 'rgba(59,130,246,0.15)' : 'rgba(201,169,110,0.12)'}; border:1px solid ${l.meetingType === 'Zoom' ? 'rgba(59,130,246,0.3)' : 'rgba(201,169,110,0.25)'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              ${l.meetingType === 'Zoom' ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>` : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`}
+            <div style="width:44px; height:44px; border-radius:12px; background:${l.meetingType?.toLowerCase() === 'zoom' ? 'rgba(59,130,246,0.15)' : 'rgba(201,169,110,0.12)'}; border:1px solid ${l.meetingType?.toLowerCase() === 'zoom' ? 'rgba(59,130,246,0.3)' : 'rgba(201,169,110,0.25)'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              ${l.meetingType?.toLowerCase() === 'zoom' ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>` : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`}
             </div>
             <div style="flex:1;">
-              <div style="font-size:15px; font-weight:700; color:var(--white); margin-bottom:3px;">${l.meetingType === 'Zoom' ? 'Zoom Meeting' : 'In-Person Meeting'}</div>
+              <div style="font-size:15px; font-weight:700; color:var(--white); margin-bottom:3px;">${l.meetingType?.toLowerCase() === 'zoom' ? 'Zoom Meeting' : 'In-Person Meeting'}</div>
               <div style="font-size:12px; color:var(--muted);">
                 ${new Date(l.bookingTime).toLocaleDateString('en-NZ', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}
               </div>
@@ -2348,23 +2348,17 @@ const AT_FIELDS = {
   full_name:        'fldnzGt6AXI2GjIZX',
   agent_notes:      'fldWSLI44zO7tOxVl',
   pipeline_stage:   'fldqvVfQxdzK1nu0p',
-  email:            'fldrYx9nQ8D2rwHBT',
-  phone:            'fldYibNPqZOw4KPZx',
-  income:           'fldaID5e17VCrWnK7',
-  deposit:          'fldrXMHE1zwg7aIzR',
-  deposit_amount:   'fldrXMHE1zwg7aIzR',
-  area:             'fldwfkBBgMT67Jks7',
-  timeframe:        'fld8NaNsskjLUKXyw',
-  source:           'fldGpiOssNfEnyvRs',
-  score:            'flduRoHoygVWZbfvn',
-  first_home:       'fldnzGt6AXI2GjIZX',
-  employment:       'fldWSLI44zO7tOxVl',
-  booking_time:     'fldcE5ZePycc97Bvm',
-  meeting_choice:   'fldbxFEIExMmHXrfL',
-  zoom_link:        'fldDr724XlOrFfgc1',
-  zoom_meeting_id:  'fldWGvS3W75nGpNLi',
-  ai_debrief:       'fldOqGQVLFDb1YEYe',
-  checkin_date:     'fldqj65o3Zcizdng8'
+  email:            'fldEmail',
+  phone:            'fldPhone',
+  income:           'fldIncome',
+  deposit:          'fldDeposit',
+  deposit_amount:   'fldDepositAmt',
+  area:             'fldArea',
+  timeframe:        'fldTimeframe',
+  source:           'fldSource',
+  score:            'fldScore',
+  first_home:       'fldFirstHome',
+  employment:       'fldEmployment'
 };
 
 // Map Airtable pipeline_stage → internal appState stage key
@@ -2415,27 +2409,25 @@ function atRecordToLead(record) {
     airtableId: record.id,
     name: name,
     email: f[AT_FIELDS.email] || f['email'] || '',
-    phone: f[AT_FIELDS.phone] || f['Phone'] || f['phone'] || '',
-    income: f[AT_FIELDS.income] || f['income_range'] || f['income'] || (incomeMatch ? incomeMatch[0] : ''),
-    deposit: f[AT_FIELDS.deposit] || f['deposit_range'] || f['deposit'] || '',
-    depositAmount: f[AT_FIELDS.deposit_amount] || f['deposit_range'] || f['deposit_amount'] || '',
-    area: f[AT_FIELDS.area] || f['area_preference'] || f['area'] || '',
-    timeFrame: f[AT_FIELDS.timeframe] || f['purchase_timeframe'] || f['timeframe'] || '',
-    source: f[AT_FIELDS.source] || f['Lead_source'] || f['source'] || 'Open Home',
-    firstHome: f[AT_FIELDS.first_home] || f['first_home_buyer'] || f['first_home'] || 'Yes',
-    employment: f[AT_FIELDS.employment] || f['employment_status'] || f['employment'] || '',
+    phone: f[AT_FIELDS.phone] || f['phone'] || '',
+    income: f[AT_FIELDS.income] || f['income'] || (incomeMatch ? incomeMatch[0] : ''),
+    deposit: f[AT_FIELDS.deposit] || f['deposit'] || '',
+    depositAmount: f[AT_FIELDS.deposit_amount] || f['deposit_amount'] || '',
+    area: f[AT_FIELDS.area] || f['area'] || 'Hamilton',
+    timeFrame: f[AT_FIELDS.timeframe] || f['timeframe'] || '',
+    source: f[AT_FIELDS.source] || f['source'] || 'Open Home',
+    firstHome: f[AT_FIELDS.first_home] || f['first_home_buyer'] || 'Yes',
+    employment: f[AT_FIELDS.employment] || f['employment_status'] || '',
     stage: atStageToInternal(stage),
     airtableStage: stage,
     score: parseInt(f[AT_FIELDS.score] || f['lead_score'] || scoreMatch?.[1] || '0') || null,
     agent_notes: notes,
-    ai_debrief: f[AT_FIELDS.ai_debrief] || f['ai_debrief'] || null,
+    ai_debrief: f['ai_debrief'] || null,
     timestamp: record.createdTime || new Date().toISOString(),
-    hasBooked: !!(f[AT_FIELDS.booking_time] || f['booking_time'] || f[AT_FIELDS.meeting_choice] || f['meeting_choice']),
-    bookingTime: f[AT_FIELDS.booking_time] || f['booking_time'] || null,
-    meetingType: f[AT_FIELDS.meeting_choice] || f['meeting_choice'] || null,
-    zoomLink: f[AT_FIELDS.zoom_link] || f['zoom_link'] || null,
-    zoomMeetingId: f[AT_FIELDS.zoom_meeting_id] || f['zoom_meeting_id'] || null,
-    checkinDate: f[AT_FIELDS.checkin_date] || f['checkin_date'] || null
+    hasBooked: !!(f['booking_time'] || f['meeting_choice']),
+    bookingTime: f['booking_time'] || null,
+    meetingType: f['meeting_choice'] || null,
+    zoomLink: f['zoom_link'] || null
   };
 }
 
@@ -3207,7 +3199,7 @@ function renderModalDebriefHistory() {
         ${l.meetingType ? `
           <div style="margin: 8px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <span style="background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.35); color: var(--gold); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-transform: uppercase;">
-              ${l.meetingType === 'Zoom' ? '📹' : '🏠'} ${l.meetingType}
+              ${l.meetingType?.toLowerCase() === 'zoom' ? '📹' : '🏠'} ${l.meetingType}
             </span>
             ${l.zoomLink ? `<a href="${l.zoomLink}" target="_blank" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35); color: #3B82F6; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-decoration: none;">🔗 Join Zoom</a>` : ''}
           </div>
