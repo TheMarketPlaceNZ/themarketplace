@@ -240,22 +240,14 @@
         <input type="text" id="clientName" class="input-control" placeholder="enter your name" required>
       </div>
 
-      <div class="grid-2">
-        <div class="form-group">
-          <label for="bookingDate">Select Date</label>
-          <input type="date" id="bookingDate" class="input-control" required>
-        </div>
-        <div class="form-group">
-          <label for="bookingTime">Select Time Slot</label>
-          <select id="bookingTime" class="input-control" required>
-            <option value="">Choose a slot</option>
-            <option value="09:00">09:00 AM</option>
-            <option value="10:30">10:30 AM</option>
-            <option value="13:00">01:00 PM</option>
-            <option value="15:30">03:30 PM</option>
-            <option value="17:00">05:00 PM</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label for="bookingSlot">Select Available Time</label>
+        <select id="bookingSlot" class="input-control" required>
+          <option value="">Loading available slots...</option>
+        </select>
+        <input type="hidden" id="bookingDate" />
+        <input type="hidden" id="bookingTime" />
+        <input type="hidden" id="bookingSlotId" />
       </div>
 
       <div class="form-group">
@@ -337,78 +329,52 @@
         document.getElementById('clientName').value = name;
       }
       
-      // Default date to next Monday
-      const today = new Date();
-      const nextMonday = new Date();
-      nextMonday.setDate(today.getDate() + ((1 + 7 - today.getDay()) % 7 || 7));
-      document.getElementById('bookingDate').value = nextMonday.toISOString().split('T')[0];
-      
-      // Setup slot availability update listeners
-      document.getElementById('bookingDate').addEventListener('change', updateAvailableSlots);
-      
-      updateAvailableSlots();
+      // Load available slots from Airtable
+      loadAvailableSlots();
     });
 
-    function updateAvailableSlots() {
-      const dateVal = document.getElementById('bookingDate').value;
-      const select = document.getElementById('bookingTime');
-      if (!dateVal || !select) return;
+    async function loadAvailableSlots() {
+      const AT_BASE = 'appXHdiVfCGMZPtWw';
+      const AT_TABLE = 'tbljkZglwG1Sf32gP';
+      const AT_KEY = 'patLZ2SNfkHGTBH6C.366ee25b241f63f90b31a6d3322f4c50ac6a086d9ca441320f3b099533bdb86a';
+      const select = document.getElementById('bookingSlot');
       
-      loadState();
-      
-      // Default slots Sopo offers
-      const slots = [
-        { value: "09:00", label: "09:00 AM" },
-        { value: "10:30", label: "10:30 AM" },
-        { value: "13:00", label: "01:00 PM" },
-        { value: "15:30", label: "03:30 PM" },
-        { value: "17:00", label: "05:00 PM" }
-      ];
-      
-      select.innerHTML = '<option value="">Choose a slot</option>';
-      
-      slots.forEach(slot => {
-        const slotStart = new Date(`${dateVal}T${slot.value}:00`);
-        const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1h slot length
+      try {
+        const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=status%3D%22Available%22&sort%5B0%5D%5Bfield%5D=slot_date&sort%5B0%5D%5Bdirection%5D=asc`;
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AT_KEY}` } });
+        const data = await res.json();
         
-        let isBlocked = false;
+        select.innerHTML = '<option value="">Choose a slot</option>';
         
-        // 1. Check personal calendar blocks
-        const blocks = appState.calendarBlocks || [];
-        blocks.forEach(b => {
-          if (b && b.datetime) {
-            const bStart = new Date(b.datetime);
-            const bEnd = b.endDatetime ? new Date(b.endDatetime) : new Date(bStart.getTime() + 60 * 60 * 1000); // 1h default
-            
-            // Overlap check
-            if (slotStart < bEnd && slotEnd > bStart) {
-              isBlocked = true;
-            }
-          }
-        });
-        
-        // 2. Check client bookings
-        const leads = appState.leads || [];
-        leads.forEach(l => {
-          if (l && l.hasBooked && l.bookingTime) {
-            const bStart = new Date(l.bookingTime);
-            const bEnd = l.bookingEndTime ? new Date(l.bookingEndTime) : new Date(bStart.getTime() + 60 * 60 * 1000); // 1h default
-            
-            if (slotStart < bEnd && slotEnd > bStart) {
-              isBlocked = true;
-            }
-          }
-        });
-        
-        const opt = document.createElement('option');
-        opt.value = slot.value;
-        opt.textContent = slot.label + (isBlocked ? ' (Unavailable)' : '');
-        if (isBlocked) {
-          opt.disabled = true;
+        if (!data.records || data.records.length === 0) {
+          select.innerHTML = '<option value="">No slots available — please contact Sopo</option>';
+          return;
         }
-        select.appendChild(opt);
-      });
+        
+        data.records.forEach(record => {
+          const f = record.fields;
+          const opt = document.createElement('option');
+          opt.value = record.id;
+          opt.textContent = f.slot_label;
+          opt.dataset.date = f.slot_date;
+          opt.dataset.time = f.slot_time;
+          opt.dataset.recordId = record.id;
+          select.appendChild(opt);
+        });
+      } catch(err) {
+        select.innerHTML = '<option value="">Error loading slots — try refreshing</option>';
+        console.error('Slot load error:', err);
+      }
     }
+
+    document.getElementById('bookingSlot').addEventListener('change', function() {
+      const opt = this.options[this.selectedIndex];
+      if (opt && opt.dataset.date) {
+        document.getElementById('bookingDate').value = opt.dataset.date;
+        document.getElementById('bookingTime').value = opt.dataset.time;
+        document.getElementById('bookingSlotId').value = opt.dataset.recordId;
+      }
+    });
 
     function lookupClient() {
       const email = document.getElementById('clientEmail').value.trim().toLowerCase();
@@ -428,6 +394,7 @@
       
       const email = document.getElementById('clientEmail').value.trim();
       const name = document.getElementById('clientName').value.trim();
+      const slotSelect = document.getElementById('bookingSlot');
       const dateVal = document.getElementById('bookingDate').value;
       const timeVal = document.getElementById('bookingTime').value;
       const preference = document.getElementById('meetingPreference').value;
@@ -497,6 +464,22 @@
       .catch(error => {
         console.warn("Booking webhook submission failed:", error.message);
       });
+
+      // Mark slot as Booked in Airtable
+      const slotId = document.getElementById('bookingSlotId').value;
+      if (slotId) {
+        const AT_BASE = 'appXHdiVfCGMZPtWw';
+        const AT_TABLE = 'tbljkZglwG1Sf32gP';
+        const AT_KEY = 'patLZ2SNfkHGTBH6C.366ee25b241f63f90b31a6d3322f4c50ac6a086d9ca441320f3b099533bdb86a';
+        fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${slotId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${AT_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fields: { status: 'Booked', booked_by: name } })
+        }).catch(err => console.warn('Slot update failed:', err));
+      }
 
       // Trigger a storage event to notify index.html
       localStorage.setItem('sopo_booking_completed', JSON.stringify({
