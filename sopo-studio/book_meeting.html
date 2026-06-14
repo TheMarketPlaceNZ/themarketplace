@@ -338,19 +338,15 @@
       const AT_TABLE = 'tbljkZglwG1Sf32gP';
       const AT_KEY = 'patLZ2SNfkHGTBH6C.366ee25b241f63f90b31a6d3322f4c50ac6a086d9ca441320f3b099533bdb86a';
       const select = document.getElementById('bookingSlot');
-      
       try {
         const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=status%3D%22Available%22&sort%5B0%5D%5Bfield%5D=slot_date&sort%5B0%5D%5Bdirection%5D=asc`;
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AT_KEY}` } });
         const data = await res.json();
-        
         select.innerHTML = '<option value="">Choose a slot</option>';
-        
         if (!data.records || data.records.length === 0) {
           select.innerHTML = '<option value="">No slots available — please contact Sopo</option>';
           return;
         }
-        
         data.records.forEach(record => {
           const f = record.fields;
           const opt = document.createElement('option');
@@ -358,22 +354,22 @@
           opt.textContent = f.slot_label;
           opt.dataset.date = f.slot_date;
           opt.dataset.time = f.slot_time;
-          opt.dataset.recordId = record.id;
           select.appendChild(opt);
         });
       } catch(err) {
         select.innerHTML = '<option value="">Error loading slots — try refreshing</option>';
-        console.error('Slot load error:', err);
       }
     }
 
-    document.getElementById('bookingSlot').addEventListener('change', function() {
-      const opt = this.options[this.selectedIndex];
-      if (opt && opt.dataset.date) {
-        document.getElementById('bookingDate').value = opt.dataset.date;
-        document.getElementById('bookingTime').value = opt.dataset.time;
-        document.getElementById('bookingSlotId').value = opt.dataset.recordId;
-      }
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('bookingSlot').addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        if (opt && opt.dataset.date) {
+          document.getElementById('bookingDate').value = opt.dataset.date;
+          document.getElementById('bookingTime').value = opt.dataset.time;
+          document.getElementById('bookingSlotId').value = opt.value;
+        }
+      });
     });
 
     function lookupClient() {
@@ -394,7 +390,6 @@
       
       const email = document.getElementById('clientEmail').value.trim();
       const name = document.getElementById('clientName').value.trim();
-      const slotSelect = document.getElementById('bookingSlot');
       const dateVal = document.getElementById('bookingDate').value;
       const timeVal = document.getElementById('bookingTime').value;
       const preference = document.getElementById('meetingPreference').value;
@@ -453,28 +448,19 @@
 
       fetch(webhookUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      .then(response => {
-        console.log("Booking successfully sent to Make.com Webhook");
-      })
-      .catch(error => {
-        console.warn("Booking webhook submission failed:", error.message);
-      });
+      .then(() => console.log("Booking sent to Make.com"))
+      .catch(err => console.warn("Webhook failed:", err));
 
       // Mark slot as Booked in Airtable
       const slotId = document.getElementById('bookingSlotId').value;
       if (slotId) {
-        const AT_BASE = 'appXHdiVfCGMZPtWw';
-        const AT_TABLE = 'tbljkZglwG1Sf32gP';
-        const AT_KEY = 'patLZ2SNfkHGTBH6C.366ee25b241f63f90b31a6d3322f4c50ac6a086d9ca441320f3b099533bdb86a';
-        fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${slotId}`, {
+        fetch(`https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tbljkZglwG1Sf32gP/${slotId}`, {
           method: 'PATCH',
           headers: {
-            'Authorization': `Bearer ${AT_KEY}`,
+            'Authorization': 'Bearer patLZ2SNfkHGTBH6C.366ee25b241f63f90b31a6d3322f4c50ac6a086d9ca441320f3b099533bdb86a',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ fields: { status: 'Booked', booked_by: name } })
