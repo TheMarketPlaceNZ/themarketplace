@@ -331,6 +331,16 @@
       
       // Load available slots from Airtable
       loadAvailableSlots();
+
+      // Wire slot change listener after DOM is ready
+      document.getElementById('bookingSlot').addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        if (opt && opt.dataset.date) {
+          document.getElementById('bookingDate').value = opt.dataset.date;
+          document.getElementById('bookingTime').value = opt.dataset.time;
+          document.getElementById('bookingSlotId').value = opt.value;
+        }
+      });
     });
 
     async function loadAvailableSlots() {
@@ -353,24 +363,22 @@
           opt.value = record.id;
           opt.textContent = f.slot_label;
           opt.dataset.date = f.slot_date;
-          opt.dataset.time = f.slot_time;
+          // Convert "9:00am"/"10:00am" to 24h "09:00"/"10:00"
+          const rawTime = f.slot_time || '';
+          const isPM = rawTime.toLowerCase().includes('pm');
+          const timeNum = rawTime.replace(/[apm]/gi, '').trim();
+          const parts = timeNum.split(':');
+          let hours = parseInt(parts[0]);
+          const mins = parts[1] || '00';
+          if (isPM && hours !== 12) hours += 12;
+          if (!isPM && hours === 12) hours = 0;
+          opt.dataset.time = String(hours).padStart(2,'0') + ':' + mins;
           select.appendChild(opt);
         });
       } catch(err) {
         select.innerHTML = '<option value="">Error loading slots — try refreshing</option>';
       }
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('bookingSlot').addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        if (opt && opt.dataset.date) {
-          document.getElementById('bookingDate').value = opt.dataset.date;
-          document.getElementById('bookingTime').value = opt.dataset.time;
-          document.getElementById('bookingSlotId').value = opt.value;
-        }
-      });
-    });
 
     function lookupClient() {
       const email = document.getElementById('clientEmail').value.trim().toLowerCase();
@@ -399,7 +407,19 @@
         return;
       }
 
-      const dateTimeStr = `${dateVal}T${timeVal}:00`;
+      // Normalise timeVal to 24h format in case it came through as "9:00am"
+      let normTime = timeVal;
+      if (/[apm]/i.test(timeVal)) {
+        const isPM = /pm/i.test(timeVal);
+        const cleaned = timeVal.replace(/[apm]/gi,'').trim();
+        const parts = cleaned.split(':');
+        let h = parseInt(parts[0]);
+        const m = parts[1] || '00';
+        if (isPM && h !== 12) h += 12;
+        if (!isPM && h === 12) h = 0;
+        normTime = String(h).padStart(2,'0') + ':' + m;
+      }
+      const dateTimeStr = `${dateVal}T${normTime}:00`;
       const dateObj = new Date(dateTimeStr);
       
       loadState();
