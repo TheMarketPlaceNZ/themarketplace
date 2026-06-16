@@ -2254,6 +2254,10 @@ function openLeadDetail(idx) {
           <div class="lead-info-label">Timeframe</div>
           <input type="text" class="settings-input" id="editLeadTimeframe" value="${l.timeFrame || ''}" style="padding:6px; font-size:12px; width:100%;">
         </div>
+        <div class="lead-info-item">
+          <div class="lead-info-label">Employment</div>
+          <input type="text" class="settings-input" id="editLeadEmployment" value="${l.employment || ''}" style="padding:6px; font-size:12px; width:100%;">
+        </div>
         <div class="lead-info-item" style="grid-column: 1/-1;">
           <div class="lead-info-label">Lead Avenue</div>
           <input type="text" class="settings-input" id="editLeadSource" value="${l.source || ''}" style="padding:6px; font-size:12px; width:100%;">
@@ -2405,6 +2409,7 @@ function saveLeadDetails(idx) {
   l.depositAmount = document.getElementById('editLeadDepositAmount').value.trim();
   l.area = document.getElementById('editLeadArea').value.trim();
   l.timeFrame = document.getElementById('editLeadTimeframe').value.trim();
+  l.employment = document.getElementById('editLeadEmployment').value.trim();
   l.source = document.getElementById('editLeadSource').value.trim();
   l.birthdayHusband = document.getElementById('editLeadBdayHusband').value;
   l.birthdayWife = document.getElementById('editLeadBdayWife').value;
@@ -4090,7 +4095,24 @@ function saveLeadDetails(idx) {
   _origSaveLeadDetails(idx);
   const l = appState.leads[idx];
   if (l && l.airtableId) {
-    writeNotesToAirtable(l.airtableId, l.agent_notes || '');
+    const AT_KEY = document.querySelector('meta[name="airtable-api-key"]')?.content;
+    if (AT_KEY) {
+      const fields = {};
+      fields[AT_FIELDS.agent_notes] = l.agent_notes || '';
+      fields[AT_FIELDS.employment] = l.employment || '';
+      fields[AT_FIELDS.income] = l.income || '';
+      fields[AT_FIELDS.deposit] = l.deposit || '';
+      fields[AT_FIELDS.area] = l.area || '';
+      fields[AT_FIELDS.timeframe] = l.timeFrame || '';
+      fields[AT_FIELDS.phone] = l.phone || '';
+      fields[AT_FIELDS.email] = l.email || '';
+      fields[AT_FIELDS.source] = l.source || '';
+      fetch(`https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tbleWHVvCC8o5pNVx/${l.airtableId}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields })
+      }).catch(err => console.error('AT writeback error:', err));
+    }
   }
 }
 
