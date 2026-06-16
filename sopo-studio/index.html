@@ -1788,7 +1788,8 @@ function renderTracker() {
             <span class="badge ${scoreClass}" style="font-size: 8px; padding: 2px 4px;">Score: ${score}</span>
           </div>
           <div class="lead-details-text" style="font-size: 10px; margin-bottom: 6px; line-height: 1.3;">
-            Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}
+            Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}<br>
+            Employment: ${l.employment || 'N/A'} · First Home: ${l.firstHome || 'N/A'} · Timeframe: ${l.timeFrame || 'N/A'}
           </div>
           ${birthdayBanners}
           ${actionButtons}
@@ -1955,7 +1956,9 @@ function renderLeads() {
       </div>
       <div class="lead-details-text">
         Income: ${l.income || 'N/A'}<br>
-        Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}
+        Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}<br>
+        Employment: ${l.employment || 'N/A'} · First Home: ${l.firstHome || 'N/A'}<br>
+        Timeframe: ${l.timeFrame || 'N/A'}
       </div>
       ${l.meetingType ? `
         <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -2357,8 +2360,8 @@ const AT_FIELDS = {
   timeframe:        'fld8NaNsskjLUKXyw',
   source:           'fldGpiOssNfEnyvRs',
   score:            'flduRoHoygVWZbfvn',
-  first_home:       'fldnzGt6AXI2GjIZX',
-  employment:       'fldWSLI44zO7tOxVl',
+  first_home:       'fldGpiOssNfEnyvRs',
+  employment:       'fld0dUvYYHL4z9kYc',
   booking_time:     'fldcE5ZePycc97Bvm',
   meeting_choice:   'fldbxFEIExMmHXrfL',
   zoom_link:        'fldDr724XlOrFfgc1',
@@ -2415,15 +2418,15 @@ function atRecordToLead(record) {
     airtableId: record.id,
     name: name,
     email: f[AT_FIELDS.email] || f['email'] || '',
-    phone: f['Phone'] || f['phone'] || '',
-    income: f['income_range'] || (incomeMatch ? incomeMatch[0] : ''),
-    deposit: f['deposit_range'] || '',
-    depositAmount: f['deposit_range'] || '',
-    area: f['area_preference'] || '',
-    timeFrame: f['purchase_timeframe'] || '',
-    source: f['Lead_source'] || f['lead_source'] || 'Open Home',
-    firstHome: f['first_home_buyer'] || f['first_home'] || 'Yes',
-    employment: f['employment_status'] || f['employment'] || '',
+    phone: f[AT_FIELDS.phone] || f['Phone'] || f['phone'] || '',
+    income: f[AT_FIELDS.income] || f['income_range'] || (incomeMatch ? incomeMatch[0] : ''),
+    deposit: f[AT_FIELDS.deposit] || f['deposit_range'] || '',
+    depositAmount: f[AT_FIELDS.deposit] || f['deposit_range'] || '',
+    area: f[AT_FIELDS.area] || f['area_preference'] || '',
+    timeFrame: f[AT_FIELDS.timeframe] || f['purchase_timeframe'] || '',
+    source: f[AT_FIELDS.source] || f['Lead_source'] || f['lead_source'] || 'Open Home',
+    firstHome: f[AT_FIELDS.first_home] || f['first_home_buyer'] || f['first_home'] || 'Yes',
+    employment: f[AT_FIELDS.employment] || f['employment_status'] || f['employment'] || '',
     stage: atStageToInternal(stage),
     airtableStage: stage,
     score: parseInt(f['lead_score'] || scoreMatch?.[1] || '0') || null,
