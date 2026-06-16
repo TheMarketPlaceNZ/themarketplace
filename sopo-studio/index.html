@@ -3007,6 +3007,10 @@ function addCalendarBlockForSelectedDay() {
     const [eh, em] = endStr.split(':').map(Number);
     const blockEnd = new Date(selDate.getFullYear(), selDate.getMonth(), selDate.getDate(), eh, em);
     endDatetime = blockEnd.toISOString();
+  } else {
+    // Default 1 hour block if no end time set
+    const blockEnd = new Date(blockStart.getTime() + 60 * 60 * 1000);
+    endDatetime = blockEnd.toISOString();
   }
   
   if (!appState.calendarBlocks) appState.calendarBlocks = [];
@@ -3019,6 +3023,17 @@ function addCalendarBlockForSelectedDay() {
   
   saveState();
   renderAll();
+  
+  // POST to Make → Google Calendar
+  fetch('https://hook.us2.make.com/yi3h5z34uvmhlsdgjap4al9zrloreix1', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      label: label,
+      startDatetime: blockStart.toISOString(),
+      endDatetime: endDatetime
+    })
+  }).catch(err => console.error('Calendar block webhook error:', err));
   
   document.getElementById('blockTimeLabel').value = '';
   document.getElementById('blockTimeStartHour').value = '';
