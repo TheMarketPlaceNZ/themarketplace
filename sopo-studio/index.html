@@ -1706,12 +1706,12 @@ function approveLeadStage(idx, currentStage) {
     l.stage = 'valuation';
     newAtStage = 'Valuation';
   } else if (currentStage === 'valuation') {
-    l.stage = 'sold';
+    l.stage = 'hold';
     l.soldDate = new Date().toISOString();
     newAtStage = 'Sold Settled';
   }
   
-  appendLifecycleEntry(l, `Advanced to ${newAtStage}`);
+  appendLifecycleEntry(l, currentStage === 'valuation' ? 'Marked Sold, moved straight to 1-Year Hold' : `Advanced to ${newAtStage}`);
   saveState();
   renderAll();
   
@@ -1809,9 +1809,9 @@ function reEvaluateLead(idx) {
   }
 }
 
-// Sopo can pull a lead out of Declined Wait List early, before the
-// automatic countdown finishes, sends them back to square one at Pre-Broker.
-function reinstateFromWaitList(idx) {
+// Sopo can pull a lead out of Cultivation, the Wait List, or Reactivation
+// at any time, no questions asked, sends them back to square one at Pre-Broker.
+function reinstateLead(idx, sourceList) {
   const l = appState.leads[idx];
   if (!l) return;
   
@@ -1819,7 +1819,7 @@ function reinstateFromWaitList(idx) {
   
   l.stage = 'qualified';
   l.waitUntil = null;
-  appendLifecycleEntry(l, 'Reinstated early from Declined Wait List by Sopo, back to Pre-Broker');
+  appendLifecycleEntry(l, `Reinstated early from ${sourceList} by Sopo, back to Pre-Broker`);
   saveState();
   renderAll();
   
@@ -3629,7 +3629,10 @@ function renderEmailLists() {
               <div class="prospect-info">${l.name}</div>
               <div class="prospect-sub">${l.email || 'No Email'}</div>
             </div>
-            <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+              <button class="btn btn-gold" style="padding:4px 8px; font-size:10px;" onclick="reinstateLead(${appState.leads.indexOf(l)}, 'Cultivation List')">Reinstate</button>
+            </div>
           </div>
           ${makeBirthdayBanner(l)}
         </div>
@@ -3667,7 +3670,7 @@ function renderEmailLists() {
               </div>
               <div style="display:flex; gap:4px;">
                 <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
-                <button class="btn btn-gold" style="padding:4px 8px; font-size:10px;" onclick="reinstateFromWaitList(${appState.leads.indexOf(l)})">Reinstate</button>
+                <button class="btn btn-gold" style="padding:4px 8px; font-size:10px;" onclick="reinstateLead(${appState.leads.indexOf(l)}, 'Declined Wait List')">Reinstate</button>
               </div>
             </div>
           </div>
@@ -3725,7 +3728,10 @@ function renderEmailLists() {
                 <div class="prospect-info">${l.name}</div>
                 <div class="prospect-sub">${l.email || 'No Email'}</div>
               </div>
-              <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+              <div style="display:flex; gap:4px;">
+                <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+                <button class="btn btn-gold" style="padding:4px 8px; font-size:10px;" onclick="reinstateLead(${appState.leads.indexOf(l)}, 'Reactivation')">Reinstate</button>
+              </div>
             </div>
             ${makeBirthdayBanner(l)}
             <div style="font-size:10px; color:var(--gold); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px; font-style:italic;">${note}</div>
