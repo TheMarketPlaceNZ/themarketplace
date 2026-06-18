@@ -958,6 +958,10 @@ body {
           </div>
         </div>
         
+        <div style="margin-bottom: 12px;">
+          <input type="text" id="leadSearchInput" class="settings-input" placeholder="Search by name, email, or phone..." style="width: 100%; padding: 10px 14px; font-size: 13px;" oninput="searchLeads(this.value)">
+        </div>
+        
         <div class="filter-bar">
           <div class="filter-chips">
             <div class="filter-chip active" data-filter="all" onclick="filterLeads('all', this)">All</div>
@@ -1811,6 +1815,37 @@ function reEvaluateLead(idx) {
 
 // Sopo can pull a lead out of Cultivation, the Wait List, or Reactivation
 // at any time, no questions asked, sends them back to square one at Pre-Broker.
+// Genuinely and permanently delete a lead, from local state AND from
+// Airtable itself. Unlike moveLeadToDustbin, which only ever touched a
+// retired Google Sheet blocklist and left the Airtable record untouched,
+// this is a true delete with no way back. Reserved for leads already
+// past Pre-Broker, where Sopo has decided the record should simply be gone.
+async function deleteLeadPermanently(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  const confirmMsg = `This will permanently delete ${l.name || 'this lead'} from Airtable. This cannot be undone. Are you sure?`;
+  if (!confirm(confirmMsg)) return;
+  
+  if (l.airtableId) {
+    try {
+      await fetch(`${AIRTABLE_API}/${l.airtableId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
+      });
+    } catch(e) {
+      console.warn('Airtable permanent delete failed:', e.message);
+      alert('Could not delete from Airtable, please check your connection and try again.');
+      return;
+    }
+  }
+  
+  appState.leads.splice(idx, 1);
+  saveState();
+  closeLeadModal();
+  renderAll();
+}
+
 function reinstateLead(idx, sourceList) {
   const l = appState.leads[idx];
   if (!l) return;
@@ -2043,6 +2078,11 @@ function filterLeads(filter, el) {
   renderLeads();
 }
 
+function searchLeads(term) {
+  appState.leadSearchTerm = term;
+  renderLeads();
+}
+
 function renderLeads() {
   const container = document.getElementById('leadsContainer');
   let leads = (appState.leads || []).filter(l => l !== null && l !== undefined);
@@ -2059,12 +2099,22 @@ function renderLeads() {
   else if (filter === 'cold') leads = leads.filter(l => (l.score || scoreLead(l)) <= 3);
   else if (filter === 'today') leads = leads.filter(l => l.timestamp && new Date(l.timestamp) >= today);
   
+  const searchTerm = (appState.leadSearchTerm || '').trim().toLowerCase();
+  if (searchTerm) {
+    leads = leads.filter(l => {
+      const name = (l.name || '').toLowerCase();
+      const email = (l.email || '').toLowerCase();
+      const phone = (l.phone || '').toLowerCase();
+      return name.includes(searchTerm) || email.includes(searchTerm) || phone.includes(searchTerm);
+    });
+  }
+  
   if (leads.length === 0) {
     container.innerHTML = `
       <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted);">
         <div style="font-size:16px; margin-bottom:12px; color:var(--gold); font-weight:600; text-transform:uppercase; letter-spacing:1px;">Leads</div>
         <div style="font-size:16px; font-weight:600; color:var(--white);">No Leads Found</div>
-        <div style="font-size:13px; margin-top:4px;">No leads matching "${filter}" category.</div>
+        <div style="font-size:13px; margin-top:4px;">${searchTerm ? `No leads matching "${searchTerm}".` : `No leads matching "${filter}" category.`}</div>
       </div>
     `;
     return;
@@ -2436,7 +2486,10 @@ function openLeadDetail(idx) {
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button class="btn btn-gold" style="flex:1;" onclick="saveLeadDetails(${idx})">Save Changes</button>
         <button class="btn btn-ghost" style="flex:1;" onclick="callLead('${l.phone}')">Call Buyer</button>
-        <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
+        ${l.stage && l.stage !== 'new'
+          ? `<button class="btn btn-red" style="flex:1; border-color:var(--red); color:var(--red);" onclick="deleteLeadPermanently(${idx})">Delete</button>`
+          : `<button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>`
+        }
       </div>
     </div>
     
