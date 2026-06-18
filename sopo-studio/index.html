@@ -1775,6 +1775,26 @@ function reEvaluateLead(idx) {
   }
 }
 
+// Sopo can pull a lead out of Declined Wait List early, before the
+// automatic countdown finishes, sends them back to square one at Pre-Broker.
+function reinstateFromWaitList(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  if (!confirm(`Reinstate ${l.name || 'this lead'} back to Pre-Broker now?`)) return;
+  
+  l.stage = 'qualified';
+  l.waitUntil = null;
+  appendLifecycleEntry(l, 'Reinstated early from Declined Wait List by Sopo, back to Pre-Broker');
+  saveState();
+  renderAll();
+  
+  if (l.airtableId) {
+    writeStageToAirtable(l.airtableId, l.stage);
+    writeWaitUntilToAirtable(l.airtableId, '');
+  }
+}
+
 function reActivateLeadEarly(idx) {
   const l = appState.leads[idx];
   if (!l) return;
@@ -2068,7 +2088,7 @@ function renderLeads() {
       <div class="lead-actions-row" style="margin-top: 10px;">
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); smsLead('${l.phone}')">SMS</button>
-        <button class="lead-act-btn" onclick="event.stopPropagation(); moveLeadToEmailList(${appState.leads.indexOf(l)})" title="Graduate to email list" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Email List</button>
+        <button class="lead-act-btn" onclick="event.stopPropagation(); pushLead(${appState.leads.indexOf(l)})" title="Manually push to Pre-Broker" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Push</button>
         <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
       </div>
     </div>
@@ -3638,7 +3658,10 @@ function renderEmailLists() {
                 <div class="prospect-sub">${l.email || 'No Email'}</div>
                 <div style="font-size:10px; color:${countdownColor}; margin-top:2px;">${countdownText}</div>
               </div>
-              <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+              <div style="display:flex; gap:4px;">
+                <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+                <button class="btn btn-gold" style="padding:4px 8px; font-size:10px;" onclick="reinstateFromWaitList(${appState.leads.indexOf(l)})">Reinstate</button>
+              </div>
             </div>
           </div>
         `;
@@ -4076,6 +4099,31 @@ function simulateCallNoAnswer() {
       <a href="${bookingUrl}" target="_blank" style="color: var(--gold-bright); font-weight: 700; text-decoration: underline;">Open Booking Link</a>
     </div>
   `;
+}
+
+// Manual override: push a New Lead straight to Pre-Broker.
+// Used when a client books or meets Sopo outside the normal website flow.
+// Deliberately restricted to this one move only, no jumping further ahead.
+function pushLead(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  if (l.stage && l.stage !== 'new') {
+    alert('This lead has already progressed past New Lead.');
+    return;
+  }
+  
+  if (!confirm(`Push ${l.name || 'this lead'} into Pre-Broker?`)) return;
+  
+  l.stage = 'qualified';
+  appendLifecycleEntry(l, 'Manually pushed to Pre-Broker by Sopo');
+  
+  saveState();
+  renderAll();
+  
+  if (l.airtableId) {
+    writeStageToAirtable(l.airtableId, l.stage);
+  }
 }
 
 function simulateCallBooked() {
