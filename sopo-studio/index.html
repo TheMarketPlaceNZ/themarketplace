@@ -1078,6 +1078,15 @@ body {
           
           <div class="list-segment-card">
             <div class="list-header">
+              <div class="list-title">Declined Wait List</div>
+              <div class="list-count" id="countWaitList">0</div>
+            </div>
+            <div class="settings-hint" style="margin-bottom:12px;">Met after Gameplan, agreed a wait period. Re-evaluation email fires automatically when the date arrives.</div>
+            <div class="list-prospects" id="prospectsWaitList"></div>
+          </div>
+
+          <div class="list-segment-card">
+            <div class="list-header">
               <div class="list-title">1st Year Hold</div>
               <div class="list-count" id="countSoldYear">0</div>
             </div>
@@ -1654,26 +1663,102 @@ function approveLeadStage(idx, currentStage) {
   const l = appState.leads[idx];
   if (!l) return;
   
+  let newAtStage = null;
+  
   if (currentStage === 'qualified') {
     l.stage = 'finance-pending';
+    newAtStage = 'Finance Pending';
   } else if (currentStage === 'finance-pending') {
     l.stage = 'valuation';
+    newAtStage = 'Valuation';
   } else if (currentStage === 'valuation') {
     l.stage = 'sold';
     l.soldDate = new Date().toISOString();
+    newAtStage = 'Sold Settled';
+  }
+  
+  appendLifecycleEntry(l, `Advanced to ${newAtStage}`);
+  saveState();
+  renderAll();
+  
+  if (l.airtableId && newAtStage) {
+    writeStageToAirtable(l.airtableId, l.stage);
+  }
+}
+
+function denyLeadStage(idx, currentStage) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  let newAtStage = null;
+  
+  if (currentStage === 'qualified') {
+    // Pre-Broker decline goes to Cultivation List, not Gameplan
+    l.stage = 'cultivation';
+    newAtStage = 'Cultivation List';
+    appendLifecycleEntry(l, 'Declined at Pre-Broker, moved to Cultivation List');
+  } else {
+    // Finance Pending and Valuation declines go to Gameplan
+    l.stage = 'gameplan';
+    newAtStage = 'Gameplan';
+    appendLifecycleEntry(l, `Declined at ${currentStage === 'finance-pending' ? 'Finance Pending' : 'Valuation'}, moved to Gameplan`);
   }
   
   saveState();
   renderAll();
+  
+  if (l.airtableId && newAtStage) {
+    writeStageToAirtable(l.airtableId, l.stage);
+  }
 }
 
-function denyLeadStage(idx) {
+function openWaitPeriodPrompt(idx) {
   const l = appState.leads[idx];
   if (!l) return;
   
-  l.stage = 'gameplan';
+  const months = prompt(`How many months should ${l.name || 'this lead'} wait before re-evaluation?`, '3');
+  if (months === null) return; // cancelled
+  
+  const monthsNum = parseInt(months);
+  if (!monthsNum || monthsNum <= 0) {
+    alert('Please enter a valid number of months.');
+    return;
+  }
+  
+  const waitUntilDate = new Date();
+  waitUntilDate.setMonth(waitUntilDate.getMonth() + monthsNum);
+  const waitUntilStr = waitUntilDate.toISOString().split('T')[0]; // YYYY-MM-DD
+  
+  l.stage = 'wait-list';
+  l.waitUntil = waitUntilStr;
+  appendLifecycleEntry(l, `Gameplan meeting held, wait period set to ${monthsNum} month${monthsNum > 1 ? 's' : ''}, re-evaluation on ${waitUntilDate.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}`);
+  
   saveState();
   renderAll();
+  
+  if (l.airtableId) {
+    writeStageToAirtable(l.airtableId, l.stage);
+    writeWaitUntilToAirtable(l.airtableId, waitUntilStr);
+  }
+}
+
+// Write wait_until date back to Airtable
+async function writeWaitUntilToAirtable(airtableId, dateStr) {
+  if (!airtableId) return;
+  try {
+    await fetch(`${AIRTABLE_API}/${airtableId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fields: { [AT_FIELDS.wait_until]: dateStr }
+      })
+    });
+  } catch(e) {
+    console.warn('Airtable wait_until write failed:', e.message);
+  }
 }
 
 function reEvaluateLead(idx) {
@@ -1681,8 +1766,13 @@ function reEvaluateLead(idx) {
   if (!l) return;
   
   l.stage = 'qualified';
+  appendLifecycleEntry(l, 'Re-entered Pre-Broker after Gameplan meeting');
   saveState();
   renderAll();
+  
+  if (l.airtableId) {
+    writeStageToAirtable(l.airtableId, l.stage);
+  }
 }
 
 function reActivateLeadEarly(idx) {
@@ -1733,27 +1823,27 @@ function renderTracker() {
         actionButtons = `
           <div style="display: flex; gap: 6px; margin-top: 10px;">
             <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green); padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'qualified')">Approve</button>
-            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx})">Deny</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx}, 'qualified')">Deny</button>
           </div>
         `;
       } else if (stage.key === 'finance-pending') {
         actionButtons = `
           <div style="display: flex; gap: 6px; margin-top: 10px;">
             <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green); padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'finance-pending')">Approve</button>
-            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx})">Deny</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx}, 'finance-pending')">Deny</button>
           </div>
         `;
       } else if (stage.key === 'valuation') {
         actionButtons = `
           <div style="display: flex; gap: 6px; margin-top: 10px;">
-            <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green); padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'valuation')">Approve</button>
-            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx})">Deny</button>
+            <button class="lead-act-btn call" style="background: var(--green-dim); color: var(--green); padding: 6px;" onclick="event.stopPropagation(); approveLeadStage(${leadIdx}, 'valuation')">Sold</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: none; flex: 1; padding: 6px;" onclick="event.stopPropagation(); denyLeadStage(${leadIdx}, 'valuation')">Decline</button>
           </div>
         `;
       } else if (stage.key === 'gameplan') {
         actionButtons = `
           <div style="display: flex; gap: 6px; margin-top: 10px;">
-            <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold); padding: 6px;" onclick="event.stopPropagation(); reEvaluateLead(${leadIdx})">Restart</button>
+            <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold); padding: 6px;" onclick="event.stopPropagation(); openWaitPeriodPrompt(${leadIdx})">Set Wait Period</button>
             <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px; padding: 6px;" onclick="event.stopPropagation(); moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
           </div>
         `;
@@ -1902,6 +1992,11 @@ function filterLeads(filter, el) {
 function renderLeads() {
   const container = document.getElementById('leadsContainer');
   let leads = (appState.leads || []).filter(l => l !== null && l !== undefined);
+  
+  // Lead Database only shows unserviced leads — anyone who has progressed
+  // into the pipeline, cultivation, gameplan, wait list, hold, or reactivation
+  // moves out of this view entirely, no clutter, single source of truth.
+  leads = leads.filter(l => !l.stage || l.stage === 'new');
   
   const today = new Date(); today.setHours(0,0,0,0);
   const filter = appState.currentFilter || 'all';
@@ -2205,8 +2300,6 @@ function openLeadDetail(idx) {
   const l = appState.leads[idx];
   if (!l) return;
   currentLeadIndex = idx;
-  const stages = ['qualified','finance-pending','valuation','gameplan','sold'];
-  const stageLabels = ['Pre-Broker','Finance Pending','Valuation','Gameplan','Sold'];
   const score = l.score || scoreLead(l);
   const scoreClass = getScoreClass(score);
   
@@ -2281,9 +2374,10 @@ function openLeadDetail(idx) {
       </div>
       
       <div class="settings-label" style="font-size:11px; margin-bottom:8px; letter-spacing: 2px;">Pipeline Stage</div>
-      <div class="stage-selector">
-        ${stages.map((s,i) => `<button class="stage-btn ${(l.stage||'qualified')===s?'active':''}" onclick="updateLeadStage(${idx},'${s}',this)">${stageLabels[i]}</button>`).join('')}
+      <div style="padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius-xs); font-size:13px; color:var(--gold); font-weight:600; margin-bottom:4px;">
+        ${internalStageToAt(l.stage || 'qualified')}
       </div>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:16px;">Move this lead between stages from the Tracker view.</div>
       
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button class="btn btn-gold" style="flex:1;" onclick="saveLeadDetails(${idx})">Save Changes</button>
@@ -2464,24 +2558,28 @@ const AT_FIELDS = {
   zoom_link:        'fldDr724XlOrFfgc1',
   zoom_meeting_id:  'fldWGvS3W75nGpNLi',
   ai_debrief:       'fldOqGQVLFDb1YEYe',
-  checkin_date:     'fldqj65o3Zcizdng8'
+  checkin_date:     'fldqj65o3Zcizdng8',
+  lifecycle_log:    'fldtCNudL7GcBXqNc',
+  wait_until:       'fldRntkXDBcsrq34k'
 };
 
 // Map Airtable pipeline_stage → internal appState stage key
 function atStageToInternal(atStage) {
   const map = {
-    'New Lead':         'new',
-    'Pre-Broker':       'qualified',
-    'Broker Pending':   'qualified',
-    'Finance Approved': 'finance-pending',
-    'Valuation':        'valuation',
-    'Gameplan':         'gameplan',
-    'Under Offer':      'valuation',
-    'Sold Settled':     'sold',
-    '1-Year Hold':      'sold',
-    'Reactivation':     'qualified',
-    'Just Looking':     'new',
-    'Lost Archived':    'new'
+    'New Lead':           'new',
+    'Pre-Broker':         'qualified',
+    'Broker Pending':     'qualified',
+    'Finance Pending':    'finance-pending',
+    'Valuation':          'valuation',
+    'Gameplan':           'gameplan',
+    'Under Offer':        'valuation',
+    'Sold Settled':       'sold',
+    '1-Year Hold':        'hold',
+    'Reactivation':       'reactivation',
+    'Cultivation List':   'cultivation',
+    'Declined Wait List': 'wait-list',
+    'Just Looking':       'new',
+    'Lost Archived':      'new'
   };
   return map[atStage] || 'qualified';
 }
@@ -2491,10 +2589,14 @@ function internalStageToAt(internalStage) {
   const map = {
     'new':             'New Lead',
     'qualified':       'Pre-Broker',
-    'finance-pending': 'Finance Approved',
+    'finance-pending': 'Finance Pending',
     'valuation':       'Valuation',
     'gameplan':        'Gameplan',
-    'sold':            'Sold Settled'
+    'sold':            'Sold Settled',
+    'hold':            '1-Year Hold',
+    'reactivation':    'Reactivation',
+    'cultivation':     'Cultivation List',
+    'wait-list':       'Declined Wait List'
   };
   return map[internalStage] || 'Pre-Broker';
 }
@@ -2528,7 +2630,9 @@ function atRecordToLead(record) {
     airtableStage: stage,
     score: parseInt(f['lead_score'] || scoreMatch?.[1] || '0') || null,
     agent_notes: notes,
-    ai_debrief: f['ai_debrief'] || null,
+    ai_debrief: f[AT_FIELDS.ai_debrief] || f['ai_debrief'] || null,
+    lifecycleLog: f[AT_FIELDS.lifecycle_log] || f['lifecycle_log'] || '',
+    waitUntil: f[AT_FIELDS.wait_until] || f['wait_until'] || null,
     timestamp: record.createdTime || new Date().toISOString(),
     hasBooked: !!(f['booking_time'] || f['meeting_choice']),
     bookingTime: f['booking_time'] || null,
@@ -2539,6 +2643,36 @@ function atRecordToLead(record) {
     checkinDate: f['checkin_date'] || null,
     zoomStartUrl: f['zoom_start_url'] || null
   };
+}
+
+// Append a dated entry to a lead's lifecycle log, locally and to Airtable
+function appendLifecycleEntry(lead, text) {
+  if (!lead) return;
+  const dateStr = new Date().toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' });
+  const entry = `[${dateStr}] ${text}`;
+  lead.lifecycleLog = lead.lifecycleLog ? `${lead.lifecycleLog}\n${entry}` : entry;
+  if (lead.airtableId) {
+    writeLifecycleLogToAirtable(lead.airtableId, lead.lifecycleLog);
+  }
+}
+
+// Write the full lifecycle log back to Airtable
+async function writeLifecycleLogToAirtable(airtableId, log) {
+  if (!airtableId) return;
+  try {
+    await fetch(`${AIRTABLE_API}/${airtableId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fields: { [AT_FIELDS.lifecycle_log]: log }
+      })
+    });
+  } catch(e) {
+    console.warn('Airtable lifecycle log write failed:', e.message);
+  }
 }
 
 // Write a stage change back to Airtable
@@ -3418,17 +3552,21 @@ function toggleClientTask(meetingIdx, taskIdx) {
 function renderEmailLists() {
   const leads = appState.leads || [];
   
-  const cultivationList = leads.filter(l => {
-    const s = l.score || scoreLead(l);
-    return s >= 1 && s <= 6 && l.stage !== 'sold' && l.stage !== 'reactivation';
-  });
+  // Cultivation List = leads declined at Pre-Broker specifically.
+  // No longer score-based, stage is the single source of truth.
+  const cultivationList = leads.filter(l => l.stage === 'cultivation');
   
-  const soldYearList = leads.filter(l => l.stage === 'sold');
+  const waitList = leads.filter(l => l.stage === 'wait-list');
+  
+  const soldYearList = leads.filter(l => l.stage === 'hold');
   
   const reactivationList = leads.filter(l => l.stage === 'reactivation');
   
   const countSavingEl = document.getElementById('countSaving');
   if (countSavingEl) countSavingEl.textContent = cultivationList.length;
+  
+  const countWaitListEl = document.getElementById('countWaitList');
+  if (countWaitListEl) countWaitListEl.textContent = waitList.length;
   
   const countSoldYearEl = document.getElementById('countSoldYear');
   if (countSoldYearEl) countSoldYearEl.textContent = soldYearList.length;
@@ -3469,6 +3607,42 @@ function renderEmailLists() {
           ${makeBirthdayBanner(l)}
         </div>
       `).join('');
+    }
+  }
+  
+  const prospectsWaitList = document.getElementById('prospectsWaitList');
+  if (prospectsWaitList) {
+    if (waitList.length === 0) {
+      prospectsWaitList.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">No leads on the wait list.</div>';
+    } else {
+      prospectsWaitList.innerHTML = waitList.map(l => {
+        let countdownText = 'No date set';
+        let countdownColor = 'var(--muted)';
+        if (l.waitUntil) {
+          const waitDate = new Date(l.waitUntil);
+          const today = new Date(); today.setHours(0,0,0,0);
+          const daysLeft = Math.ceil((waitDate - today) / (24 * 60 * 60 * 1000));
+          if (daysLeft <= 0) {
+            countdownText = 'Re-evaluation due';
+            countdownColor = 'var(--gold)';
+          } else {
+            countdownText = `${daysLeft} day${daysLeft !== 1 ? 's' : ''} until re-evaluation`;
+            countdownColor = 'var(--muted)';
+          }
+        }
+        return `
+          <div class="list-prospect-row" style="margin-bottom:6px; flex-direction:column; align-items:stretch; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <div style="flex:1;">
+                <div class="prospect-info">${l.name}</div>
+                <div class="prospect-sub">${l.email || 'No Email'}</div>
+                <div style="font-size:10px; color:${countdownColor}; margin-top:2px;">${countdownText}</div>
+              </div>
+              <button class="btn btn-ghost" style="padding:4px 8px; font-size:10px;" onclick="copyProspectInfo('${l.name}','${l.email}')">Copy</button>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
   }
   
@@ -3773,22 +3947,6 @@ function clearSyncBlocklist() {
   renderAll();
 }
 
-// ===== MANUAL LEAD STAGE ROUTING =====
-function proceedLeadStage(idx) {
-  const l = appState.leads[idx];
-  if (!l) return;
-  
-  const stages = ['qualified', 'finance-pending', 'valuation', 'gameplan', 'sold', 'reactivation'];
-  const currentIdx = stages.indexOf(l.stage || 'qualified');
-  
-  if (currentIdx !== -1 && currentIdx < stages.length - 2) {
-    l.stage = stages[currentIdx + 1];
-  }
-  
-  saveState();
-  renderAll();
-}
-
 // ===== VOICE CALL DIALER SIMULATOR =====
 let currentContactLeadIndex = null;
 let dialingTimeout = null;
@@ -3932,9 +4090,14 @@ function simulateCallBooked() {
   l.bookingTime = nextMonday.toISOString();
   l.meetingType = 'zoom';
   l.stage = 'qualified'; // pre-broker
+  appendLifecycleEntry(l, 'Booked meeting directly via call, moved to Pre-Broker');
   
   saveState();
   renderAll();
+  
+  if (l.airtableId) {
+    writeStageToAirtable(l.airtableId, l.stage);
+  }
   
   document.getElementById('voiceCallStatus').textContent = 'Booked';
   document.getElementById('voiceCallConnectedControls').style.display = 'none';
@@ -4040,10 +4203,15 @@ function submitQuickClientBooking() {
     l.bookingEndTime = endDateTimeISO;
     l.meetingType = type;
     l.stage = 'qualified'; // move to Pre-Broker
+    appendLifecycleEntry(l, 'Booked meeting via Studio quick booking, moved to Pre-Broker');
     
     saveState();
     renderAll();
     closeQuickBookingModal();
+    
+    if (l.airtableId) {
+      writeStageToAirtable(l.airtableId, l.stage);
+    }
   }
 }
 
