@@ -1334,6 +1334,40 @@ body {
 const DEFAULT_PASSCODE = 'sopo2026';
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
+// ===== AIRTABLE CONFIG =====
+// Declared right at the top, deliberately, so every function in this
+// file can rely on these existing, no matter where it sits below.
+const AIRTABLE_BASE_ID = 'appXHdiVfCGMZPtWw';
+const AIRTABLE_TABLE_ID = 'tbleWHVvCC8o5pNVx';
+const AIRTABLE_API_KEY = (document.querySelector('meta[name="at-key"]') || {}).content || '';
+const AIRTABLE_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`;
+
+// Field IDs from the SOPO_CRM Leads table
+const AT_FIELDS = {
+  full_name:        'fldnzGt6AXI2GjIZX',
+  agent_notes:      'fldWSLI44zO7tOxVl',
+  pipeline_stage:   'fldqvVfQxdzK1nu0p',
+  email:            'fldrYx9nQ8D2rwHBT',
+  phone:            'fldYibNPqZOw4KPZx',
+  income:           'fldaID5e17VCrWnK7',
+  deposit:          'fldrXMHE1zwg7aIzR',
+  deposit_amount:   'fldrXMHE1zwg7aIzR',
+  area:             'fldwfkBBgMT67Jks7',
+  timeframe:        'fld8NaNsskjLUKXyw',
+  source:           'fldGpiOssNfEnyvRs',
+  score:            'flduRoHoygVWZbfvn',
+  first_home:       'fldGpiOssNfEnyvRs',
+  employment:       'fld0dUvYYHL4z9kYc',
+  booking_time:     'fldcE5ZePycc97Bvm',
+  meeting_choice:   'fldbxFEIExMmHXrfL',
+  zoom_link:        'fldDr724XlOrFfgc1',
+  zoom_meeting_id:  'fldWGvS3W75nGpNLi',
+  ai_debrief:       'fldOqGQVLFDb1YEYe',
+  checkin_date:     'fldqj65o3Zcizdng8',
+  lifecycle_log:    'fldtCNudL7GcBXqNc',
+  wait_until:       'fldRntkXDBcsrq34k'
+};
+
 const DEFAULT_LEADS = [
   {
     name: "Tane & Aroha Williams",
@@ -2552,36 +2586,9 @@ function closeLeadModal() {
 document.getElementById('leadModal').addEventListener('click', e => { if (e.target === document.getElementById('leadModal')) closeLeadModal(); });
 
 // ===== AIRTABLE INTEGRATION =====
-const AIRTABLE_BASE_ID = 'appXHdiVfCGMZPtWw';
-const AIRTABLE_TABLE_ID = 'tbleWHVvCC8o5pNVx';
-const AIRTABLE_API_KEY = (document.querySelector('meta[name="at-key"]') || {}).content || '';
-const AIRTABLE_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`;
-
-// Field IDs from the SOPO_CRM Leads table
-const AT_FIELDS = {
-  full_name:        'fldnzGt6AXI2GjIZX',
-  agent_notes:      'fldWSLI44zO7tOxVl',
-  pipeline_stage:   'fldqvVfQxdzK1nu0p',
-  email:            'fldrYx9nQ8D2rwHBT',
-  phone:            'fldYibNPqZOw4KPZx',
-  income:           'fldaID5e17VCrWnK7',
-  deposit:          'fldrXMHE1zwg7aIzR',
-  deposit_amount:   'fldrXMHE1zwg7aIzR',
-  area:             'fldwfkBBgMT67Jks7',
-  timeframe:        'fld8NaNsskjLUKXyw',
-  source:           'fldGpiOssNfEnyvRs',
-  score:            'flduRoHoygVWZbfvn',
-  first_home:       'fldGpiOssNfEnyvRs',
-  employment:       'fld0dUvYYHL4z9kYc',
-  booking_time:     'fldcE5ZePycc97Bvm',
-  meeting_choice:   'fldbxFEIExMmHXrfL',
-  zoom_link:        'fldDr724XlOrFfgc1',
-  zoom_meeting_id:  'fldWGvS3W75nGpNLi',
-  ai_debrief:       'fldOqGQVLFDb1YEYe',
-  checkin_date:     'fldqj65o3Zcizdng8',
-  lifecycle_log:    'fldtCNudL7GcBXqNc',
-  wait_until:       'fldRntkXDBcsrq34k'
-};
+// (Base ID, Table ID, API Key, AIRTABLE_API, and AT_FIELDS now declared
+// near the top of the file, see CONFIG section, so they're available
+// to every function regardless of where it sits in the file.)
 
 // Map Airtable pipeline_stage → internal appState stage key
 function atStageToInternal(atStage) {
