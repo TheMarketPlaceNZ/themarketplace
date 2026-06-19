@@ -2686,7 +2686,8 @@ function atRecordToLead(record) {
   const f = record.fields;
   const name = f[AT_FIELDS.full_name] || f['full_name'] || '';
   const notes = f[AT_FIELDS.agent_notes] || f['agent_notes'] || '';
-  const stage = f[AT_FIELDS.pipeline_stage] || f['pipeline_stage'] || 'New Lead';
+  const rawStage = f[AT_FIELDS.pipeline_stage] || f['pipeline_stage'];
+  const stage = (rawStage && typeof rawStage === 'object') ? (rawStage.name || 'New Lead') : (rawStage || 'New Lead');
 
   // Try to parse quick info out of agent_notes for display
   // Notes format: "detail... Income: X... Deposit: Y... Score X/10"
