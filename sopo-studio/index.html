@@ -4280,13 +4280,17 @@ function startAirtablePolling() {
 // ===== INITIAL LOAD FROM AIRTABLE =====
 // Sync is triggered by initApp() after auth — no pre-auth sync needed.
 
-// ===== REGISTER PWA SERVICE WORKER =====
+// ===== RETIRE LEGACY PWA SERVICE WORKER =====
+// This used to register a service worker for offline support, but it was the
+// root cause of returning browsers showing a stale dashboard after a deploy.
+// This actively removes it (and anything it cached) on any browser that still has it.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('Service Worker registered successfully.', reg.scope))
-      .catch(err => console.log('Service Worker registration failed: ', err));
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
   });
+}
+if (window.caches) {
+  caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
 }
 </script>
 </body>
