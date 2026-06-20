@@ -1,6 +1,11 @@
 [build]
   publish = "."
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
 [[redirects]]
   from = "/checkin"
   to = "/sopo-studio/checkin.html"
