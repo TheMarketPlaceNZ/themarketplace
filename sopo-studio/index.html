@@ -1372,6 +1372,158 @@ const AT_FIELDS = {
   wait_until:       'fldRntkXDBcsrq34k'
 };
 
+const DEFAULT_LEADS = [
+  {
+    name: "Tane & Aroha Williams",
+    email: "tane.aroha@gmail.com",
+    phone: "021555789",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Dinsdale",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Instagram",
+    stage: "qualified", // Pre-Mortgage Broker
+    bookingTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    score: 9,
+    birthdayHusband: "1991-03-12",
+    birthdayWife: "1993-06-06", // Birthday Today
+    birthdayKids: "Hemi: 2018-09-22"
+  },
+  {
+    name: "Hemi & Kiri Taylor",
+    email: "hemi.taylor@gmail.com",
+    phone: "027333456",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "80000 to 120000",
+    deposit: "Yes KiwiSaver",
+    area: "Hamilton East",
+    timeFrame: "Within 3 Months",
+    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Facebook",
+    stage: "finance-pending", // Finance Pending
+    score: 7,
+    birthdayHusband: "1988-08-14",
+    birthdayWife: "1990-11-20",
+    birthdayKids: "Rawiri: 2015-04-12, Kiri: 2017-08-05"
+  },
+  {
+    name: "John & Sarah Miller",
+    email: "john.miller@yahoo.com",
+    phone: "022444901",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Rototuna",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Open Home",
+    stage: "valuation", // Valuation
+    score: 10,
+    birthdayHusband: "1989-11-04",
+    birthdayWife: "1991-06-06", // Birthday Today
+    birthdayKids: "Leo: 2018-06-06, Mia: 2021-12-15" // Leo Birthday Today
+  },
+  {
+    name: "Sione & Mele Tupou",
+    email: "sione.tupou@gmail.com",
+    phone: "021998112",
+    firstHome: "No",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Frankton",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(), // ~1.1 years ago
+    source: "Referral",
+    stage: "reactivation",
+    soldDate: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+    score: 9,
+    birthdayHusband: "1985-02-14",
+    birthdayWife: "1987-10-09",
+    birthdayKids: "Sione Jr: 2012-07-25"
+  },
+  {
+    name: "Wiremu Kingi",
+    email: "wiremu.k@outlook.co.nz",
+    phone: "022774883",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "80000 to 120000",
+    deposit: "Yes KiwiSaver",
+    area: "Dinsdale",
+    timeFrame: "Within 3 Months",
+    timestamp: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(), // ~1.3 years ago
+    source: "Open Home",
+    stage: "reactivation",
+    soldDate: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(),
+    score: 7,
+    birthdayHusband: "1994-07-12",
+    birthdayWife: "1996-01-29",
+    birthdayKids: ""
+  },
+  {
+    name: "Lani & Vaea Faletau",
+    email: "lani.faletau@yahoo.com",
+    phone: "027443992",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "Melville",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 450 * 24 * 60 * 60 * 1000).toISOString(), // ~1.2 years ago
+    source: "Referral",
+    stage: "reactivation",
+    soldDate: new Date(Date.now() - 450 * 24 * 60 * 60 * 1000).toISOString(),
+    score: 8,
+    birthdayHusband: "1990-12-04",
+    birthdayWife: "1992-04-18",
+    birthdayKids: "Vaea Jr: 2019-03-30"
+  },
+  {
+    name: "Peni & Losa Havili",
+    email: "peni.havili@gmail.com",
+    phone: "021666111",
+    firstHome: "Yes",
+    employment: "Part Time",
+    income: "Under 80000",
+    deposit: "No Still Saving",
+    area: "Melville",
+    timeFrame: "Just Looking",
+    timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Open Home",
+    stage: "gameplan", // Gameplan Meeting
+    score: 3,
+    birthdayHusband: "1995-09-02",
+    birthdayWife: "1997-05-15",
+    birthdayKids: "Tevita: 2022-01-14"
+  },
+  {
+    name: "David & Anna Watson",
+    email: "david.watson@gmail.com",
+    phone: "022888222",
+    firstHome: "Yes",
+    employment: "Full Time",
+    income: "Over 120000",
+    deposit: "Yes Both",
+    area: "St Andrews",
+    timeFrame: "Immediately",
+    timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Open Home",
+    stage: "sold", // Sold (held under 1 year)
+    soldDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(), // Sold 25 days ago
+    score: 9,
+    birthdayHusband: "1988-05-28",
+    birthdayWife: "1989-12-09",
+    birthdayKids: "Emma: 2016-10-04, Jack: 2019-07-19"
+  }
+];
+
 let appState = {
   leads: [],
   meetings: [],
@@ -1384,25 +1536,38 @@ let currentLeadIndex = null;
 
 // ===== DATABASE METHODS =====
 function saveState() {
-  localStorage.setItem('sopo_state_v2', JSON.stringify(appState));
+  localStorage.setItem('sopo_state_v3', JSON.stringify(appState));
 }
 
 function loadState() {
   try {
-    const s = localStorage.getItem('sopo_state_v2');
+    const s = localStorage.getItem('sopo_state_v3');
     if (s) {
       appState = { ...appState, ...JSON.parse(s) };
     } else {
+      // Migrate from v2 if exists, then wipe v2
+      const v2 = localStorage.getItem('sopo_state_v2');
+      if (v2) {
+        appState = { ...appState, ...JSON.parse(v2) };
+        localStorage.removeItem('sopo_state_v2');
+      }
       // Migrate from old state if exists
       const old = localStorage.getItem('sopo_state');
       if (old) {
         appState = { ...appState, ...JSON.parse(old) };
       } else {
-        // Fresh install — start empty, real leads come from the Airtable sync
+        // First ever install — seed demo leads once only
+        if (!localStorage.getItem('sopo_seeded')) {
+          appState.leads = DEFAULT_LEADS;
+          localStorage.setItem('sopo_seeded', 'true');
+        }
         appState.calendarBlocks = [];
       }
     }
   } catch(e) {}
+
+  // Always reset filter to 'all' on load — never persist tab selection across sessions.
+  appState.currentFilter = 'all';
 
   // Removed: forced re-seed when leads is empty.
   // Leads should stay empty if Sopo has deleted them all.
@@ -4280,17 +4445,13 @@ function startAirtablePolling() {
 // ===== INITIAL LOAD FROM AIRTABLE =====
 // Sync is triggered by initApp() after auth — no pre-auth sync needed.
 
-// ===== RETIRE LEGACY PWA SERVICE WORKER =====
-// This used to register a service worker for offline support, but it was the
-// root cause of returning browsers showing a stale dashboard after a deploy.
-// This actively removes it (and anything it cached) on any browser that still has it.
+// ===== REGISTER PWA SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(reg => reg.unregister());
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('Service Worker registered successfully.', reg.scope))
+      .catch(err => console.log('Service Worker registration failed: ', err));
   });
-}
-if (window.caches) {
-  caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
 }
 </script>
 </body>
