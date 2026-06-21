@@ -1556,11 +1556,8 @@ function loadState() {
       if (old) {
         appState = { ...appState, ...JSON.parse(old) };
       } else {
-        // First ever install — seed demo leads once only
-        if (!localStorage.getItem('sopo_seeded')) {
-          appState.leads = DEFAULT_LEADS;
-          localStorage.setItem('sopo_seeded', 'true');
-        }
+        // Fresh install — start empty, Airtable sync will populate leads
+        appState.leads = [];
         appState.calendarBlocks = [];
       }
     }
@@ -2912,7 +2909,7 @@ window.addEventListener('storage', e => {
     } catch(err) {
       console.error(err);
     }
-  } else if (e.key === 'sopo_state_v2' && e.newValue) {
+  } else if (e.key === 'sopo_state_v3' && e.newValue) {
     loadState();
     renderAll();
   }
