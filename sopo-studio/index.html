@@ -1009,12 +1009,22 @@ body {
         <!-- Quick Share Invite Templates Card -->
         <div class="card" style="margin-bottom: 24px; padding: 18px;">
           <div class="section-title" style="font-size: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-            <span>SMS / DM Invite Template</span>
+            <span>SMS / DM Invite Templates</span>
             <span style="font-size: 8px; color: var(--muted); text-transform: none; letter-spacing: 0.5px;">Click to copy to clipboard</span>
           </div>
-          <div style="background: rgba(255, 255, 255, 0.01); border: 1.2px dashed var(--border-gold); border-radius: var(--radius-sm); padding: 14px 100px 14px 14px; position: relative;">
+
+          <!-- Template 1: Full Check-In -->
+          <div style="font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px;">Full Check-In</div>
+          <div style="background: rgba(255, 255, 255, 0.01); border: 1.2px dashed var(--border-gold); border-radius: var(--radius-sm); padding: 14px 100px 14px 14px; position: relative; margin-bottom: 14px;">
             <p id="inviteTextTemplate" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5; margin: 0;">Hey, thanks so much for reaching out! If you could click the link below and answer 10 questions (takes less than a minute), I'll be able to slot you in and we can see how to get you into your very own house. God bless! <span id="inviteLinkSpan" style="color:var(--gold-bright); text-decoration:underline; font-weight:600;">https://www.themarketplace.co.nz/checkin</span></p>
             <button class="btn btn-gold" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding: 6px 12px; font-size: 11px; border-radius: var(--radius-xs);" onclick="copyInviteText()">Copy Text</button>
+          </div>
+
+          <!-- Template 2: Quick Booking -->
+          <div style="font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px;">Quick Book</div>
+          <div style="background: rgba(255, 255, 255, 0.01); border: 1.2px dashed var(--border-gold); border-radius: var(--radius-sm); padding: 14px 100px 14px 14px; position: relative;">
+            <p id="bookingTextTemplate" style="font-size: 12.5px; color: #cbd5e1; line-height: 1.5; margin: 0;">Hey! Would love to sit down and have a chat about getting you into your first home. Click the link below and pick a time that works for you. Won't take long — I promise it'll be worth it. God bless! <span id="bookingLinkSpan" style="color:var(--gold-bright); text-decoration:underline; font-weight:600;">https://www.themarketplace.co.nz/sopo-studio/book_meeting.html</span></p>
+            <button class="btn btn-gold" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding: 6px 12px; font-size: 11px; border-radius: var(--radius-xs);" onclick="copyBookingText()">Copy Text</button>
           </div>
         </div>
         
@@ -1727,6 +1737,21 @@ function copyInviteText() {
     document.execCommand('copy');
     document.body.removeChild(el);
     alert('Invite message copied to clipboard!');
+  });
+}
+
+function copyBookingText() {
+  const txt = document.getElementById('bookingTextTemplate').textContent.trim();
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('Quick booking message copied to clipboard!');
+  }).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = txt;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('Quick booking message copied to clipboard!');
   });
 }
 
