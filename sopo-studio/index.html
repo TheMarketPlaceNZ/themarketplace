@@ -857,6 +857,66 @@ body {
   overflow-y: auto;
   border-left: 2.5px solid var(--gold);
 }
+
+/* ===== CALL NOTES SECTION ===== */
+.call-notes-box {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.call-notes-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.call-quick-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.call-quick-btn {
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.call-quick-btn:hover,
+.call-quick-btn.selected {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.call-note-textarea {
+  width: 100%;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  color: var(--white);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  min-height: 64px;
+  transition: border-color 0.2s;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.call-note-textarea:focus { border-color: var(--gold); }
+.call-note-textarea::placeholder { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -2424,7 +2484,7 @@ function openLeadDetail(idx) {
     
     <div class="modal-tabs">
       <button class="modal-tab-btn active" id="btnTabDetails" onclick="switchModalTab('details')">Client Details</button>
-      <button class="modal-tab-btn" id="btnTabDebrief" onclick="switchModalTab('debrief')">AI Debrief Folder</button>
+      <button class="modal-tab-btn" id="btnTabDebrief" onclick="switchModalTab('debrief')">Timeline</button>
     </div>
     
     <div class="modal-tab-pane active" id="paneTabDetails">
@@ -2586,15 +2646,21 @@ function openLeadDetail(idx) {
         <div class="spinner-text" id="spinnerText" style="font-size: 12px;">Sina is extracting action items...</div>
       </div>
 
-      <!-- ===== AI DEBRIEF HISTORY ===== -->
-      <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:10px;">AI Debrief History</div>
-      <div id="modalDebriefList" style="margin-bottom:10px;">
-        ${(l.ai_debrief && l.ai_debrief.trim()) ? renderDebriefHistory(l.ai_debrief, l) : `
-          <div style="padding:20px; text-align:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; color:var(--muted); font-size:13px; line-height:1.6;">
-            No AI debriefs recorded for this client yet.<br>Start recording above to qualify goals and auto-generate checklists.
-          </div>
-        `}
+      <!-- ===== CALL NOTES ===== -->
+      <div class="call-notes-box">
+        <div class="call-notes-label">Log a Call Activity</div>
+        <div class="call-quick-btns">
+          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📞 Left voicemail')">📞 Left voicemail</button>
+          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📱 Sent text')">📱 Sent text</button>
+          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📅 Callback requested')">📅 Callback requested</button>
+        </div>
+        <textarea class="call-note-textarea" id="callNoteText" placeholder="Add a note (e.g. Left voicemail, she'll call back Friday)"></textarea>
+        <button class="btn btn-gold full" onclick="submitCallNote()">Log Activity</button>
       </div>
+
+      <!-- ===== CLIENT TIMELINE ===== -->
+      <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:10px;">Client Timeline</div>
+      <div id="modalDebriefList" style="margin-bottom:10px;"></div>
 
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
@@ -2760,6 +2826,50 @@ async function writeLifecycleLogToAirtable(airtableId, log) {
   } catch(e) {
     console.warn('Airtable lifecycle log write failed:', e.message);
   }
+}
+
+// ===== CALL NOTE QUICK-TAP BUTTONS =====
+function selectCallQuickBtn(btn, text) {
+  // Toggle selection highlight
+  document.querySelectorAll('.call-quick-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  // Pre-fill textarea, appending if there's already content
+  const ta = document.getElementById('callNoteText');
+  if (ta) ta.value = text;
+  ta.focus();
+}
+
+async function submitCallNote() {
+  const ta = document.getElementById('callNoteText');
+  if (!ta) return;
+  const noteText = ta.value.trim();
+  if (!noteText) return;
+
+  const l = appState.leads[currentLeadIndex];
+  if (!l) return;
+
+  // Build timestamped entry matching lifecycle_log format: [22 Jun 2026 14:35] text
+  const now = new Date();
+  const dateLabel = now.toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' });
+  const timeLabel = now.toLocaleTimeString('en-NZ', { hour:'numeric', minute:'2-digit', hour12:true });
+  const entry = `[${dateLabel} ${timeLabel}] ${noteText}`;
+
+  // Append to lead's local lifecycleLog
+  l.lifecycleLog = l.lifecycleLog
+    ? l.lifecycleLog.trim() + '\n' + entry
+    : entry;
+
+  // Write to Airtable
+  if (l.airtableId) {
+    writeLifecycleLogToAirtable(l.airtableId, l.lifecycleLog);
+  }
+
+  // Clear input and reset quick buttons
+  ta.value = '';
+  document.querySelectorAll('.call-quick-btn').forEach(b => b.classList.remove('selected'));
+
+  // Re-render the timeline immediately
+  renderModalDebriefHistory();
 }
 
 // Write a stage change back to Airtable
@@ -3530,68 +3640,138 @@ function switchModalTab(tabId) {
 function renderModalDebriefHistory() {
   const container = document.getElementById('modalDebriefList');
   if (!container) return;
-  
   const l = appState.leads[currentLeadIndex];
   if (!l) return;
 
-  let html = '';
+  // ── Build a unified event list ──────────────────────────────────────────
+  const events = [];
 
-  // Show Airtable ai_debrief if it exists
-  if (l.ai_debrief) {
-    html += `
-      <div class="debrief-item" style="margin-bottom: 16px; border-color: rgba(201,169,110,0.3);">
-        <div class="debrief-header">
-          <span class="debrief-title" style="color: var(--gold);">📋 AI Strategy Debrief</span>
-          ${l.bookingTime ? `<span class="debrief-date">${new Date(l.bookingTime).toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'})}</span>` : ''}
-        </div>
-        ${l.meetingType ? `
-          <div style="margin: 8px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <span style="background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.35); color: var(--gold); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-transform: uppercase;">
-              ${l.meetingType?.toLowerCase() === 'zoom' ? '📹' : '🏠'} ${l.meetingType}
-            </span>
-            ${l.zoomLink ? `<a href="${l.zoomLink}" target="_blank" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35); color: #3B82F6; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; text-decoration: none;">🔗 Join Zoom</a>` : ''}
-          </div>
-        ` : ''}
-        <div class="debrief-transcript-box" style="display: block; margin-top: 10px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">${l.ai_debrief}</div>
-      </div>
-    `;
+  // 1. Lifecycle log entries: "[21 Jun 2026] Text here"
+  if (l.lifecycleLog && l.lifecycleLog.trim()) {
+    l.lifecycleLog.trim().split('\n').forEach(line => {
+      const m = line.match(/^\[(.+?)\]\s*(.+)$/);
+      if (!m) return;
+      const parsed = new Date(m[1]);
+      events.push({
+        type: 'lifecycle',
+        date: isNaN(parsed) ? new Date(0) : parsed,
+        dateLabel: m[1],
+        text: m[2]
+      });
+    });
   }
 
-  const meetings = l.meetings || [];
-  if (meetings.length === 0 && !l.ai_debrief) {
-    container.innerHTML = `<div style="text-align:center; padding:15px; color:var(--muted); font-size:12px;">No AI debriefs recorded for this client yet. Start recording above to qualify goals and auto-generate checklists.</div>`;
+  // 2. Recorded meetings (local)
+  (l.meetings || []).forEach((m, idx) => {
+    events.push({
+      type: 'meeting',
+      date: new Date(m.date),
+      dateLabel: new Date(m.date).toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'}),
+      meeting: m,
+      meetingIdx: idx
+    });
+  });
+
+  // 3. Airtable ai_debrief text (treat as one entry dated at booking time or lead creation)
+  if (l.ai_debrief && l.ai_debrief.trim()) {
+    const debriefDate = l.bookingTime ? new Date(l.bookingTime) : new Date(l.timestamp || 0);
+    events.push({
+      type: 'airtable_debrief',
+      date: debriefDate,
+      dateLabel: debriefDate.toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'}),
+      text: l.ai_debrief,
+      meetingType: l.meetingType,
+      zoomLink: l.zoomLink
+    });
+  }
+
+  if (events.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:24px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; color:var(--muted); font-size:13px; line-height:1.6;">
+        No history yet for this client.<br>Stage changes and recordings will appear here automatically.
+      </div>`;
     return;
   }
-  
-  html += meetings.map((m, idx) => `
-    <div class="debrief-item">
-      <div class="debrief-header">
-        <span class="debrief-title">${m.label || 'Debrief'}</span>
-        <span class="debrief-date">${new Date(m.date).toLocaleDateString('en-NZ')} (${m.duration || '00:00'})</span>
-      </div>
-      ${m.summary ? `<div class="debrief-summary" style="margin-bottom:10px;">${m.summary}</div>` : ''}
-      
-      ${m.tasks && m.tasks.length > 0 ? `
-        <div class="debrief-tasks" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: var(--radius-xs); border: 1px solid var(--border);">
-          <div style="font-size: 11px; font-weight:700; color:var(--gold); text-transform:uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Tasks Generated</div>
-          ${m.tasks.map((t, tIdx) => `
-            <div class="checklist-item" style="display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
-              <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleClientTask(${idx}, ${tIdx})" style="cursor:pointer; transform: scale(1.05);">
-              <span style="font-size:12px; color:${t.done ? 'var(--muted)' : 'var(--white)'}; text-decoration:${t.done ? 'line-through' : 'none'};">${t.task}</span>
-              <span class="badge cat-${(t.category||'followup').toLowerCase()}" style="font-size:8px; padding: 2px 4px; margin-left: auto;">${t.category}</span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-      
-      <div style="display: flex; gap: 8px;">
-        <button class="btn btn-ghost" style="padding: 2px 8px; font-size: 11px;" onclick="toggleDebriefTranscript(${idx})">View Transcript</button>
-        <button class="btn btn-red" style="padding: 2px 8px; font-size: 11px; border: none; background: rgba(230, 57, 70, 0.1); color: var(--red);" onclick="deleteClientDebrief(${idx})">Delete</button>
-      </div>
-      <div id="debriefTransBox_${idx}" class="debrief-transcript-box" style="display:none; margin-top: 8px;">${m.transcript || 'No transcript text available.'}</div>
-    </div>
-  `).join('');
 
+  // Sort newest first
+  events.sort((a, b) => b.date - a.date);
+
+  // ── Render timeline ──────────────────────────────────────────────────────
+  const timelineStyle = `
+    position:relative; padding-left:24px;
+  `;
+  const lineStyle = `
+    position:absolute; left:7px; top:8px; bottom:0;
+    width:1px; background:rgba(255,255,255,0.08);
+  `;
+
+  let html = `<div style="${timelineStyle}"><div style="${lineStyle}"></div>`;
+
+  events.forEach((ev, i) => {
+    if (ev.type === 'lifecycle') {
+      // Stage/action event — compact single-line entry
+      html += `
+        <div style="position:relative; margin-bottom:14px;">
+          <div style="position:absolute; left:-20px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--gold); border:2px solid var(--navy);"></div>
+          <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; color:var(--white); font-weight:500;">${ev.text}</span>
+            <span style="font-size:10px; color:var(--muted); white-space:nowrap;">${ev.dateLabel}</span>
+          </div>
+        </div>`;
+
+    } else if (ev.type === 'meeting') {
+      const m = ev.meeting;
+      const mIdx = ev.meetingIdx;
+      html += `
+        <div style="position:relative; margin-bottom:16px;">
+          <div style="position:absolute; left:-21px; top:10px; width:10px; height:10px; border-radius:50%; background:#3B82F6; border:2px solid var(--navy);"></div>
+          <div class="debrief-item" style="margin-bottom:0;">
+            <div class="debrief-header">
+              <span class="debrief-title">🎙 ${m.label || 'Recording'}</span>
+              <span class="debrief-date">${ev.dateLabel}${m.duration ? ` · ${m.duration}` : ''}</span>
+            </div>
+            ${m.summary ? `<div class="debrief-summary" style="margin-bottom:10px;">${m.summary}</div>` : ''}
+            ${m.tasks && m.tasks.length > 0 ? `
+              <div style="margin-bottom:10px; padding:10px; background:rgba(255,255,255,0.03); border-radius:var(--radius-xs); border:1px solid var(--border);">
+                <div style="font-size:10px; font-weight:700; color:var(--gold); text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">Tasks</div>
+                ${m.tasks.map((t, tIdx) => `
+                  <div style="display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleClientTask(${mIdx}, ${tIdx})" style="cursor:pointer;">
+                    <span style="font-size:12px; color:${t.done ? 'var(--muted)' : 'var(--white)'}; text-decoration:${t.done ? 'line-through' : 'none'};">${t.task}</span>
+                    ${t.category ? `<span class="badge cat-${(t.category||'followup').toLowerCase()}" style="font-size:8px; padding:2px 4px; margin-left:auto;">${t.category}</span>` : ''}
+                  </div>`).join('')}
+              </div>` : ''}
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" style="padding:2px 8px; font-size:11px;" onclick="toggleDebriefTranscript(${mIdx})">Transcript</button>
+              <button class="btn btn-red" style="padding:2px 8px; font-size:11px; border:none; background:rgba(230,57,70,0.1); color:var(--red);" onclick="deleteClientDebrief(${mIdx})">Delete</button>
+            </div>
+            <div id="debriefTransBox_${mIdx}" class="debrief-transcript-box" style="display:none; margin-top:8px;">${m.transcript || 'No transcript available.'}</div>
+          </div>
+        </div>`;
+
+    } else if (ev.type === 'airtable_debrief') {
+      html += `
+        <div style="position:relative; margin-bottom:16px;">
+          <div style="position:absolute; left:-21px; top:10px; width:10px; height:10px; border-radius:50%; background:var(--gold); border:2px solid var(--navy);"></div>
+          <div class="debrief-item" style="margin-bottom:0; border-color:rgba(201,169,110,0.3);">
+            <div class="debrief-header">
+              <span class="debrief-title" style="color:var(--gold);">📋 AI Strategy Debrief</span>
+              <span class="debrief-date">${ev.dateLabel}</span>
+            </div>
+            ${ev.meetingType ? `
+              <div style="margin:8px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="background:rgba(201,169,110,0.15); border:1px solid rgba(201,169,110,0.35); color:var(--gold); font-size:10px; font-weight:700; padding:3px 10px; border-radius:100px; text-transform:uppercase;">
+                  ${ev.meetingType.toLowerCase() === 'zoom' ? '📹' : '🏠'} ${ev.meetingType}
+                </span>
+                ${ev.zoomLink ? `<a href="${ev.zoomLink}" target="_blank" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); color:#3B82F6; font-size:10px; font-weight:700; padding:3px 10px; border-radius:100px; text-decoration:none;">🔗 Join Zoom</a>` : ''}
+              </div>` : ''}
+            <div class="debrief-transcript-box" style="display:block; margin-top:10px; white-space:pre-wrap; max-height:200px; overflow-y:auto;">${ev.text}</div>
+          </div>
+        </div>`;
+    }
+  });
+
+  html += '</div>';
   container.innerHTML = html;
 }
 
