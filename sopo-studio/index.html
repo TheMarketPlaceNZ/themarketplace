@@ -2297,51 +2297,38 @@ async function executeNewZoomLink() {
   if (btn) btn.textContent = 'Generating...';
 
   try {
-    const AT_KEY = document.querySelector('meta[name="airtable-api-key"]')?.content;
-    const bookingTime = l.bookingTime || new Date().toISOString();
-    const topic = `Strategy Session - ${l.name}`;
-    const startTime = new Date(bookingTime).toISOString().replace('.000Z', 'Z');
+    const payload = {
+      recordId: l.airtableId,
+      name: l.name,
+      bookingTime: l.bookingTime || new Date().toISOString(),
+      oldMeetingId: l.zoomMeetingId || '',
+      email: l.email
+    };
 
-    // Create new Zoom meeting via Make webhook
-    // We update Airtable directly with a placeholder and reopen the detail
-    // Since we don't have direct Zoom API access from the browser, we call
-    // the booking scenario webhook to regenerate — for now we alert Sopo to
-    // use the Zoom web portal and refresh. Full automation requires server-side token.
+    const resp = await fetch('https://hook.us2.make.com/6vqzv72p8p8oqrvhxq9w9id44qe8iguc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-    // What we CAN do right now: clear the old link in Airtable so it shows as broken
-    // and prompt Sopo to create manually. Full Zoom API needs OAuth server-side.
-    // For the demo tomorrow, show the UI works — the API call will be wired via Make.
+    if (!resp.ok) throw new Error('Webhook returned ' + resp.status);
 
-    if (AT_KEY && l.airtableId) {
-      const payload = { fields: {} };
-      payload.fields[AT_FIELDS.zoom_link] = '';
-      payload.fields[AT_FIELDS.zoom_meeting_id] = '';
-
-      await fetch(`https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tbleWHVvCC8o5pNVx/${l.airtableId}`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    }
-
-    // Update local state
+    // Clear local state optimistically — Airtable poll repopulates with new link
     appState.leads[idx].zoomLink = null;
     appState.leads[idx].zoomStartUrl = null;
     appState.leads[idx].zoomMeetingId = null;
 
-    // Refresh the join button
-    const joinBtn = document.getElementById('zoomJoinBtn');
-    if (joinBtn) {
-      joinBtn.style.opacity = '0.4';
-      joinBtn.style.pointerEvents = 'none';
-    }
+    showSyncToast('✓ New Zoom link on its way — client will receive an email shortly. Studio refreshes automatically.');
 
-    // Show success state
-    alert('Old Zoom link cleared. Please create a new Zoom meeting from your Zoom account and the system will update automatically when the new booking comes through.\n\nFor full auto-regeneration, this will be wired to the Zoom API in the next build session.');
+    // Background refresh after 8s to pick up new values from Airtable
+    setTimeout(() => syncLeads(true), 8000);
 
   } catch(err) {
     console.error('New link error:', err);
-    alert('Something went wrong. Please try again.');
+    showSyncToast('Something went wrong generating the new link. Please try again.');
+  } finally {
+    if (btn) btn.textContent = 'Yes, Generate';
+    newLinkTargetIdx = null;
   }
 }
 
