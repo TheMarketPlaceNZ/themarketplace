@@ -1725,10 +1725,10 @@ function initApp() {
     startAirtablePolling();
   });
   
-  // Schedule background sync every 5 minutes (300,000 milliseconds)
+  // Schedule background sync every 30 minutes (1,800,000 milliseconds)
   setInterval(() => {
     syncLeads(true);
-  }, 300000);
+  }, 1800000);
 }
 
 function copyInviteText() {
@@ -3851,7 +3851,8 @@ async function renderClientTimeline() {
               <span class="debrief-date">${ev.dateLabel}</span>
             </div>
             ${ev.meetingType ? `<div style="margin-bottom:8px;"><span style="background:rgba(201,169,110,0.15); border:1px solid rgba(201,169,110,0.35); color:var(--gold); font-size:10px; font-weight:700; padding:2px 8px; border-radius:100px; text-transform:uppercase;">${ev.meetingType}</span></div>` : ''}
-            <div class="debrief-transcript-box" style="display:block; margin-top:8px; white-space:pre-wrap; max-height:200px; overflow-y:auto;">${ev.text}</div>
+            <div class="debrief-transcript-box" id="debriefBox_${ev.date.getTime()}" style="display:block; margin-top:8px; white-space:pre-wrap; max-height:120px; overflow:hidden; transition:max-height 0.3s ease;">${ev.text}</div>
+            <button onclick="toggleDebriefExpand(this, 'debriefBox_${ev.date.getTime()}')" style="margin-top:6px; background:none; border:none; color:var(--gold); font-size:11px; font-weight:600; cursor:pointer; padding:0; letter-spacing:0.5px;">Show more ▼</button>
           </div>
         </div>`;
     }
@@ -3869,6 +3870,16 @@ function toggleDebriefTranscript(idx) {
   if (box) {
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
   }
+}
+
+function toggleDebriefExpand(btn, boxId) {
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  const expanded = btn.dataset.expanded === 'true';
+  box.style.maxHeight = expanded ? '120px' : 'none';
+  box.style.overflow = expanded ? 'hidden' : 'visible';
+  btn.dataset.expanded = expanded ? 'false' : 'true';
+  btn.textContent = expanded ? 'Show more ▼' : 'Show less ▲';
 }
 
 function deleteClientDebrief(idx) {
@@ -4702,13 +4713,13 @@ function updateLeadStage(idx, stage, btn) {
   }
 }
 
-// ===== LIVE POLLING — refresh from Airtable every 30 seconds =====
+// ===== LIVE POLLING — refresh from Airtable every 30 minutes =====
 let airtablePollInterval = null;
 function startAirtablePolling() {
   if (airtablePollInterval) clearInterval(airtablePollInterval);
   airtablePollInterval = setInterval(() => {
     syncLeads(true); // silent refresh
-  }, 30000); // 30 seconds
+  }, 1800000); // 30 minutes
 }
 
 // ===== TRANSCRIPT POPUP =====
