@@ -2354,7 +2354,7 @@ async function executeNewZoomLink() {
       joinBtnErr.style.cursor = 'pointer';
       const span = joinBtnErr.querySelector('span');
       if (span) span.textContent = 'Join Zoom';
-      if (l.zoomStartUrl || l.zoomLink) joinBtnErr.setAttribute('href', l.zoomStartUrl || l.zoomLink);
+      if (l.zoomLink || l.zoomStartUrl) joinBtnErr.setAttribute('href', l.zoomLink || l.zoomStartUrl);
     }
   } finally {
     if (btn) btn.textContent = 'Yes, Generate';
@@ -2661,7 +2661,7 @@ function openLeadDetail(idx) {
             </div>
             ${l.meetingType?.toLowerCase() === 'zoom' ? `
               <div style="display:flex; align-items:center; gap:10px;">
-                <a id="zoomJoinBtn" href="${l.zoomStartUrl || l.zoomLink || '#'}" target="${(l.zoomStartUrl || l.zoomLink) ? '_blank' : '_self'}" onclick="event.stopPropagation();" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:12px; padding:12px 20px; text-decoration:none; cursor:pointer;">
+                <a id="zoomJoinBtn" href="${l.zoomLink || l.zoomStartUrl || '#'}" target="${(l.zoomLink || l.zoomStartUrl) ? '_blank' : '_self'}" onclick="event.stopPropagation();" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:12px; padding:12px 20px; text-decoration:none; cursor:pointer;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>
                   <span style="font-size:14px; font-weight:700; color:#60A5FA;">Join Zoom</span>
                 </a>
