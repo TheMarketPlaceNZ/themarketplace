@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="at-key" content="patLZ2SNfkHGTBH6C.366ee25b241f63f90b31a6d3322f4c50ac6a086d9ca441320f3b099533bdb86a">
+<meta name="gemini-api-key" content="AQ.Ab8RN6LAwwtUlF2YKj7zwatCz7_eHnm7-ySm54Xhz_FxVj4rag">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2297,8 +2298,9 @@ async function executeNewZoomLink() {
   if (idx === null || idx === undefined) return;
   const l = appState.leads[idx];
   if (!l) return;
-  const leadAirtableId = l.airtableId;
+  const leadAirtableId = l.airtableId; // capture before async ops
 
+  // Immediately disable Join Zoom to prevent clicks on the stale old URL
   const joinBtn = document.getElementById('zoomJoinBtn');
   if (joinBtn) {
     joinBtn.removeAttribute('href');
@@ -2329,12 +2331,14 @@ async function executeNewZoomLink() {
 
     if (!resp.ok) throw new Error('Webhook returned ' + resp.status);
 
+    // Clear local state optimistically — Airtable poll repopulates with new link
     appState.leads[idx].zoomLink = null;
     appState.leads[idx].zoomStartUrl = null;
     appState.leads[idx].zoomMeetingId = null;
 
     showSyncToast('✓ New Zoom link on its way — client will receive an email shortly. Studio refreshes automatically.');
 
+    // Background refresh after 8s, then re-render modal with fresh data
     setTimeout(async () => {
       await syncLeads(true);
       const modal = document.getElementById('leadModal');
@@ -2347,6 +2351,7 @@ async function executeNewZoomLink() {
   } catch(err) {
     console.error('New link error:', err);
     showSyncToast('Something went wrong generating the new link. Please try again.');
+    // Re-enable Join Zoom on failure so Sopo can still use the old link
     const joinBtnErr = document.getElementById('zoomJoinBtn');
     if (joinBtnErr) {
       joinBtnErr.style.opacity = '1';
@@ -2354,7 +2359,7 @@ async function executeNewZoomLink() {
       joinBtnErr.style.cursor = 'pointer';
       const span = joinBtnErr.querySelector('span');
       if (span) span.textContent = 'Join Zoom';
-      if (l.zoomLink || l.zoomStartUrl) joinBtnErr.setAttribute('href', l.zoomLink || l.zoomStartUrl);
+      if (l.zoomStartUrl || l.zoomLink) joinBtnErr.setAttribute('href', l.zoomStartUrl || l.zoomLink);
     }
   } finally {
     if (btn) btn.textContent = 'Yes, Generate';
@@ -2661,7 +2666,7 @@ function openLeadDetail(idx) {
             </div>
             ${l.meetingType?.toLowerCase() === 'zoom' ? `
               <div style="display:flex; align-items:center; gap:10px;">
-                <a id="zoomJoinBtn" href="${l.zoomLink || l.zoomStartUrl || '#'}" target="${(l.zoomLink || l.zoomStartUrl) ? '_blank' : '_self'}" onclick="event.stopPropagation();" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:12px; padding:12px 20px; text-decoration:none; cursor:pointer;">
+                <a id="zoomJoinBtn" href="${l.zoomStartUrl || l.zoomLink || '#'}" target="${(l.zoomStartUrl || l.zoomLink) ? '_blank' : '_self'}" onclick="event.stopPropagation();" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:12px; padding:12px 20px; text-decoration:none; cursor:pointer;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>
                   <span style="font-size:14px; font-weight:700; color:#60A5FA;">Join Zoom</span>
                 </a>
@@ -2858,8 +2863,7 @@ function atRecordToLead(record) {
     zoomLink: f['zoom_link'] || null,
     zoomStartUrl: f['zoom_start_url'] || null,
     zoomMeetingId: f['zoom_meeting_id'] || null,
-    checkinDate: f['checkin_date'] || null,
-    zoomStartUrl: f['zoom_start_url'] || null
+    checkinDate: f['checkin_date'] || null
   };
 }
 
@@ -3016,7 +3020,6 @@ async function syncLeads(silent = false) {
           bookingEndTime: existing.bookingEndTime || null,
           meetingType: fresh.meetingType || existing.meetingType || null,
           zoomLink: fresh.zoomLink || existing.zoomLink || null,
-          zoomStartUrl: fresh.zoomStartUrl || existing.zoomStartUrl || null,
           zoomStartUrl: fresh.zoomStartUrl || existing.zoomStartUrl || null,
           ai_debrief: fresh.ai_debrief || existing.ai_debrief || null,
           birthdayHusband: existing.birthdayHusband || '',
@@ -3582,9 +3585,9 @@ async function processRecording() {
     return;
   }
 
-  const apiKey = getSetting('apiKey');
+  const apiKey = document.querySelector('meta[name="gemini-api-key"]')?.content || getSetting('apiKey');
   if (!apiKey) {
-    alert('A Gemini API key is required to use the recorder.\n\nTo get one (free):\n1. Go to aistudio.google.com\n2. Sign in with Google\n3. Click "Get API key" and create a new key\n4. Paste it into Studio Settings > Gemini API Key');
+    alert('A Gemini API key is required to process recordings.\n\nTo get one:\n1. Go to aistudio.google.com\n2. Sign in and click "Get API key"\n3. Create a new key and paste it into Studio Settings > Gemini API Key\n\nThis is a free Google key.');
     return;
   }
 
