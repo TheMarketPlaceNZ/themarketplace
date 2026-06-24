@@ -2297,6 +2297,17 @@ async function executeNewZoomLink() {
   if (idx === null || idx === undefined) return;
   const l = appState.leads[idx];
   if (!l) return;
+  const leadAirtableId = l.airtableId;
+
+  const joinBtn = document.getElementById('zoomJoinBtn');
+  if (joinBtn) {
+    joinBtn.removeAttribute('href');
+    joinBtn.style.opacity = '0.5';
+    joinBtn.style.pointerEvents = 'none';
+    joinBtn.style.cursor = 'default';
+    const span = joinBtn.querySelector('span');
+    if (span) span.textContent = 'Refreshing...';
+  }
 
   const btn = document.getElementById('newLinkConfirmBtn');
   if (btn) btn.textContent = 'Generating...';
@@ -2318,19 +2329,33 @@ async function executeNewZoomLink() {
 
     if (!resp.ok) throw new Error('Webhook returned ' + resp.status);
 
-    // Clear local state optimistically — Airtable poll repopulates with new link
     appState.leads[idx].zoomLink = null;
     appState.leads[idx].zoomStartUrl = null;
     appState.leads[idx].zoomMeetingId = null;
 
     showSyncToast('✓ New Zoom link on its way — client will receive an email shortly. Studio refreshes automatically.');
 
-    // Background refresh after 8s to pick up new values from Airtable
-    setTimeout(() => syncLeads(true), 8000);
+    setTimeout(async () => {
+      await syncLeads(true);
+      const modal = document.getElementById('leadModal');
+      if (modal && modal.classList.contains('open')) {
+        const freshIdx = appState.leads.findIndex(lead => lead.airtableId === leadAirtableId);
+        if (freshIdx >= 0) openLeadModal(freshIdx);
+      }
+    }, 8000);
 
   } catch(err) {
     console.error('New link error:', err);
     showSyncToast('Something went wrong generating the new link. Please try again.');
+    const joinBtnErr = document.getElementById('zoomJoinBtn');
+    if (joinBtnErr) {
+      joinBtnErr.style.opacity = '1';
+      joinBtnErr.style.pointerEvents = 'auto';
+      joinBtnErr.style.cursor = 'pointer';
+      const span = joinBtnErr.querySelector('span');
+      if (span) span.textContent = 'Join Zoom';
+      if (l.zoomStartUrl || l.zoomLink) joinBtnErr.setAttribute('href', l.zoomStartUrl || l.zoomLink);
+    }
   } finally {
     if (btn) btn.textContent = 'Yes, Generate';
     newLinkTargetIdx = null;
@@ -2681,16 +2706,16 @@ function openLeadDetail(idx) {
         <div class="rec-hint" id="recHint" style="font-size: 12px;">Tap mic to begin recording</div>
         <div class="rec-input-group" style="margin-top: 12px;">
           <select class="rec-input" id="meetingTypeDropdown" style="padding: 8px 10px; font-size: 13px; width:100%; background:rgba(255,255,255,0.05); color:var(--white); border:1px solid var(--border); border-radius:8px; cursor:pointer;">
-            <option value="">Select meeting type...</option>
-            <option value="New Lead Intro">New Lead Intro</option>
-            <option value="Pre-Broker Meeting">Pre-Broker Meeting</option>
-            <option value="Finance Check-in">Finance Check-in</option>
-            <option value="Valuation">Valuation</option>
-            <option value="Reevaluation">Reevaluation</option>
-            <option value="Gameplan Meeting">Gameplan Meeting</option>
-            <option value="Declined Follow-up">Declined Follow-up</option>
-            <option value="Reinstatement Meeting">Reinstatement Meeting</option>
-            <option value="Coffee Meet">Coffee Meet</option>
+            <option value="" style="background-color:#1a1a2e; color:#ffffff;">Select meeting type...</option>
+            <option value="New Lead Intro" style="background-color:#1a1a2e; color:#ffffff;">New Lead Intro</option>
+            <option value="Pre-Broker Meeting" style="background-color:#1a1a2e; color:#ffffff;">Pre-Broker Meeting</option>
+            <option value="Finance Check-in" style="background-color:#1a1a2e; color:#ffffff;">Finance Check-in</option>
+            <option value="Valuation" style="background-color:#1a1a2e; color:#ffffff;">Valuation</option>
+            <option value="Reevaluation" style="background-color:#1a1a2e; color:#ffffff;">Reevaluation</option>
+            <option value="Gameplan Meeting" style="background-color:#1a1a2e; color:#ffffff;">Gameplan Meeting</option>
+            <option value="Declined Follow-up" style="background-color:#1a1a2e; color:#ffffff;">Declined Follow-up</option>
+            <option value="Reinstatement Meeting" style="background-color:#1a1a2e; color:#ffffff;">Reinstatement Meeting</option>
+            <option value="Coffee Meet" style="background-color:#1a1a2e; color:#ffffff;">Coffee Meet</option>
           </select>
         </div>
       </div>
@@ -3559,7 +3584,7 @@ async function processRecording() {
 
   const apiKey = getSetting('apiKey');
   if (!apiKey) {
-    alert('Please add your Gemini API key in Settings to enable meeting recordings.');
+    alert('A Gemini API key is required to use the recorder.\n\nTo get one (free):\n1. Go to aistudio.google.com\n2. Sign in with Google\n3. Click "Get API key" and create a new key\n4. Paste it into Studio Settings > Gemini API Key');
     return;
   }
 
