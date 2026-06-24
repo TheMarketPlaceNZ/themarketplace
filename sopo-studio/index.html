@@ -1229,6 +1229,11 @@ body {
       <div class="settings-hint">The Make.com webhook URL for the Sopo Lead Status Updater scenario. Marks deleted and email-list leads in the Google Sheet so they never re-appear on any device.</div>
     </div>
     <div class="settings-row">
+      <div class="settings-label">Recording Webhook URL</div>
+      <input class="settings-input" id="settingsRecordingWebhookUrl" placeholder="https://hook.us2.make.com/...">
+      <div class="settings-hint">The Make.com webhook URL for scenario 5476295 (Sopo Local Recording Processor). Open that scenario in Make, click the webhook module, and copy the URL.</div>
+    </div>
+    <div class="settings-row">
       <div class="settings-label">Change Passcode</div>
       <input class="settings-input" id="settingsPasscode" type="password" placeholder="Leave blank to keep current">
     </div>
@@ -2496,7 +2501,8 @@ function openLeadDetail(idx) {
     
     <div class="modal-tabs">
       <button class="modal-tab-btn active" id="btnTabDetails" onclick="switchModalTab('details')">Client Details</button>
-      <button class="modal-tab-btn" id="btnTabDebrief" onclick="switchModalTab('debrief')">Timeline</button>
+      <button class="modal-tab-btn" id="btnTabTimeline" onclick="switchModalTab('timeline')">Timeline</button>
+      <button class="modal-tab-btn" id="btnTabMeeting" onclick="switchModalTab('meeting')">Meeting</button>
     </div>
     
     <div class="modal-tab-pane active" id="paneTabDetails">
@@ -2570,10 +2576,35 @@ function openLeadDetail(idx) {
         }
       </div>
     </div>
-    
-    <div class="modal-tab-pane" id="paneTabDebrief">
 
-      <!-- ===== ZOOM MEETING BOX ===== -->
+    <!-- ===== TAB: TIMELINE ===== -->
+    <div class="modal-tab-pane" id="paneTabTimeline">
+
+      <!-- Log a Call Activity -->
+      <div class="call-notes-box">
+        <div class="call-notes-label">Log a Call Activity</div>
+        <div class="call-quick-btns">
+          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📞 Left voicemail')">📞 Left voicemail</button>
+          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📱 Sent text')">📱 Sent text</button>
+          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📅 Callback requested')">📅 Callback requested</button>
+        </div>
+        <textarea class="call-note-textarea" id="callNoteText" placeholder="Add a note (e.g. Left voicemail, she'll call back Friday)"></textarea>
+        <button class="btn btn-gold full" onclick="submitCallNote()">Log Activity</button>
+      </div>
+
+      <!-- Client Timeline -->
+      <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin:16px 0 10px;">Client Timeline</div>
+      <div id="modalDebriefList" style="margin-bottom:10px;"></div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
+      </div>
+    </div>
+
+    <!-- ===== TAB: MEETING ===== -->
+    <div class="modal-tab-pane" id="paneTabMeeting">
+
+      <!-- Zoom Card -->
       <div id="zoomMeetingBox" style="
         background: rgba(255,255,255,0.04);
         border: 1px solid rgba(255,255,255,0.1);
@@ -2626,7 +2657,7 @@ function openLeadDetail(idx) {
         `}
       </div>
 
-      <!-- ===== NEW LINK CONFIRMATION POPUP ===== -->
+      <!-- New Link Confirmation Popup -->
       <div id="newLinkConfirmOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
         <div style="background:#1a2535; border:1px solid rgba(201,169,110,0.3); border-radius:20px; padding:32px 28px; max-width:340px; width:90%; text-align:center;">
           <div style="font-size:32px; margin-bottom:16px;">⚠️</div>
@@ -2639,7 +2670,7 @@ function openLeadDetail(idx) {
         </div>
       </div>
 
-      <!-- ===== MANUAL RECORDING BOX ===== -->
+      <!-- Recorder -->
       <div class="recorder-box" style="padding: 20px; max-width: 100%; margin-bottom: 15px;">
         <div class="rec-timer" id="recTimer" style="font-size: 36px; margin-bottom: 10px;">00:00</div>
         <button class="record-btn" id="recordBtn" onclick="toggleRecording()" style="width: 70px; height: 70px; margin-bottom: 10px;">
@@ -2647,40 +2678,37 @@ function openLeadDetail(idx) {
             <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" x2="12" y1="19" y2="22"/>
           </svg>
         </button>
-        <div class="rec-hint" id="recHint" style="font-size: 12px;">Tap mic to record client strategy consultation</div>
-        <div class="rec-input-group" style="margin-top: 10px;">
-          <input type="text" class="rec-input" id="meetingLabel" placeholder="Enter meeting label (e.g. Consultation)" style="padding: 8px; font-size: 13px;">
+        <div class="rec-hint" id="recHint" style="font-size: 12px;">Tap mic to begin recording</div>
+        <div class="rec-input-group" style="margin-top: 12px;">
+          <select class="rec-input" id="meetingTypeDropdown" style="padding: 8px 10px; font-size: 13px; width:100%; background:rgba(255,255,255,0.05); color:var(--white); border:1px solid var(--border); border-radius:8px; cursor:pointer;">
+            <option value="">Select meeting type...</option>
+            <option value="New Lead Intro">New Lead Intro</option>
+            <option value="Pre-Broker Meeting">Pre-Broker Meeting</option>
+            <option value="Finance Check-in">Finance Check-in</option>
+            <option value="Valuation">Valuation</option>
+            <option value="Reevaluation">Reevaluation</option>
+            <option value="Gameplan Meeting">Gameplan Meeting</option>
+            <option value="Declined Follow-up">Declined Follow-up</option>
+            <option value="Reinstatement Meeting">Reinstatement Meeting</option>
+            <option value="Coffee Meet">Coffee Meet</option>
+          </select>
         </div>
       </div>
 
       <div class="ai-spinner-box" id="aiSpinnerBox" style="padding: 15px; margin-bottom: 15px; max-width: 100%;">
         <div class="spinner" style="width: 24px; height: 24px; border-width: 2.5px;"></div>
-        <div class="spinner-text" id="spinnerText" style="font-size: 12px;">Sina is extracting action items...</div>
+        <div class="spinner-text" id="spinnerText" style="font-size: 12px;">Uploading to Gemini...</div>
       </div>
-
-      <!-- ===== CALL NOTES ===== -->
-      <div class="call-notes-box">
-        <div class="call-notes-label">Log a Call Activity</div>
-        <div class="call-quick-btns">
-          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📞 Left voicemail')">📞 Left voicemail</button>
-          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📱 Sent text')">📱 Sent text</button>
-          <button class="call-quick-btn" onclick="selectCallQuickBtn(this, '📅 Callback requested')">📅 Callback requested</button>
-        </div>
-        <textarea class="call-note-textarea" id="callNoteText" placeholder="Add a note (e.g. Left voicemail, she'll call back Friday)"></textarea>
-        <button class="btn btn-gold full" onclick="submitCallNote()">Log Activity</button>
-      </div>
-
-      <!-- ===== CLIENT TIMELINE ===== -->
-      <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:10px;">Client Timeline</div>
-      <div id="modalDebriefList" style="margin-bottom:10px;"></div>
 
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button class="btn btn-ghost" style="flex:1;" onclick="closeLeadModal()">Close</button>
       </div>
     </div>
-  `;
+  \`;
   document.getElementById('leadModal').classList.add('open');
+  renderClientTimeline();
 }
+
 
 function saveLeadDetails(idx) {
   const l = appState.leads[idx];
@@ -3517,72 +3545,90 @@ async function toggleRecording() {
 
 async function processRecording() {
   const blob = new Blob(audioChunks, { type: 'audio/webm' });
-  const label = document.getElementById('meetingLabel').value || 'Strategy Debrief ' + new Date().toLocaleDateString('en-NZ');
-  
-  document.getElementById('aiSpinnerBox').classList.add('show');
-  
-  const apiKey = getSetting('apiKey');
-  if (!apiKey) {
-    saveMeeting(label, blob, "Meeting recorded successfully. Add your Gemini API key in Settings to auto-generate summaries and checklists.", []);
-    document.getElementById('aiSpinnerBox').classList.remove('show');
-    renderAll();
-    alert('Meeting saved locally. Configure Gemini key to enable AI features.');
+  const meetingType = (document.getElementById('meetingTypeDropdown')?.value || '').trim();
+  const l = appState.leads[currentLeadIndex];
+
+  if (!meetingType) {
+    alert('Please select a meeting type before saving the recording.');
+    return;
+  }
+  if (!l || !l.airtableId) {
+    alert('Cannot save recording — no Airtable record found for this lead. Sync the lead first.');
     return;
   }
 
-  try {
-    document.getElementById('spinnerText').textContent = 'Converting audio for AI engine...';
-    const base64 = await blobToBase64(blob);
-    
-    document.getElementById('spinnerText').textContent = 'Sina AI is transcribing and qualifying tasks...';
-    
-    const prompt = `You are Sina, Sopo FuiFui's expert real estate setter and assistant in Hamilton.
-Transcribe this client recording and return ONLY a valid JSON object containing:
-1. "transcript": "the detailed word-for-word transcript of the recording"
-2. "summary": "a 2-3 sentence strategic summary of the meeting"
-3. "tasks": [
-     {
-       "task": "specific action item",
-       "urgency": "today|this week",
-       "category": "call|email|document|followup",
-       "person": "client name if mentioned, otherwise empty string"
-     }
-   ]`;
+  const apiKey = getSetting('apiKey');
+  if (!apiKey) {
+    alert('Please add your Gemini API key in Settings to enable meeting recordings.');
+    return;
+  }
 
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+  const webhookUrl = getSetting('recordingWebhookUrl');
+  if (!webhookUrl) {
+    alert('Please add your Recording Webhook URL in Settings.\n\nOpen Make scenario 5476295, click the webhook module, and copy the URL.');
+    return;
+  }
+
+  document.getElementById('aiSpinnerBox').classList.add('show');
+
+  try {
+    // Step 1 — Upload audio to Gemini Files API
+    document.getElementById('spinnerText').textContent = 'Uploading audio to Gemini...';
+    const uploadForm = new FormData();
+    uploadForm.append('file', blob, 'recording.webm');
+
+    const uploadResp = await fetch(
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+      { method: 'POST', headers: { 'X-Goog-Upload-Protocol': 'multipart' }, body: uploadForm }
+    );
+    if (!uploadResp.ok) throw new Error(`Gemini upload failed: ${uploadResp.status}`);
+    const uploadData = await uploadResp.json();
+    const geminiFileName = uploadData.file?.name;
+    const geminiFileUri = uploadData.file?.uri;
+    if (!geminiFileName || !geminiFileUri) throw new Error('Gemini upload returned no file reference.');
+
+    // Step 2 — Brief wait for file to reach ACTIVE state
+    document.getElementById('spinnerText').textContent = 'File ready. Triggering pipeline...';
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Step 3 — POST to Make webhook
+    const duration = Math.round((Date.now() - recStart) / 1000);
+    const payload = {
+      geminiFileName,
+      geminiFileUri,
+      geminiApiKey: apiKey,
+      mimeType: 'audio/webm',
+      meetingType,
+      meetingSource: 'In-Person',
+      recordId: l.airtableId,
+      leadName: l.name || 'Unknown',
+      duration,
+      timestamp: new Date().toISOString()
+    };
+
+    const hookResp = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: 'audio/webm', data: base64.split(',')[1] } },
-            { text: prompt }
-          ]
-        }],
-        generationConfig: { temperature: 0.2, responseMimeType: 'application/json' }
-      })
+      body: JSON.stringify(payload)
     });
+    if (!hookResp.ok) console.warn('Webhook response:', hookResp.status);
 
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    
-    let parsed;
-    try { parsed = JSON.parse(text); }
-    catch(e) {
-      const match = text.match(/\{[\s\S]*\}/);
-      parsed = match ? JSON.parse(match[0]) : { summary: text, tasks: [], transcript: "No raw transcript returned." };
+    document.getElementById('aiSpinnerBox').classList.remove('show');
+    document.getElementById('recHint').textContent = 'Tap mic to begin recording';
+    if (document.getElementById('meetingTypeDropdown')) {
+      document.getElementById('meetingTypeDropdown').value = '';
     }
 
-    saveMeeting(label, blob, parsed.summary, parsed.tasks || [], parsed.transcript || "No raw transcript captured.");
-    document.getElementById('aiSpinnerBox').classList.remove('show');
-    renderAll();
+    // Toast and auto-refresh timeline after 30s
+    showSyncToast('Recording sent. Debrief will appear in Timeline within 30 seconds.');
+    setTimeout(() => {
+      renderClientTimeline();
+    }, 30000);
+
   } catch(e) {
-    console.error(e);
-    saveMeeting(label, blob, "AI summary failed. Meeting saved locally.", [], "Audio stored. AI transcription failed.");
+    console.error('processRecording error:', e);
     document.getElementById('aiSpinnerBox').classList.remove('show');
-    renderAll();
-    alert('AI processing failed. Recording saved locally.');
+    alert(`Recording pipeline error: ${e.message}`);
   }
 }
 
@@ -3638,27 +3684,31 @@ function blobToBase64(blob) {
 function switchModalTab(tabId) {
   document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.modal-tab-pane').forEach(pane => pane.classList.remove('active'));
-  
+
   if (tabId === 'details') {
     document.getElementById('btnTabDetails').classList.add('active');
     document.getElementById('paneTabDetails').classList.add('active');
-  } else if (tabId === 'debrief') {
-    document.getElementById('btnTabDebrief').classList.add('active');
-    document.getElementById('paneTabDebrief').classList.add('active');
-    renderModalDebriefHistory();
+  } else if (tabId === 'timeline') {
+    document.getElementById('btnTabTimeline').classList.add('active');
+    document.getElementById('paneTabTimeline').classList.add('active');
+    renderClientTimeline();
+  } else if (tabId === 'meeting') {
+    document.getElementById('btnTabMeeting').classList.add('active');
+    document.getElementById('paneTabMeeting').classList.add('active');
   }
 }
 
-function renderModalDebriefHistory() {
+async function renderClientTimeline() {
   const container = document.getElementById('modalDebriefList');
   if (!container) return;
   const l = appState.leads[currentLeadIndex];
   if (!l) return;
 
-  // ── Build a unified event list ──────────────────────────────────────────
+  container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--muted); font-size:13px;">Loading timeline...</div>`;
+
   const events = [];
 
-  // 1. Lifecycle log entries: "[21 Jun 2026] Text here"
+  // 1. Lifecycle log entries
   if (l.lifecycleLog && l.lifecycleLog.trim()) {
     l.lifecycleLog.trim().split('\n').forEach(line => {
       const m = line.match(/^\[(.+?)\]\s*(.+)$/);
@@ -3673,22 +3723,44 @@ function renderModalDebriefHistory() {
     });
   }
 
-  // 2. Recorded meetings (local)
-  (l.meetings || []).forEach((m, idx) => {
-    events.push({
-      type: 'meeting',
-      date: new Date(m.date),
-      dateLabel: new Date(m.date).toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'}),
-      meeting: m,
-      meetingIdx: idx
-    });
-  });
+  // 2. Fetch meetings from Airtable Meetings table
+  if (l.airtableId) {
+    try {
+      const formula = encodeURIComponent(`FIND("${l.airtableId}", ARRAYJOIN({lead}))`);
+      const resp = await fetch(
+        `https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tblkor1cYPuiNBUCE?filterByFormula=${formula}&sort[0][field]=meeting_date&sort[0][direction]=desc`,
+        { headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` } }
+      );
+      if (resp.ok) {
+        const data = await resp.json();
+        (data.records || []).forEach(rec => {
+          const f = rec.fields;
+          const mDate = f.meeting_date ? new Date(f.meeting_date) : new Date(0);
+          events.push({
+            type: 'meeting',
+            date: mDate,
+            dateLabel: mDate.toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'}),
+            recordId: rec.id,
+            label: f.meeting_label || f.meeting_type || 'Meeting',
+            meetingType: f.meeting_type || '',
+            source: f.meeting_source || 'In-Person',
+            debrief: f.debrief || '',
+            transcript: f.transcript || '',
+            driveUrl: f.drive_audio_url || '',
+            duration: f.duration_seconds || 0
+          });
+        });
+      }
+    } catch(e) {
+      console.warn('Airtable Meetings fetch failed:', e.message);
+    }
+  }
 
-  // 3. Airtable ai_debrief text (treat as one entry dated at booking time or lead creation)
+  // 3. Airtable ai_debrief (Zoom pipeline legacy — single field)
   if (l.ai_debrief && l.ai_debrief.trim()) {
     const debriefDate = l.bookingTime ? new Date(l.bookingTime) : new Date(l.timestamp || 0);
     events.push({
-      type: 'airtable_debrief',
+      type: 'zoom_debrief',
       date: debriefDate,
       dateLabel: debriefDate.toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'}),
       text: l.ai_debrief,
@@ -3700,28 +3772,17 @@ function renderModalDebriefHistory() {
   if (events.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; padding:24px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; color:var(--muted); font-size:13px; line-height:1.6;">
-        No history yet for this client.<br>Stage changes and recordings will appear here automatically.
+        No history yet.<br>Stage changes, calls, and meeting debriefs will appear here.
       </div>`;
     return;
   }
 
-  // Sort newest first
   events.sort((a, b) => b.date - a.date);
 
-  // ── Render timeline ──────────────────────────────────────────────────────
-  const timelineStyle = `
-    position:relative; padding-left:24px;
-  `;
-  const lineStyle = `
-    position:absolute; left:7px; top:8px; bottom:0;
-    width:1px; background:rgba(255,255,255,0.08);
-  `;
+  let html = `<div style="position:relative; padding-left:24px;"><div style="position:absolute; left:7px; top:8px; bottom:0; width:1px; background:rgba(255,255,255,0.08);"></div>`;
 
-  let html = `<div style="${timelineStyle}"><div style="${lineStyle}"></div>`;
-
-  events.forEach((ev, i) => {
+  events.forEach(ev => {
     if (ev.type === 'lifecycle') {
-      // Stage/action event — compact single-line entry
       html += `
         <div style="position:relative; margin-bottom:14px;">
           <div style="position:absolute; left:-20px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--gold); border:2px solid var(--navy);"></div>
@@ -3732,52 +3793,37 @@ function renderModalDebriefHistory() {
         </div>`;
 
     } else if (ev.type === 'meeting') {
-      const m = ev.meeting;
-      const mIdx = ev.meetingIdx;
+      const durationLabel = ev.duration ? ` · ${Math.floor(ev.duration / 60)}m ${ev.duration % 60}s` : '';
+      const safeTranscript = (ev.transcript || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safeLabel = (ev.label || 'Meeting').replace(/'/g, "\\'");
       html += `
         <div style="position:relative; margin-bottom:16px;">
           <div style="position:absolute; left:-21px; top:10px; width:10px; height:10px; border-radius:50%; background:#3B82F6; border:2px solid var(--navy);"></div>
           <div class="debrief-item" style="margin-bottom:0;">
             <div class="debrief-header">
-              <span class="debrief-title">🎙 ${m.label || 'Recording'}</span>
-              <span class="debrief-date">${ev.dateLabel}${m.duration ? ` · ${m.duration}` : ''}</span>
+              <span class="debrief-title">🎙 ${ev.label}</span>
+              <span class="debrief-date">${ev.dateLabel}${durationLabel}</span>
             </div>
-            ${m.summary ? `<div class="debrief-summary" style="margin-bottom:10px;">${m.summary}</div>` : ''}
-            ${m.tasks && m.tasks.length > 0 ? `
-              <div style="margin-bottom:10px; padding:10px; background:rgba(255,255,255,0.03); border-radius:var(--radius-xs); border:1px solid var(--border);">
-                <div style="font-size:10px; font-weight:700; color:var(--gold); text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">Tasks</div>
-                ${m.tasks.map((t, tIdx) => `
-                  <div style="display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
-                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleClientTask(${mIdx}, ${tIdx})" style="cursor:pointer;">
-                    <span style="font-size:12px; color:${t.done ? 'var(--muted)' : 'var(--white)'}; text-decoration:${t.done ? 'line-through' : 'none'};">${t.task}</span>
-                    ${t.category ? `<span class="badge cat-${(t.category||'followup').toLowerCase()}" style="font-size:8px; padding:2px 4px; margin-left:auto;">${t.category}</span>` : ''}
-                  </div>`).join('')}
-              </div>` : ''}
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn-ghost" style="padding:2px 8px; font-size:11px;" onclick="toggleDebriefTranscript(${mIdx})">Transcript</button>
-              <button class="btn btn-red" style="padding:2px 8px; font-size:11px; border:none; background:rgba(230,57,70,0.1); color:var(--red);" onclick="deleteClientDebrief(${mIdx})">Delete</button>
+            ${ev.source ? `<div style="margin-bottom:8px;"><span style="background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#60A5FA; font-size:10px; font-weight:700; padding:2px 8px; border-radius:100px;">${ev.source}</span></div>` : ''}
+            ${ev.debrief ? `<div class="debrief-summary" style="margin-bottom:10px; white-space:pre-wrap;">${ev.debrief}</div>` : ''}
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${ev.transcript ? `<button class="btn btn-ghost" style="padding:4px 10px; font-size:11px;" onclick="openTranscriptPopup('${safeTranscript}', '${safeLabel}')">Transcript</button>` : ''}
+              ${ev.driveUrl ? `<a href="${ev.driveUrl}" target="_blank" class="btn btn-ghost" style="padding:4px 10px; font-size:11px; text-decoration:none;">Audio</a>` : ''}
             </div>
-            <div id="debriefTransBox_${mIdx}" class="debrief-transcript-box" style="display:none; margin-top:8px;">${m.transcript || 'No transcript available.'}</div>
           </div>
         </div>`;
 
-    } else if (ev.type === 'airtable_debrief') {
+    } else if (ev.type === 'zoom_debrief') {
       html += `
         <div style="position:relative; margin-bottom:16px;">
           <div style="position:absolute; left:-21px; top:10px; width:10px; height:10px; border-radius:50%; background:var(--gold); border:2px solid var(--navy);"></div>
           <div class="debrief-item" style="margin-bottom:0; border-color:rgba(201,169,110,0.3);">
             <div class="debrief-header">
-              <span class="debrief-title" style="color:var(--gold);">📋 AI Strategy Debrief</span>
+              <span class="debrief-title" style="color:var(--gold);">📋 Zoom AI Debrief</span>
               <span class="debrief-date">${ev.dateLabel}</span>
             </div>
-            ${ev.meetingType ? `
-              <div style="margin:8px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                <span style="background:rgba(201,169,110,0.15); border:1px solid rgba(201,169,110,0.35); color:var(--gold); font-size:10px; font-weight:700; padding:3px 10px; border-radius:100px; text-transform:uppercase;">
-                  ${ev.meetingType.toLowerCase() === 'zoom' ? '📹' : '🏠'} ${ev.meetingType}
-                </span>
-                ${ev.zoomLink ? `<a href="${ev.zoomLink}" target="_blank" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); color:#3B82F6; font-size:10px; font-weight:700; padding:3px 10px; border-radius:100px; text-decoration:none;">🔗 Join Zoom</a>` : ''}
-              </div>` : ''}
-            <div class="debrief-transcript-box" style="display:block; margin-top:10px; white-space:pre-wrap; max-height:200px; overflow-y:auto;">${ev.text}</div>
+            ${ev.meetingType ? `<div style="margin-bottom:8px;"><span style="background:rgba(201,169,110,0.15); border:1px solid rgba(201,169,110,0.35); color:var(--gold); font-size:10px; font-weight:700; padding:2px 8px; border-radius:100px; text-transform:uppercase;">${ev.meetingType}</span></div>` : ''}
+            <div class="debrief-transcript-box" style="display:block; margin-top:8px; white-space:pre-wrap; max-height:200px; overflow-y:auto;">${ev.text}</div>
           </div>
         </div>`;
     }
@@ -3786,6 +3832,9 @@ function renderModalDebriefHistory() {
   html += '</div>';
   container.innerHTML = html;
 }
+
+// Legacy alias so any old calls still work
+function renderModalDebriefHistory() { renderClientTimeline(); }
 
 function toggleDebriefTranscript(idx) {
   const box = document.getElementById(`debriefTransBox_${idx}`);
@@ -4198,6 +4247,7 @@ function openSettingsModal() {
   document.getElementById('settingsSheetUrl').value = getSetting('sheetUrl');
   document.getElementById('settingsBookingWebhookUrl').value = getSetting('bookingWebhookUrl');
   document.getElementById('settingsStatusWebhookUrl').value = getSetting('statusWebhookUrl');
+  document.getElementById('settingsRecordingWebhookUrl').value = getSetting('recordingWebhookUrl');
   document.getElementById('settingsModal').classList.add('open');
 }
 function closeModal(id) {
@@ -4216,10 +4266,12 @@ function saveSettings() {
   const statusWebhookUrl = document.getElementById('settingsStatusWebhookUrl').value.trim();
   const passcode = document.getElementById('settingsPasscode').value.trim();
   
+  const recordingWebhookUrl = document.getElementById('settingsRecordingWebhookUrl').value.trim();
   if (apiKey) setSetting('apiKey', apiKey);
   if (sheetUrl) setSetting('sheetUrl', sheetUrl);
   if (bookingWebhookUrl) setSetting('bookingWebhookUrl', bookingWebhookUrl);
   if (statusWebhookUrl) setSetting('statusWebhookUrl', statusWebhookUrl);
+  if (recordingWebhookUrl) setSetting('recordingWebhookUrl', recordingWebhookUrl);
   if (passcode) setSetting('passcode', passcode);
   
   closeSettingsModal();
@@ -4631,8 +4683,90 @@ function startAirtablePolling() {
   }, 30000); // 30 seconds
 }
 
-// ===== INITIAL LOAD FROM AIRTABLE =====
-// Sync is triggered by initApp() after auth — no pre-auth sync needed.
+// ===== TRANSCRIPT POPUP =====
+function openTranscriptPopup(transcript, label) {
+  let overlay = document.getElementById('transcriptPopupOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'transcriptPopupOverlay';
+    overlay.style.cssText = [
+      'display:none; position:fixed; inset:0; z-index:10000;',
+      'background:rgba(5,10,20,0.75);',
+      'backdrop-filter:blur(25px); -webkit-backdrop-filter:blur(25px);',
+      'align-items:flex-end; justify-content:center;'
+    ].join('');
+    overlay.onclick = function(e) { if (e.target === overlay) closeTranscriptPopup(); };
+    document.body.appendChild(overlay);
+  }
+
+  var safeLabel = (label || 'Transcript').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var safeText  = (transcript || 'No transcript available.').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  overlay.innerHTML = '<div style="'
+    + 'width:100%; max-width:600px; max-height:80vh;'
+    + 'background:linear-gradient(160deg,rgba(20,30,50,0.97) 0%,rgba(13,22,33,0.99) 100%);'
+    + 'border:1px solid rgba(201,169,110,0.35); border-bottom:none;'
+    + 'border-radius:24px 24px 0 0;'
+    + 'box-shadow:0 -4px 60px rgba(201,169,110,0.18),0 -1px 0 rgba(201,169,110,0.4) inset,0 2px 80px rgba(0,0,0,0.8);'
+    + 'padding:24px 20px 32px; display:flex; flex-direction:column; overflow:hidden;'
+    + '">'
+    + '<div style="width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,0.15);margin:0 auto 18px;flex-shrink:0;"></div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0;">'
+    + '<div>'
+    + '<div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#C9A96E;margin-bottom:4px;">Transcript</div>'
+    + '<div style="font-size:14px;font-weight:700;color:#fff;">' + safeLabel + '</div>'
+    + '</div>'
+    + '<button onclick="closeTranscriptPopup()" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#888;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">&times;</button>'
+    + '</div>'
+    + '<div style="flex:1;overflow-y:auto;font-size:13px;line-height:1.7;color:rgba(255,255,255,0.85);white-space:pre-wrap;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 16px;margin-bottom:16px;-webkit-overflow-scrolling:touch;">'
+    + safeText
+    + '</div>'
+    + '<button onclick="downloadTranscriptAsPDF()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,rgba(201,169,110,0.9),rgba(180,145,80,0.9));color:#0d1621;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(201,169,110,0.25);flex-shrink:0;">Download PDF</button>'
+    + '</div>';
+
+  overlay._currentTranscript = transcript || '';
+  overlay._currentLabel = label || 'Transcript';
+  overlay.style.display = 'flex';
+}
+
+function closeTranscriptPopup() {
+  var overlay = document.getElementById('transcriptPopupOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function downloadTranscriptAsPDF() {
+  var overlay = document.getElementById('transcriptPopupOverlay');
+  var transcript = (overlay && overlay._currentTranscript) ? overlay._currentTranscript : '';
+  var label = (overlay && overlay._currentLabel) ? overlay._currentLabel : 'Transcript';
+
+  var printWindow = window.open('', '_blank');
+  if (!printWindow) { alert('Allow pop-ups to download the PDF.'); return; }
+
+  var dateStr = new Date().toLocaleDateString('en-NZ', {day:'numeric', month:'long', year:'numeric'});
+  printWindow.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + label + '</title>'
+    + '<style>body{font-family:Georgia,serif;max-width:680px;margin:40px auto;color:#1a1a1a;line-height:1.7;}'
+    + 'h1{font-size:22px;margin-bottom:4px;}.meta{font-size:13px;color:#666;margin-bottom:24px;border-bottom:1px solid #ddd;padding-bottom:12px;}'
+    + 'pre{font-family:Georgia,serif;white-space:pre-wrap;font-size:14px;}.brand{margin-top:40px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px;}'
+    + '</style></head><body>'
+    + '<h1>' + label.replace(/</g,'&lt;') + '</h1>'
+    + '<div class="meta">Generated ' + dateStr + ' · Sopo Studio — The MarketPlace NZ</div>'
+    + '<pre>' + transcript.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
+    + '<div class="brand">themarketplace.co.nz</div>'
+    + '<scr' + 'ipt>window.onload=function(){window.print();}<\/scr' + 'ipt>'
+    + '</body></html>');
+  printWindow.document.close();
+}
+
+// ===== INITIAL LOAD =====
+// initApp() is called on auth success — no inline call needed here.
+</script>
+</body>
+</html>
+===== INITIAL LOAD FROM AIRTABLE =====
+// Sync is triggered by initApp() which is called on auth success (line ~1695).
+</script>
+</body>
+</html>) after auth — no pre-auth sync needed.
 
 // ===== REGISTER PWA SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
