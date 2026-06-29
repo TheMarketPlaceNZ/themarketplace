@@ -117,8 +117,8 @@ body {
 /* ===== APP SHELL CONTAINER ===== */
 #appShell {
   display: flex;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s ease;
@@ -511,15 +511,35 @@ body {
     position: fixed; top: 0; left: 0; bottom: 0;
     transform: translateX(-100%);
     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+    z-index: 200;
   }
   .sidebar.open { transform: translateX(0); }
-  .menu-toggle { display: block; }
+  .menu-toggle { display: flex; }
   .top-header { padding: 0 16px; }
   .panel-view { padding: 16px; }
   .pipeline-funnel { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .nurture-layout { grid-template-columns: 1fr; }
   .transcript-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
   .transcript-sidebar { border-right: none; border-bottom: 1px solid var(--border); padding-right: 0; padding-bottom: 16px; margin-bottom: 16px; max-height: 200px; }
+}
+
+/* Mobile sidebar backdrop overlay */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 150;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  transition: opacity 0.3s ease;
+}
+.sidebar-backdrop.open { display: block; }
+
+/* Eliminate 300ms tap delay on touch devices */
+.menu-item, .menu-toggle, .btn, .filter-chip, .lead-card, .lead-act-btn,
+.modal-close-x, .call-quick-btn, .slot-btn, .appt-card {
+  touch-action: manipulation;
 }
 
 @keyframes pulseGlow {
@@ -935,6 +955,9 @@ body {
 <!-- ===== MAIN APP SHELL ===== -->
 <div id="appShell">
   
+  <!-- Mobile sidebar backdrop -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
   <!-- Collapsible Left Sidebar -->
   <aside class="sidebar" id="appSidebar">
     <div class="sidebar-logo">
@@ -2076,20 +2099,37 @@ function renderTracker() {
 }
 
 // ===== RESPONSIVE DRAWER SIDEBAR =====
+function openSidebar() {
+  document.getElementById('appSidebar').classList.add('open');
+  document.getElementById('sidebarBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebar() {
+  document.getElementById('appSidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
 function toggleSidebar() {
-  document.getElementById('appSidebar').classList.toggle('open');
+  const sidebar = document.getElementById('appSidebar');
+  if (sidebar.classList.contains('open')) {
+    closeSidebar();
+  } else {
+    openSidebar();
+  }
 }
 
 function switchView(tabId) {
   // Switch visible panel
   document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
-  
+
   // Update sidebar active menu styling
   document.querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
   const btn = document.querySelector(`.menu-item[data-tab="${tabId}"]`);
   if (btn) btn.classList.add('active');
-  
+
   // Update Header Title
   const titles = {
     viewLeads: 'Leads Database',
@@ -2100,15 +2140,10 @@ function switchView(tabId) {
     viewEmailLists: 'Email Lists'
   };
   document.getElementById('headerTitle').textContent = titles[tabId] || 'Portal';
-  
-  // Close sidebar drawer on mobile after selection
-  document.getElementById('appSidebar').classList.remove('open');
-}
 
-// Hide sidebar drawer when clicking main panel
-document.querySelector('.main-content').addEventListener('click', () => {
-  document.getElementById('appSidebar').classList.remove('open');
-});
+  // Close sidebar drawer on mobile after selection
+  closeSidebar();
+}
 
 // ===== STATS CALCULATION =====
 function updateSidebarStats() {
@@ -4798,21 +4833,13 @@ function downloadTranscriptAsPDF() {
 
 // ===== INITIAL LOAD =====
 // initApp() is called on auth success — no inline call needed here.
-</script>
-</body>
-</html>
-===== INITIAL LOAD FROM AIRTABLE =====
-// Sync is triggered by initApp() which is called on auth success (line ~1695).
-</script>
-</body>
-</html>) after auth — no pre-auth sync needed.
 
 // ===== REGISTER PWA SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('Service Worker registered successfully.', reg.scope))
-      .catch(err => console.log('Service Worker registration failed: ', err));
+      .then(reg => console.log('Service Worker registered.', reg.scope))
+      .catch(err => console.log('Service Worker failed:', err));
   });
 }
 </script>
