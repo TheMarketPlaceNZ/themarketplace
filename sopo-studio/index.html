@@ -1258,6 +1258,11 @@ body {
       <div class="settings-hint">The Make.com webhook URL for scenario 5476295 (Sopo Local Recording Processor). Open that scenario in Make, click the webhook module, and copy the URL.</div>
     </div>
     <div class="settings-row">
+      <div class="settings-label">SMS Everyone Password</div>
+      <input class="settings-input" id="settingsSmsPassword" type="password" placeholder="Your SMS Everyone account password">
+      <div class="settings-hint">Required to send booking reminder texts. Username is fixed as "marketplace". Get the password from smseveryone.com.</div>
+    </div>
+    <div class="settings-row">
       <div class="settings-label">Change Passcode</div>
       <input class="settings-input" id="settingsPasscode" type="password" placeholder="Leave blank to keep current">
     </div>
@@ -1746,6 +1751,7 @@ function initApp() {
   // Auto sync on load silently then start polling
   syncLeads(true).then(() => {
     startAirtablePolling();
+    checkAutoSMSReminders(); // run after sync so lead data is fresh
   });
   
   // Schedule background sync every 30 minutes (1,800,000 milliseconds)
@@ -2303,7 +2309,7 @@ function renderLeads() {
       ${birthdayBanners}
       <div class="lead-actions-row" style="margin-top: 10px;">
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
-        <button class="lead-act-btn sms" onclick="event.stopPropagation(); smsLead('${l.phone}')">SMS</button>
+        <button class="lead-act-btn sms" onclick="event.stopPropagation(); sendBookingReminder(${appState.leads.indexOf(l)})">SMS</button>
         <button class="lead-act-btn" onclick="event.stopPropagation(); pushLead(${appState.leads.indexOf(l)})" title="Manually push to Pre-Broker" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Push</button>
         <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
       </div>
@@ -2312,7 +2318,94 @@ function renderLeads() {
 }
 
 function callLead(phone) { if (phone) window.location.href = 'tel:' + phone; }
-function smsLead(phone) { if (phone) window.location.href = 'sms:' + phone; }
+
+// ===== SMS EVERYONE INTEGRATION =====
+function formatNZPhoneForSMS(raw) {
+  const clean = (raw || '').replace(/[\s\-()]/g, '');
+  if (clean.startsWith('+64')) return clean.slice(1); // +6421xxx → 6421xxx
+  if (clean.startsWith('64'))  return clean;           // already international
+  if (clean.startsWith('0'))   return '64' + clean.slice(1); // 021xxx → 6421xxx
+  return '64' + clean;
+}
+
+function sendBookingReminder(idx) {
+  const lead = appState.leads[idx];
+  if (!lead) return;
+
+  const pwd = getSetting('smsPassword');
+  if (!pwd) {
+    alert('SMS password not set. Go to Settings and enter your SMS Everyone password.');
+    return;
+  }
+
+  const phone = formatNZPhoneForSMS(lead.phone);
+  if (!phone || phone.length < 10) {
+    alert('No valid phone number for this lead.');
+    return;
+  }
+
+  const firstName = (lead.name || '').split(' ')[0] || 'there';
+  const msg = `Hi ${firstName}, its Sopo! We sent you a booking link by email. Grab a slot here: https://www.themarketplace.co.nz/sopo-studio/book_meeting.html`;
+
+  // Fire via SMS Everyone HTTP API (no-cors — fire and forget)
+  const url = `https://api.smseveryone.com/ws/campaign?user=marketplace&password=${encodeURIComponent(pwd)}&originator=SOPO&destination=${phone}&message=${encodeURIComponent(msg)}`;
+  fetch(url, { mode: 'no-cors' }).catch(() => {});
+
+  // Log to timeline immediately
+  appendLifecycleEntry(lead, `SMS reminder sent: "${msg}"`);
+  lead.lastSmsSent = new Date().toISOString();
+  saveState();
+
+  // Visual feedback on button
+  const btn = event && event.currentTarget;
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = 'Sent!';
+    btn.style.background = 'var(--green-dim)';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2500);
+  }
+}
+
+// ===== 3-DAY AUTO-REMINDER CHECK =====
+function checkAutoSMSReminders() {
+  const pwd = getSetting('smsPassword');
+  if (!pwd) return; // can't send without credentials
+
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  let autoSent = 0;
+
+  (appState.leads || []).forEach((lead, idx) => {
+    if (!lead) return;
+    // Only target unbooked Pre-Broker leads
+    if (lead.stage !== 'qualified') return;
+    if (lead.hasBooked || lead.bookingTime) return;
+    if (lead.smsReminderSent) return; // already auto-sent once
+
+    const age = now - new Date(lead.timestamp || 0).getTime();
+    if (age < threeDaysMs) return;
+
+    // Auto-fire
+    const phone = formatNZPhoneForSMS(lead.phone);
+    if (!phone || phone.length < 10) return;
+
+    const firstName = (lead.name || '').split(' ')[0] || 'there';
+    const msg = `Hi ${firstName}, its Sopo! We sent you a booking link by email. Grab a slot here: https://www.themarketplace.co.nz/sopo-studio/book_meeting.html`;
+    const url = `https://api.smseveryone.com/ws/campaign?user=marketplace&password=${encodeURIComponent(pwd)}&originator=SOPO&destination=${phone}&message=${encodeURIComponent(msg)}`;
+    fetch(url, { mode: 'no-cors' }).catch(() => {});
+
+    lead.smsReminderSent = true;
+    lead.lastSmsSent = new Date().toISOString();
+    appendLifecycleEntry(lead, `Auto SMS reminder sent (3-day trigger): "${msg}"`);
+    autoSent++;
+  });
+
+  if (autoSent > 0) {
+    saveState();
+    console.log(`[Studio] Auto-SMS: sent ${autoSent} 3-day reminder${autoSent > 1 ? 's' : ''}`);
+  }
+}
 
 // ===== NEW ZOOM LINK FAILSAFE =====
 let newLinkTargetIdx = null;
@@ -4322,6 +4415,7 @@ function openSettingsModal() {
   document.getElementById('settingsBookingWebhookUrl').value = getSetting('bookingWebhookUrl');
   document.getElementById('settingsStatusWebhookUrl').value = getSetting('statusWebhookUrl');
   document.getElementById('settingsRecordingWebhookUrl').value = getSetting('recordingWebhookUrl');
+  document.getElementById('settingsSmsPassword').value = getSetting('smsPassword');
   document.getElementById('settingsModal').classList.add('open');
 }
 function closeModal(id) {
@@ -4346,6 +4440,8 @@ function saveSettings() {
   if (bookingWebhookUrl) setSetting('bookingWebhookUrl', bookingWebhookUrl);
   if (statusWebhookUrl) setSetting('statusWebhookUrl', statusWebhookUrl);
   if (recordingWebhookUrl) setSetting('recordingWebhookUrl', recordingWebhookUrl);
+  const smsPassword = document.getElementById('settingsSmsPassword').value.trim();
+  if (smsPassword) setSetting('smsPassword', smsPassword);
   if (passcode) setSetting('passcode', passcode);
   
   closeSettingsModal();
