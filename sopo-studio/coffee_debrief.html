@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="gemini-api-key" content="AQ.Ab8RN6LAwwtUlF2YKj7zwatCz7_eHnm7-ySm54Xhz_FxVj4rag">
+<title>Coffee Debrief | Sopo's Studio</title>
+<style>
+  :root {
+    --bg:         #0d1621;
+    --surface:    #111c2d;
+    --border:     rgba(201,169,110,0.2);
+    --gold:       #C9A96E;
+    --gold-bright:#e0ba7a;
+    --white:      #f0f4f8;
+    --muted:      #6b7a8d;
+    --green:      #4ade80;
+    --green-dim:  rgba(74,222,128,0.12);
+    --red:        #ef4444;
+    --red-dim:    rgba(239,68,68,0.12);
+    --blue:       #60a5fa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 0 40px;
+  }
+
+  /* ── Header ── */
+  .header {
+    width: 100%;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-icon {
+    width: 38px; height: 38px;
+    background: rgba(201,169,110,0.12);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .header-title { font-size: 17px; font-weight: 700; color: var(--white); }
+  .header-sub   { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* ── Screens ── */
+  .screen { width: 100%; max-width: 420px; padding: 24px 20px; display: none; }
+  .screen.active { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .card-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 12px;
+  }
+
+  /* ── Inputs ── */
+  .inp {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 12px 14px;
+    color: var(--white); font-size: 15px;
+    outline: none; appearance: none;
+    -webkit-appearance: none;
+  }
+  .inp:focus { border-color: var(--gold); }
+  select.inp option { background: #1a2535; color: var(--white); }
+
+  /* ── Passcode ── */
+  .pin-dots { display: flex; gap: 14px; justify-content: center; margin: 8px 0 4px; }
+  .pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: background 0.15s;
+  }
+  .pin-dot.filled { background: var(--gold); border-color: var(--gold-bright); }
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .num-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 18px 10px;
+    font-size: 22px; font-weight: 600; color: var(--white);
+    cursor: pointer; text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s, transform 0.1s;
+    user-select: none;
+  }
+  .num-btn:active { background: rgba(201,169,110,0.2); transform: scale(0.95); }
+  .num-btn.del    { font-size: 16px; }
+  .num-btn.empty  { background: transparent; border-color: transparent; cursor: default; }
+  .pin-error { color: var(--red); font-size: 13px; text-align: center; min-height: 18px; }
+
+  /* ── Recorder ── */
+  .rec-ring {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(201,169,110,0.08);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    position: relative;
+  }
+  .rec-ring:active { transform: scale(0.95); }
+  .rec-ring.recording {
+    background: rgba(239,68,68,0.15);
+    border-color: var(--red);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50%      { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+  }
+  .rec-icon { pointer-events: none; }
+  .rec-timer {
+    font-size: 40px; font-weight: 200; letter-spacing: 2px;
+    color: var(--white); text-align: center; font-variant-numeric: tabular-nums;
+  }
+  .rec-timer.running { color: var(--red); }
+  .rec-hint { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
+
+  /* ── Spinner ── */
+  .spinner-box {
+    display: none; flex-direction: column; align-items: center; gap: 12px;
+    padding: 20px; text-align: center;
+  }
+  .spinner-box.show { display: flex; }
+  .spinner {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 3px solid rgba(201,169,110,0.2);
+    border-top-color: var(--gold);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-text { font-size: 13px; color: var(--muted); }
+
+  /* ── Buttons ── */
+  .btn {
+    width: 100%; padding: 15px; border-radius: 12px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    border: none; letter-spacing: 0.3px;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--gold); color: #0d1621; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--muted);
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Success ── */
+  .success-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--green-dim); border: 1px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto; font-size: 32px;
+  }
+  .success-title { font-size: 20px; font-weight: 700; text-align: center; }
+  .success-sub { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; }
+
+  /* ── Lead badge ── */
+  .lead-badge {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(201,169,110,0.08);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+  }
+  .lead-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(201,169,110,0.15);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--gold); flex-shrink: 0;
+  }
+  .lead-name  { font-size: 14px; font-weight: 600; }
+  .lead-stage { font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">☕</div>
+  <div>
+    <div class="header-title">Coffee Debrief</div>
+    <div class="header-sub">Sopo's Studio</div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: Passcode ══ -->
+<div class="screen active" id="screenPin">
+  <div class="card" style="margin-top: 16px;">
+    <div class="card-label" style="text-align:center;">Enter Passcode</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+  <div class="numpad">
+    <button class="num-btn" onclick="pinKey('1')">1</button>
+    <button class="num-btn" onclick="pinKey('2')">2</button>
+    <button class="num-btn" onclick="pinKey('3')">3</button>
+    <button class="num-btn" onclick="pinKey('4')">4</button>
+    <button class="num-btn" onclick="pinKey('5')">5</button>
+    <button class="num-btn" onclick="pinKey('6')">6</button>
+    <button class="num-btn" onclick="pinKey('7')">7</button>
+    <button class="num-btn" onclick="pinKey('8')">8</button>
+    <button class="num-btn" onclick="pinKey('9')">9</button>
+    <button class="num-btn empty"></button>
+    <button class="num-btn" onclick="pinKey('0')">0</button>
+    <button class="num-btn del" onclick="pinDel()">⌫</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: Select Lead ══ -->
+<div class="screen" id="screenSelect">
+  <div class="card">
+    <div class="card-label">Who did you meet with?</div>
+    <select class="inp" id="leadSelect" onchange="onLeadChange()">
+      <option value="">Choose a lead...</option>
+    </select>
+  </div>
+  <div id="leadPreview" style="display:none;" class="lead-badge">
+    <div class="lead-avatar" id="leadAvatar"></div>
+    <div>
+      <div class="lead-name" id="leadName"></div>
+      <div class="lead-stage" id="leadStageLabel"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-label">Meeting type</div>
+    <select class="inp" id="meetingTypeSelect">
+      <option value="">Select type...</option>
+      <option value="New Lead Intro">New Lead Intro</option>
+      <option value="Pre-Broker Meeting">Pre-Broker Meeting</option>
+      <option value="Finance Check-in">Finance Check-in</option>
+      <option value="Gameplan Meeting">Gameplan Meeting</option>
+      <option value="Coffee Meet">Coffee Meet</option>
+      <option value="Reevaluation">Reevaluation</option>
+      <option value="Reinstatement Meeting">Reinstatement Meeting</option>
+      <option value="Declined Follow-up">Declined Follow-up</option>
+    </select>
+  </div>
+  <button class="btn btn-primary" id="btnToRecord" onclick="goToRecord()" disabled>Continue to Record →</button>
+</div>
+
+<!-- ══ SCREEN: Record ══ -->
+<div class="screen" id="screenRecord">
+  <div id="selectedLeadBadge" class="lead-badge"></div>
+
+  <div class="card" style="text-align:center; gap:16px; display:flex; flex-direction:column; align-items:center;">
+    <div class="rec-timer" id="recTimer">00:00</div>
+    <div class="rec-ring" id="recRing" onclick="toggleRecording()">
+      <svg class="rec-icon" id="recIconMic" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+        <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+        <line x1="12" x2="12" y1="19" y2="22"/>
+      </svg>
+      <svg class="rec-icon" id="recIconStop" width="36" height="36" viewBox="0 0 24 24" fill="#ef4444" stroke="none" style="display:none;">
+        <rect x="4" y="4" width="16" height="16" rx="3"/>
+      </svg>
+    </div>
+    <div class="rec-hint" id="recHint">Tap to start recording your debrief</div>
+  </div>
+
+  <div class="spinner-box" id="spinnerBox">
+    <div class="spinner"></div>
+    <div class="spinner-text" id="spinnerText">Uploading to Gemini...</div>
+  </div>
+
+  <button class="btn btn-ghost" onclick="goBack()" id="btnBack">← Back</button>
+</div>
+
+<!-- ══ SCREEN: Success ══ -->
+<div class="screen" id="screenSuccess">
+  <div class="card" style="align-items:center; display:flex; flex-direction:column; gap:16px; text-align:center; padding: 32px 20px;">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Debrief Sent</div>
+    <div class="success-sub" id="successMsg">Your debrief is being processed. It will appear in the lead's timeline within 30 seconds.</div>
+  </div>
+  <button class="btn btn-primary" onclick="recordAnother()">Record Another</button>
+  <button class="btn btn-ghost" onclick="openStudio()">Open Studio</button>
+</div>
+
+<script>
+// ── Constants ──
+const DEFAULT_PASSCODE = '1993';
+const GEMINI_API_KEY_META = document.querySelector('meta[name="gemini-api-key"]')?.content || '';
+
+// ── Settings helpers (mirrors Studio) ──
+function getSetting(key, fallback = '') {
+  return localStorage.getItem('sopo_' + key) || fallback;
+}
+function setSetting(key, val) {
+  localStorage.setItem('sopo_' + key, val);
+}
+
+// ── State ──
+function loadLeads() {
+  try {
+    const state = JSON.parse(localStorage.getItem('sopo_state_v3') || '{}');
+    return (state.leads || []).filter(l => l && l.name);
+  } catch(e) { return []; }
+}
+
+function appendLifecycleEntry(lead, text) {
+  if (!lead) return;
+  if (!lead.lifecycleLog) lead.lifecycleLog = [];
+  lead.lifecycleLog.push({ date: new Date().toISOString(), text });
+}
+
+function saveLeadState(lead) {
+  try {
+    const state = JSON.parse(localStorage.getItem('sopo_state_v3') || '{}');
+    const idx = (state.leads || []).findIndex(l => l && (l.airtableId === lead.airtableId || l.email === lead.email));
+    if (idx >= 0) {
+      state.leads[idx] = lead;
+      localStorage.setItem('sopo_state_v3', JSON.stringify(state));
+    }
+  } catch(e) {}
+}
+
+// ── PIN ──
+let pinBuffer = '';
+
+function pinKey(d) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  updateDots();
+  if (pinBuffer.length === 4) checkPin();
+}
+
+function pinDel() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updateDots();
+  document.getElementById('pinError').textContent = '';
+}
+
+function updateDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d' + i).classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function checkPin() {
+  const stored = getSetting('passcode', DEFAULT_PASSCODE);
+  if (pinBuffer === stored) {
+    showScreen('screenSelect');
+    populateLeads();
+  } else {
+    document.getElementById('pinError').textContent = 'Incorrect passcode';
+    pinBuffer = '';
+    updateDots();
+    setTimeout(() => { document.getElementById('pinError').textContent = ''; }, 1500);
+  }
+}
+
+// ── Lead select ──
+let selectedLead = null;
+
+const STAGE_LABELS = {
+  qualified:   'Pre-Broker',
+  pre_broker:  'Pre-Broker',
+  gameplan:    'Gameplan',
+  active:      'Active',
+  denied:      'Declined',
+  'in-progress': 'In Progress',
+};
+
+function populateLeads() {
+  const leads = loadLeads();
+  const sel = document.getElementById('leadSelect');
+  sel.innerHTML = '<option value="">Choose a lead...</option>';
+  leads.forEach((l, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = l.name + (l.email ? ` — ${l.email}` : '');
+    sel.appendChild(opt);
+  });
+}
+
+function onLeadChange() {
+  const leads = loadLeads();
+  const idx = document.getElementById('leadSelect').value;
+  const typeOk = document.getElementById('meetingTypeSelect').value;
+
+  if (idx === '') {
+    selectedLead = null;
+    document.getElementById('leadPreview').style.display = 'none';
+    document.getElementById('btnToRecord').disabled = true;
+    return;
+  }
+
+  selectedLead = leads[parseInt(idx)];
+  const initials = (selectedLead.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('leadAvatar').textContent = initials;
+  document.getElementById('leadName').textContent = selectedLead.name;
+  document.getElementById('leadStageLabel').textContent = STAGE_LABELS[selectedLead.stage] || selectedLead.stage || 'Lead';
+  document.getElementById('leadPreview').style.display = 'flex';
+
+  document.getElementById('btnToRecord').disabled = !(idx !== '' && typeOk);
+}
+
+document.getElementById('meetingTypeSelect').addEventListener('change', () => {
+  const idx = document.getElementById('leadSelect').value;
+  document.getElementById('btnToRecord').disabled = !(idx !== '' && document.getElementById('meetingTypeSelect').value);
+});
+
+function goToRecord() {
+  if (!selectedLead) return;
+  const meetingType = document.getElementById('meetingTypeSelect').value;
+  if (!meetingType) return;
+
+  // Build badge for record screen
+  const initials = (selectedLead.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('selectedLeadBadge').innerHTML = `
+    <div class="lead-avatar">${initials}</div>
+    <div>
+      <div class="lead-name">${selectedLead.name}</div>
+      <div class="lead-stage">${meetingType}</div>
+    </div>
+  `;
+  showScreen('screenRecord');
+}
+
+function goBack() {
+  if (isRecording) return;
+  showScreen('screenSelect');
+}
+
+// ── Recording ──
+let mediaRecorder, audioChunks = [], timerInterval, recStart;
+let isRecording = false;
+
+async function toggleRecording() {
+  if (document.getElementById('spinnerBox').classList.contains('show')) return;
+
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Prefer webm, fallback to mp4 (iOS Safari)
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      mediaRecorder = new MediaRecorder(stream, { mimeType });
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = () => processRecording();
+      mediaRecorder.start(1000);
+      isRecording = true;
+
+      document.getElementById('recRing').classList.add('recording');
+      document.getElementById('recIconMic').style.display  = 'none';
+      document.getElementById('recIconStop').style.display = 'block';
+      document.getElementById('recTimer').classList.add('running');
+      document.getElementById('recHint').textContent = 'Recording… tap to stop';
+      document.getElementById('btnBack').style.display = 'none';
+
+      recStart = Date.now();
+      timerInterval = setInterval(() => {
+        const e = Math.floor((Date.now() - recStart) / 1000);
+        const m = String(Math.floor(e / 60)).padStart(2,'0');
+        const s = String(e % 60).padStart(2,'0');
+        document.getElementById('recTimer').textContent = `${m}:${s}`;
+      }, 1000);
+
+    } catch(err) {
+      alert('Microphone access denied. Please allow mic access and try again.');
+    }
+
+  } else {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    isRecording = false;
+    clearInterval(timerInterval);
+
+    document.getElementById('recRing').classList.remove('recording');
+    document.getElementById('recIconMic').style.display  = 'block';
+    document.getElementById('recIconStop').style.display = 'none';
+    document.getElementById('recTimer').classList.remove('running');
+    document.getElementById('recHint').textContent = 'Processing…';
+  }
+}
+
+async function processRecording() {
+  const mimeType = (audioChunks[0] || {}).type || 'audio/webm';
+  const blob = new Blob(audioChunks, { type: mimeType });
+  const meetingType = document.getElementById('meetingTypeSelect').value;
+  const lead = selectedLead;
+
+  const apiKey = getSetting('apiKey') || GEMINI_API_KEY_META;
+  const webhookUrl = getSetting('recordingWebhookUrl');
+
+  if (!apiKey) {
+    alert('No Gemini API key found. Open Studio → Settings and add your Gemini API key.');
+    resetRecorder();
+    return;
+  }
+  if (!webhookUrl) {
+    alert('No Recording Webhook URL found. Open Studio → Settings and add it.');
+    resetRecorder();
+    return;
+  }
+
+  document.getElementById('spinnerBox').classList.add('show');
+  document.getElementById('recRing').style.pointerEvents = 'none';
+
+  try {
+    // Step 1 — Upload to Gemini Files API
+    document.getElementById('spinnerText').textContent = 'Uploading to Gemini…';
+    const ext = mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm';
+    const uploadForm = new FormData();
+    uploadForm.append('file', blob, ext);
+
+    const uploadResp = await fetch(
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+      { method: 'POST', headers: { 'X-Goog-Upload-Protocol': 'multipart' }, body: uploadForm }
+    );
+    if (!uploadResp.ok) throw new Error(`Gemini upload failed: ${uploadResp.status}`);
+    const uploadData = await uploadResp.json();
+    const geminiFileName = uploadData.file?.name;
+    const geminiFileUri  = uploadData.file?.uri;
+    if (!geminiFileName || !geminiFileUri) throw new Error('Gemini returned no file reference.');
+
+    // Step 2 — Brief wait for ACTIVE state
+    document.getElementById('spinnerText').textContent = 'File ready. Sending to pipeline…';
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Step 3 — POST to Make webhook
+    const duration = Math.round((Date.now() - recStart) / 1000);
+    const payload = {
+      geminiFileName,
+      geminiFileUri,
+      geminiApiKey:  apiKey,
+      mimeType,
+      meetingType,
+      meetingSource: 'In-Person Coffee',
+      recordId:      lead.airtableId || '',
+      leadName:      lead.name || 'Unknown',
+      duration,
+      timestamp:     new Date().toISOString()
+    };
+
+    const hookResp = await fetch(webhookUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload)
+    });
+    if (!hookResp.ok) console.warn('Webhook response:', hookResp.status);
+
+    // Step 4 — Log to localStorage timeline immediately
+    const reloadedLeads = loadLeads();
+    const liveIdx = reloadedLeads.findIndex(l => l && (l.airtableId === lead.airtableId || l.email === lead.email));
+    if (liveIdx >= 0) {
+      const liveLead = reloadedLeads[liveIdx];
+      appendLifecycleEntry(liveLead, `☕ Coffee debrief recorded (${meetingType}, ${Math.floor(duration/60)}m ${duration%60}s) — AI debrief processing`);
+      saveLeadState(liveLead);
+    }
+
+    // Success
+    document.getElementById('successMsg').textContent =
+      `Debrief for ${lead.name} sent. It will appear in their timeline within 30 seconds.`;
+    showScreen('screenSuccess');
+
+  } catch(err) {
+    console.error(err);
+    alert(`Pipeline error: ${err.message}`);
+    resetRecorder();
+  }
+}
+
+function resetRecorder() {
+  document.getElementById('spinnerBox').classList.remove('show');
+  document.getElementById('recRing').style.pointerEvents = '';
+  document.getElementById('recHint').textContent = 'Tap to start recording your debrief';
+  document.getElementById('recTimer').textContent = '00:00';
+  document.getElementById('recTimer').classList.remove('running');
+  document.getElementById('btnBack').style.display = '';
+  audioChunks = [];
+}
+
+function recordAnother() {
+  resetRecorder();
+  selectedLead = null;
+  document.getElementById('leadSelect').value = '';
+  document.getElementById('meetingTypeSelect').value = '';
+  document.getElementById('leadPreview').style.display = 'none';
+  document.getElementById('btnToRecord').disabled = true;
+  populateLeads();
+  showScreen('screenSelect');
+}
+
+function openStudio() {
+  window.location.href = 'index.html';
+}
+
+// ── Screen helper ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>

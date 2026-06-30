@@ -3700,7 +3700,9 @@ async function toggleRecording() {
 }
 
 async function processRecording() {
-  const blob = new Blob(audioChunks, { type: 'audio/webm' });
+  // Detect actual mime type recorded (webm on desktop, mp4 on iOS Safari)
+  const mimeType = (audioChunks[0] && audioChunks[0].type) ? audioChunks[0].type.split(';')[0] : 'audio/webm';
+  const blob = new Blob(audioChunks, { type: mimeType });
   const meetingType = (document.getElementById('meetingTypeDropdown')?.value || '').trim();
   const l = appState.leads[currentLeadIndex];
 
@@ -3708,30 +3710,26 @@ async function processRecording() {
     alert('Please select a meeting type before saving the recording.');
     return;
   }
-  if (!l || !l.airtableId) {
-    alert('Cannot save recording — no Airtable record found for this lead. Sync the lead first.');
+  if (!l) {
+    alert('No lead is open. Please open a lead card first.');
     return;
   }
 
   const apiKey = document.querySelector('meta[name="gemini-api-key"]')?.content || getSetting('apiKey');
   if (!apiKey) {
-    alert('A Gemini API key is required to process recordings.\n\nTo get one:\n1. Go to aistudio.google.com\n2. Sign in and click "Get API key"\n3. Create a new key and paste it into Studio Settings > Gemini API Key\n\nThis is a free Google key.');
-    return;
-  }
-
-  const webhookUrl = getSetting('recordingWebhookUrl');
-  if (!webhookUrl) {
-    alert('Please add your Recording Webhook URL in Settings.\n\nOpen Make scenario 5476295, click the webhook module, and copy the URL.');
+    alert('A Gemini API key is required to process recordings.\n\nGo to Studio Settings > Gemini API Key.');
     return;
   }
 
   document.getElementById('aiSpinnerBox').classList.add('show');
+  const duration = Math.round((Date.now() - recStart) / 1000);
 
   try {
-    // Step 1 — Upload audio to Gemini Files API
+    // ── Step 1: Upload audio to Gemini Files API ──
     document.getElementById('spinnerText').textContent = 'Uploading audio to Gemini...';
+    const ext = mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm';
     const uploadForm = new FormData();
-    uploadForm.append('file', blob, 'recording.webm');
+    uploadForm.append('file', blob, ext);
 
     const uploadResp = await fetch(
       `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
@@ -3740,51 +3738,103 @@ async function processRecording() {
     if (!uploadResp.ok) throw new Error(`Gemini upload failed: ${uploadResp.status}`);
     const uploadData = await uploadResp.json();
     const geminiFileName = uploadData.file?.name;
-    const geminiFileUri = uploadData.file?.uri;
+    const geminiFileUri  = uploadData.file?.uri;
     if (!geminiFileName || !geminiFileUri) throw new Error('Gemini upload returned no file reference.');
 
-    // Step 2 — Brief wait for file to reach ACTIVE state
-    document.getElementById('spinnerText').textContent = 'File ready. Triggering pipeline...';
-    await new Promise(r => setTimeout(r, 2000));
+    // ── Step 2: Wait for file to reach ACTIVE state ──
+    document.getElementById('spinnerText').textContent = 'Transcribing with Gemini AI...';
+    await new Promise(r => setTimeout(r, 2500));
 
-    // Step 3 — POST to Make webhook
-    const duration = Math.round((Date.now() - recStart) / 1000);
-    const payload = {
-      geminiFileName,
-      geminiFileUri,
-      geminiApiKey: apiKey,
-      mimeType: 'audio/webm',
-      meetingType,
-      meetingSource: 'In-Person',
-      recordId: l.airtableId,
-      leadName: l.name || 'Unknown',
-      duration,
-      timestamp: new Date().toISOString()
-    };
+    // ── Step 3: Call Gemini generateContent directly ──
+    const prompt = `You are processing a client meeting debrief recorded by Sopo, a mortgage advisor in New Zealand.
 
-    const hookResp = await fetch(webhookUrl, {
-      method: 'POST',
+Meeting type: ${meetingType}
+Client name: ${l.name || 'Unknown'}
+
+Analyse the audio and respond in this exact format:
+
+SUMMARY:
+• [key point 1]
+• [key point 2]
+• [key point 3 — add more if needed]
+
+ACTION ITEMS:
+• [task — who is responsible]
+
+TRANSCRIPT:
+[Full verbatim transcript of everything said]
+
+If the audio is too short or unclear, still provide whatever you can hear. Keep the SUMMARY concise and focused on mortgage/finance outcomes.`;
+
+    const genResp = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { fileData: { mimeType, fileUri: geminiFileUri } }
+          ]
+        }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 }
+      })
     });
-    if (!hookResp.ok) console.warn('Webhook response:', hookResp.status);
+    if (!genResp.ok) throw new Error(`Gemini generateContent failed: ${genResp.status}`);
+    const genData = await genResp.json();
+    const rawText = genData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
+    // ── Step 4: Parse the response ──
+    const summaryMatch   = rawText.match(/SUMMARY:\s*([\s\S]*?)(?=ACTION ITEMS:|TRANSCRIPT:|$)/i);
+    const actionsMatch   = rawText.match(/ACTION ITEMS:\s*([\s\S]*?)(?=TRANSCRIPT:|$)/i);
+    const transcriptMatch = rawText.match(/TRANSCRIPT:\s*([\s\S]*?)$/i);
+
+    const summary    = (summaryMatch?.[1]   || rawText).trim();
+    const actions    = (actionsMatch?.[1]   || '').trim();
+    const transcript = (transcriptMatch?.[1] || rawText).trim();
+
+    const fullDebrief = [
+      `**${meetingType} — ${new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' })}**`,
+      '',
+      summary,
+      actions ? `\nACTION ITEMS:\n${actions}` : ''
+    ].filter(Boolean).join('\n');
+
+    // ── Step 5: Save to timeline immediately ──
+    document.getElementById('spinnerText').textContent = 'Saving to timeline...';
+    saveMeeting(`${meetingType} (In-Person)`, blob, fullDebrief, [], transcript);
+
+    // ── Step 6: Also post to Make webhook for Airtable write-back (non-blocking) ──
+    const webhookUrl = getSetting('recordingWebhookUrl');
+    if (webhookUrl) {
+      fetch(webhookUrl, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          geminiFileName, geminiFileUri, geminiApiKey: apiKey,
+          mimeType, meetingType, meetingSource: 'In-Person',
+          recordId:   l.airtableId || '',
+          leadName:   l.name || 'Unknown',
+          debrief:    fullDebrief,
+          transcript, duration,
+          timestamp:  new Date().toISOString()
+        })
+      }).catch(e => console.warn('Webhook post failed (non-critical):', e));
+    }
+
+    // ── Done ──
     document.getElementById('aiSpinnerBox').classList.remove('show');
     document.getElementById('recHint').textContent = 'Tap mic to begin recording';
     if (document.getElementById('meetingTypeDropdown')) {
       document.getElementById('meetingTypeDropdown').value = '';
     }
-
-    // Toast and auto-refresh timeline after 30s
-    showSyncToast('Recording sent. Debrief will appear in Timeline within 30 seconds.');
-    setTimeout(() => {
-      renderClientTimeline();
-    }, 30000);
+    showSyncToast('✓ Debrief transcribed and saved to timeline.');
+    switchModalTab('timeline');
 
   } catch(e) {
     console.error('processRecording error:', e);
     document.getElementById('aiSpinnerBox').classList.remove('show');
-    alert(`Recording pipeline error: ${e.message}`);
+    document.getElementById('recHint').textContent = 'Tap mic to begin recording';
+    alert(`Recording error: ${e.message}`);
   }
 }
 
