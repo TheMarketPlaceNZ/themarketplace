@@ -2332,7 +2332,7 @@ function sendBookingReminder(idx) {
   const lead = appState.leads[idx];
   if (!lead) return;
 
-  const pwd = getSetting('smsPassword');
+  const pwd = getSetting('smsPassword', 'Marketplace1!');
   if (!pwd) {
     alert('SMS password not set. Go to Settings and enter your SMS Everyone password.');
     return;
@@ -2348,7 +2348,7 @@ function sendBookingReminder(idx) {
   const msg = `Hi ${firstName}, its Sopo! We sent you a booking link by email. Grab a slot here: https://www.themarketplace.co.nz/sopo-studio/book_meeting.html`;
 
   // Fire via SMS Everyone HTTP API (no-cors — fire and forget)
-  const url = `https://api.smseveryone.com/ws/campaign?user=marketplace&password=${encodeURIComponent(pwd)}&originator=SOPO&destination=${phone}&message=${encodeURIComponent(msg)}`;
+  const url = `https://api.smseveryone.com/ws/campaign?user=marketplace&password=${encodeURIComponent(pwd)}&originator=2310&destination=${phone}&message=${encodeURIComponent(msg)}`;
   fetch(url, { mode: 'no-cors' }).catch(() => {});
 
   // Log to timeline immediately
@@ -2369,7 +2369,7 @@ function sendBookingReminder(idx) {
 
 // ===== 3-DAY AUTO-REMINDER CHECK =====
 function checkAutoSMSReminders() {
-  const pwd = getSetting('smsPassword');
+  const pwd = getSetting('smsPassword', 'Marketplace1!');
   if (!pwd) return; // can't send without credentials
 
   const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
@@ -2392,7 +2392,7 @@ function checkAutoSMSReminders() {
 
     const firstName = (lead.name || '').split(' ')[0] || 'there';
     const msg = `Hi ${firstName}, its Sopo! We sent you a booking link by email. Grab a slot here: https://www.themarketplace.co.nz/sopo-studio/book_meeting.html`;
-    const url = `https://api.smseveryone.com/ws/campaign?user=marketplace&password=${encodeURIComponent(pwd)}&originator=SOPO&destination=${phone}&message=${encodeURIComponent(msg)}`;
+    const url = `https://api.smseveryone.com/ws/campaign?user=marketplace&password=${encodeURIComponent(pwd)}&originator=2310&destination=${phone}&message=${encodeURIComponent(msg)}`;
     fetch(url, { mode: 'no-cors' }).catch(() => {});
 
     lead.smsReminderSent = true;
