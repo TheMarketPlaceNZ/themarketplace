@@ -1853,9 +1853,9 @@ function approveLeadStage(idx, currentStage) {
 function denyLeadStage(idx, currentStage) {
   const l = appState.leads[idx];
   if (!l) return;
-  
+
   let newAtStage = null;
-  
+
   if (currentStage === 'qualified') {
     // Pre-Broker decline goes to Cultivation List, not Gameplan
     l.stage = 'cultivation';
@@ -1867,12 +1867,48 @@ function denyLeadStage(idx, currentStage) {
     newAtStage = 'Gameplan';
     appendLifecycleEntry(l, `Declined at ${currentStage === 'finance-pending' ? 'Finance Pending' : 'Valuation'}, moved to Gameplan`);
   }
-  
+
   saveState();
   renderAll();
-  
+
   if (l.airtableId && newAtStage) {
     writeStageToAirtable(l.airtableId, l.stage);
+  }
+
+  // Finance Pending denial: fire SMS + email via Make.com
+  if (currentStage === 'finance-pending') {
+    const bookingLink = 'https://www.themarketplace.co.nz/sopo-studio/book_meeting.html';
+    const firstName = (l.name || '').split(' ')[0] || 'there';
+
+    // SMS — fire and forget via SMS Everyone (no-cors)
+    const pwd = getSetting('smsPassword', 'Marketplace1!');
+    const phone = formatNZPhoneForSMS(l.phone);
+    if (phone && phone.length >= 10) {
+      const smsMsg = `Hi there, we have sent you an email regarding your progress, please check at your earliest convenience. Team Sopo`;
+      const smsUrl = `https://api.smseveryone.com/ws/campaign?user=marketplace&password=${encodeURIComponent(pwd)}&originator=2310&destination=${phone}&message=${encodeURIComponent(smsMsg)}`;
+      fetch(smsUrl, { mode: 'no-cors' }).catch(() => {});
+      appendLifecycleEntry(l, `Finance denial SMS sent: "${smsMsg}"`);
+      saveState();
+    }
+
+    // Email — POST to Make.com denial scenario
+    const denialWebhook = 'https://hook.us2.make.com/jm9b6jrjw14eu8qki8pkhfdr6l5s8wjc';
+    fetch(denialWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: l.name || '',
+        email: l.email || '',
+        phone: l.phone || '',
+        bookingLink: bookingLink
+      })
+    }).then(() => {
+      appendLifecycleEntry(l, `Finance denial email dispatched to ${l.email}`);
+      saveState();
+    }).catch(() => {
+      appendLifecycleEntry(l, `Finance denial email failed to dispatch — check Make.com`);
+      saveState();
+    });
   }
 }
 
