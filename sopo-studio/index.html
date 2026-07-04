@@ -1253,9 +1253,14 @@ body {
       <div class="settings-hint">The Make.com webhook URL for the Sopo Lead Status Updater scenario. Marks deleted and email-list leads in the Google Sheet so they never re-appear on any device.</div>
     </div>
     <div class="settings-row">
-      <div class="settings-label">Recording Webhook URL</div>
+      <div class="settings-label">Gemini Proxy URL (recorder — use this one)</div>
+      <input class="settings-input" id="settingsGeminiProxyUrl" placeholder="https://hook.us2.make.com/xfpet7ljggq16b3241nylc1t99j0jkjq">
+      <div class="settings-hint">Session 7 fix (July 4, 2026): the recorder now sends audio to scenario 5476295 (Sopo Local Recording Processor), which holds the real Gemini key inside Make and returns the summary here. Only paste this in once Henk/Kurt have replaced the placeholder key in that scenario's "Gemini API Key" module and tested a real recording. Until this field is filled in, the recorder keeps using the old direct-to-Gemini path below.</div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Recording Webhook URL (legacy, superseded)</div>
       <input class="settings-input" id="settingsRecordingWebhookUrl" placeholder="https://hook.us2.make.com/...">
-      <div class="settings-hint">The Make.com webhook URL for scenario 5476295 (Sopo Local Recording Processor). Open that scenario in Make, click the webhook module, and copy the URL.</div>
+      <div class="settings-hint">Old separate write-back call to the same scenario 5476295. No longer needed once Gemini Proxy URL above is set, that scenario now does its own Airtable write-back in the same call. Leave blank going forward.</div>
     </div>
     <div class="settings-row">
       <div class="settings-label">SMS Everyone Password</div>
@@ -3706,7 +3711,10 @@ async function toggleRecording() {
   if (!isRecording) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // iOS Safari does not support webm and throws on the line below if forced to it,
+      // which used to fail silently as a mic permission error. Detect and fall back to mp4.
+      const recMimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      mediaRecorder = new MediaRecorder(stream, { mimeType: recMimeType });
       audioChunks = [];
       mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
       mediaRecorder.onstop = () => processRecording();
@@ -3751,16 +3759,56 @@ async function processRecording() {
     return;
   }
 
-  const apiKey = document.querySelector('meta[name="gemini-api-key"]')?.content || getSetting('apiKey');
-  if (!apiKey) {
-    alert('A Gemini API key is required to process recordings.\n\nGo to Studio Settings > Gemini API Key.');
-    return;
+  // PERMANENT FIX (Session 7, July 4 2026): the real Gemini key must never ship
+  // to a browser again, that is what caused today's outage. geminiProxyUrl points
+  // at a Make.com scenario that holds the key server side, see
+  // WARM/templates/sopo_recorder_proxy_spec.md for the exact scenario to build.
+  // Once that scenario exists, its webhook URL is safe to hardcode right here
+  // (it is a routing URL, not a secret) or set once in Settings > Gemini Proxy URL.
+  // Until then this falls back to the old direct-to-Gemini path unchanged, so
+  // nothing breaks mid rollout, that path still needs a key in Settings today.
+  const geminiProxyUrl = getSetting('geminiProxyUrl');
+  let apiKey = '';
+
+  if (!geminiProxyUrl) {
+    apiKey = document.querySelector('meta[name="gemini-api-key"]')?.content || getSetting('apiKey');
+    if (!apiKey) {
+      alert('A Gemini API key is required to process recordings.\n\nGo to Studio Settings > Gemini API Key.');
+      return;
+    }
   }
 
   document.getElementById('aiSpinnerBox').classList.add('show');
   const duration = Math.round((Date.now() - recStart) / 1000);
 
   try {
+    let rawText = '', geminiFileName = '', geminiFileUri = '';
+
+    if (geminiProxyUrl) {
+      // ── Proxy path: audio goes to Make, the real key never leaves Make ──
+      // Session 7 (July 4 2026): the Make scenario behind this URL now does the
+      // full job in one call (transcript + summary back to us, plus its own
+      // Drive archival and Airtable write-back), so Step 6 below is skipped
+      // when this path runs, see the guard added there.
+      document.getElementById('spinnerText').textContent = 'Sending to secure pipeline...';
+      const ext = mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm';
+      const proxyForm = new FormData();
+      proxyForm.append('file', blob, ext);
+      proxyForm.append('meetingType', meetingType);
+      proxyForm.append('leadName', l.name || 'Unknown');
+      proxyForm.append('mimeType', mimeType);
+      proxyForm.append('recordId', l.airtableId || '');
+      proxyForm.append('duration', String(duration));
+      proxyForm.append('timestamp', new Date().toISOString());
+
+      const proxyResp = await fetch(geminiProxyUrl, { method: 'POST', body: proxyForm });
+      if (!proxyResp.ok) throw new Error(`Recorder proxy failed: ${proxyResp.status}`);
+      const proxyData = await proxyResp.json();
+      rawText        = proxyData.rawText || '';
+      geminiFileName = proxyData.geminiFileName || '';
+      geminiFileUri  = proxyData.geminiFileUri || '';
+
+    } else {
     // ── Step 1: Upload audio to Gemini Files API ──
     document.getElementById('spinnerText').textContent = 'Uploading audio to Gemini...';
     const ext = mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm';
@@ -3773,8 +3821,8 @@ async function processRecording() {
     );
     if (!uploadResp.ok) throw new Error(`Gemini upload failed: ${uploadResp.status}`);
     const uploadData = await uploadResp.json();
-    const geminiFileName = uploadData.file?.name;
-    const geminiFileUri  = uploadData.file?.uri;
+    geminiFileName = uploadData.file?.name;
+    geminiFileUri  = uploadData.file?.uri;
     if (!geminiFileName || !geminiFileUri) throw new Error('Gemini upload returned no file reference.');
 
     // ── Step 2: Wait for file to reach ACTIVE state ──
@@ -3817,7 +3865,8 @@ If the audio is too short or unclear, still provide whatever you can hear. Keep 
     });
     if (!genResp.ok) throw new Error(`Gemini generateContent failed: ${genResp.status}`);
     const genData = await genResp.json();
-    const rawText = genData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    rawText = genData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
 
     // ── Step 4: Parse the response ──
     const summaryMatch   = rawText.match(/SUMMARY:\s*([\s\S]*?)(?=ACTION ITEMS:|TRANSCRIPT:|$)/i);
@@ -3840,8 +3889,11 @@ If the audio is too short or unclear, still provide whatever you can hear. Keep 
     saveMeeting(`${meetingType} (In-Person)`, blob, fullDebrief, [], transcript);
 
     // ── Step 6: Also post to Make webhook for Airtable write-back (non-blocking) ──
+    // Skipped when the proxy path ran above: that scenario now does its own
+    // Drive archival and Airtable write-back in the same call, so firing this
+    // too would create a duplicate Meetings record and a duplicate timeline note.
     const webhookUrl = getSetting('recordingWebhookUrl');
-    if (webhookUrl) {
+    if (webhookUrl && !geminiProxyUrl) {
       fetch(webhookUrl, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4500,6 +4552,7 @@ function openSettingsModal() {
   document.getElementById('settingsSheetUrl').value = getSetting('sheetUrl');
   document.getElementById('settingsBookingWebhookUrl').value = getSetting('bookingWebhookUrl');
   document.getElementById('settingsStatusWebhookUrl').value = getSetting('statusWebhookUrl');
+  document.getElementById('settingsGeminiProxyUrl').value = getSetting('geminiProxyUrl');
   document.getElementById('settingsRecordingWebhookUrl').value = getSetting('recordingWebhookUrl');
   document.getElementById('settingsSmsPassword').value = getSetting('smsPassword');
   document.getElementById('settingsModal').classList.add('open');
@@ -4521,11 +4574,13 @@ function saveSettings() {
   const passcode = document.getElementById('settingsPasscode').value.trim();
   
   const recordingWebhookUrl = document.getElementById('settingsRecordingWebhookUrl').value.trim();
+  const geminiProxyUrl = document.getElementById('settingsGeminiProxyUrl').value.trim();
   if (apiKey) setSetting('apiKey', apiKey);
   if (sheetUrl) setSetting('sheetUrl', sheetUrl);
   if (bookingWebhookUrl) setSetting('bookingWebhookUrl', bookingWebhookUrl);
   if (statusWebhookUrl) setSetting('statusWebhookUrl', statusWebhookUrl);
   if (recordingWebhookUrl) setSetting('recordingWebhookUrl', recordingWebhookUrl);
+  if (geminiProxyUrl) setSetting('geminiProxyUrl', geminiProxyUrl);
   const smsPassword = document.getElementById('settingsSmsPassword').value.trim();
   if (smsPassword) setSetting('smsPassword', smsPassword);
   if (passcode) setSetting('passcode', passcode);
