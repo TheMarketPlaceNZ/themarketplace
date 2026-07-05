@@ -1464,6 +1464,22 @@ const AIRTABLE_TABLE_ID = 'tbleWHVvCC8o5pNVx';
 const AIRTABLE_API_KEY = (document.querySelector('meta[name="at-key"]') || {}).content || '';
 const AIRTABLE_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`;
 
+// Session 8 fix (July 6, 2026): calendarState moved up here from further down the file,
+// right before renderCalendar()/renderCalendarGrid(). initApp() runs on every page load
+// or session continuation and calls renderAll() synchronously, which calls renderCalendar(),
+// which reads calendarState.currentYear immediately. That whole chain fires before the
+// script's execution pointer ever reached the old declaration line, so calendarState was
+// still in its temporal dead zone, and the very first render on every load threw "Cannot
+// access 'calendarState' before initialization", silently killing every top-level statement
+// after that point for the rest of the page's life. This is what broke Sync Airtable's
+// alert just now, not the proxy or the PAT, calendarState was never getting initialized
+// at all. Declaring it here, before checkAuth/initApp can ever run, fixes it for good.
+let calendarState = {
+  selectedDate: new Date(2026, 5, 6), // Saturday, June 6, 2026 as selected
+  currentYear: 2026,
+  currentMonth: 5 // June is index 5
+};
+
 // Session 8 fix (July 5 2026): same exposure pattern as the Gemini key (Session 7).
 // AIRTABLE_API_KEY above is the LIVE secret still shipping in this file's meta
 // tag right now. Do not blank that meta tag until Studio Settings > Airtable
@@ -3311,11 +3327,8 @@ window.addEventListener('storage', e => {
 });
 
 // ===== CALENDAR & RESCHEDULING MODULE =====
-let calendarState = {
-  selectedDate: new Date(2026, 5, 6), // Saturday, June 6, 2026 as selected
-  currentYear: 2026,
-  currentMonth: 5 // June is index 5
-};
+// calendarState itself now lives up near AIRTABLE_API at the top of the script (Session 8
+// fix, July 6 2026) so it's initialized before initApp/renderAll can ever reach for it.
 
 function renderCalendar() {
   renderCalendarGrid();
