@@ -1267,6 +1267,11 @@ body {
       <div class="settings-hint">Old separate write-back call to the same scenario 5476295. No longer needed once Gemini Proxy URL above is set, that scenario now does its own Airtable write-back in the same call. Leave blank going forward.</div>
     </div>
     <div class="settings-row">
+      <div class="settings-label">Airtable Proxy URL (CRM — use once tested)</div>
+      <input class="settings-input" id="settingsAirtableProxyUrl" placeholder="https://hook.us2.make.com/...">
+      <div class="settings-hint">Session 8 fix (July 5, 2026): every read and write to Sopo's Airtable CRM currently ships the real Airtable key inside this file's source, same exposure pattern the Gemini key had. This field points at scenario 5577063 (Sopo Airtable Proxy), which holds the real key server side instead. Only paste this in once Kurt or Henk have replaced the placeholder key in that scenario's "airtablePAT" Set Variable module and confirmed one real sync, stage change, and note save all work through it. Until this field is filled in, Studio keeps using the old direct-with-key path below, unchanged and still live.</div>
+    </div>
+    <div class="settings-row">
       <div class="settings-label">SMS Everyone Password</div>
       <input class="settings-input" id="settingsSmsPassword" type="password" placeholder="Your SMS Everyone account password">
       <div class="settings-hint">Required to send booking reminder texts. Username is fixed as "marketplace". Get the password from smseveryone.com.</div>
@@ -1458,6 +1463,25 @@ const AIRTABLE_BASE_ID = 'appXHdiVfCGMZPtWw';
 const AIRTABLE_TABLE_ID = 'tbleWHVvCC8o5pNVx';
 const AIRTABLE_API_KEY = (document.querySelector('meta[name="at-key"]') || {}).content || '';
 const AIRTABLE_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`;
+
+// Session 8 fix (July 5 2026): same exposure pattern as the Gemini key (Session 7).
+// AIRTABLE_API_KEY above is the LIVE secret still shipping in this file's meta
+// tag right now. Do not blank that meta tag until Studio Settings > Airtable
+// Proxy URL is set below AND a real record has been read and written through
+// it successfully. Once confirmed, the meta tag content gets blanked here and
+// the old PAT gets revoked in Airtable, in that order, never the reverse,
+// same sequencing lesson as the Gemini key rotation. Proxy scenario: "Sopo
+// Airtable Proxy" (Make scenario 5577063), holds the real PAT server side.
+async function airtableProxyCall(action, payload = {}) {
+  const url = getSetting('airtableProxyUrl');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...payload })
+  });
+  if (!res.ok) throw new Error(`Airtable proxy error: ${res.status}`);
+  return res.json();
+}
 
 // Field IDs from the SOPO_CRM Leads table
 const AT_FIELDS = {
@@ -1954,17 +1978,20 @@ function openWaitPeriodPrompt(idx) {
 // Write wait_until date back to Airtable
 async function writeWaitUntilToAirtable(airtableId, dateStr) {
   if (!airtableId) return;
+  const fields = { [AT_FIELDS.wait_until]: dateStr };
   try {
-    await fetch(`${AIRTABLE_API}/${airtableId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fields: { [AT_FIELDS.wait_until]: dateStr }
-      })
-    });
+    if (getSetting('airtableProxyUrl')) {
+      await airtableProxyCall('patch', { recordId: airtableId, fields });
+    } else {
+      await fetch(`${AIRTABLE_API}/${airtableId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields })
+      });
+    }
   } catch(e) {
     console.warn('Airtable wait_until write failed:', e.message);
   }
@@ -2000,10 +2027,14 @@ async function deleteLeadPermanently(idx) {
   
   if (l.airtableId) {
     try {
-      await fetch(`${AIRTABLE_API}/${l.airtableId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
-      });
+      if (getSetting('airtableProxyUrl')) {
+        await airtableProxyCall('delete', { recordId: l.airtableId });
+      } else {
+        await fetch(`${AIRTABLE_API}/${l.airtableId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
+        });
+      }
     } catch(e) {
       console.warn('Airtable permanent delete failed:', e.message);
       alert('Could not delete from Airtable, please check your connection and try again.');
@@ -3054,17 +3085,20 @@ function appendLifecycleEntry(lead, text) {
 // Write the full lifecycle log back to Airtable
 async function writeLifecycleLogToAirtable(airtableId, log) {
   if (!airtableId) return;
+  const fields = { [AT_FIELDS.lifecycle_log]: log };
   try {
-    await fetch(`${AIRTABLE_API}/${airtableId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fields: { [AT_FIELDS.lifecycle_log]: log }
-      })
-    });
+    if (getSetting('airtableProxyUrl')) {
+      await airtableProxyCall('patch', { recordId: airtableId, fields });
+    } else {
+      await fetch(`${AIRTABLE_API}/${airtableId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields })
+      });
+    }
   } catch(e) {
     console.warn('Airtable lifecycle log write failed:', e.message);
   }
@@ -3118,17 +3152,20 @@ async function submitCallNote() {
 async function writeStageToAirtable(airtableId, internalStage) {
   if (!airtableId) return;
   const atStage = internalStageToAt(internalStage);
+  const fields = { [AT_FIELDS.pipeline_stage]: atStage };
   try {
-    await fetch(`${AIRTABLE_API}/${airtableId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fields: { [AT_FIELDS.pipeline_stage]: atStage }
-      })
-    });
+    if (getSetting('airtableProxyUrl')) {
+      await airtableProxyCall('patch', { recordId: airtableId, fields });
+    } else {
+      await fetch(`${AIRTABLE_API}/${airtableId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields })
+      });
+    }
   } catch(e) {
     console.warn('Airtable stage write failed:', e.message);
   }
@@ -3137,17 +3174,20 @@ async function writeStageToAirtable(airtableId, internalStage) {
 // Write agent notes back to Airtable
 async function writeNotesToAirtable(airtableId, notes) {
   if (!airtableId) return;
+  const fields = { [AT_FIELDS.agent_notes]: notes };
   try {
-    await fetch(`${AIRTABLE_API}/${airtableId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fields: { [AT_FIELDS.agent_notes]: notes }
-      })
-    });
+    if (getSetting('airtableProxyUrl')) {
+      await airtableProxyCall('patch', { recordId: airtableId, fields });
+    } else {
+      await fetch(`${AIRTABLE_API}/${airtableId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields })
+      });
+    }
   } catch(e) {
     console.warn('Airtable notes write failed:', e.message);
   }
@@ -3165,13 +3205,17 @@ async function syncLeads(silent = false) {
 
   try {
     // Fetch all records from Airtable, sorted newest first
-    const url = `${AIRTABLE_API}?sort[0][field]=full_name&sort[0][direction]=asc&pageSize=100`;
-    const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
-    });
-
-    if (!res.ok) throw new Error(`Airtable API error: ${res.status}`);
-    const data = await res.json();
+    let data;
+    if (getSetting('airtableProxyUrl')) {
+      data = await airtableProxyCall('list');
+    } else {
+      const url = `${AIRTABLE_API}?sort[0][field]=full_name&sort[0][direction]=asc&pageSize=100`;
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
+      });
+      if (!res.ok) throw new Error(`Airtable API error: ${res.status}`);
+      data = await res.json();
+    }
     const records = data.records || [];
 
     // Convert records to lead objects
@@ -4024,13 +4068,18 @@ async function renderClientTimeline() {
   // 2. Fetch meetings from Airtable Meetings table
   if (l.airtableId) {
     try {
-      const formula = encodeURIComponent(`FIND("${l.airtableId}", ARRAYJOIN({lead}))`);
-      const resp = await fetch(
-        `https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tblkor1cYPuiNBUCE?filterByFormula=${formula}&sort[0][field]=meeting_date&sort[0][direction]=desc`,
-        { headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` } }
-      );
-      if (resp.ok) {
-        const data = await resp.json();
+      const formula = `FIND("${l.airtableId}", ARRAYJOIN({lead}))`;
+      let data;
+      if (getSetting('airtableProxyUrl')) {
+        data = await airtableProxyCall('list_meetings', { formula });
+      } else {
+        const resp = await fetch(
+          `https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tblkor1cYPuiNBUCE?filterByFormula=${encodeURIComponent(formula)}&sort[0][field]=meeting_date&sort[0][direction]=desc`,
+          { headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` } }
+        );
+        if (resp.ok) data = await resp.json();
+      }
+      if (data) {
         (data.records || []).forEach(rec => {
           const f = rec.fields;
           const mDate = f.meeting_date ? new Date(f.meeting_date) : new Date(0);
@@ -4558,6 +4607,7 @@ function openSettingsModal() {
   document.getElementById('settingsStatusWebhookUrl').value = getSetting('statusWebhookUrl');
   document.getElementById('settingsGeminiProxyUrl').value = getSetting('geminiProxyUrl');
   document.getElementById('settingsRecordingWebhookUrl').value = getSetting('recordingWebhookUrl');
+  document.getElementById('settingsAirtableProxyUrl').value = getSetting('airtableProxyUrl');
   document.getElementById('settingsSmsPassword').value = getSetting('smsPassword');
   document.getElementById('settingsModal').classList.add('open');
 }
@@ -4579,12 +4629,14 @@ function saveSettings() {
   
   const recordingWebhookUrl = document.getElementById('settingsRecordingWebhookUrl').value.trim();
   const geminiProxyUrl = document.getElementById('settingsGeminiProxyUrl').value.trim();
+  const airtableProxyUrl = document.getElementById('settingsAirtableProxyUrl').value.trim();
   if (apiKey) setSetting('apiKey', apiKey);
   if (sheetUrl) setSetting('sheetUrl', sheetUrl);
   if (bookingWebhookUrl) setSetting('bookingWebhookUrl', bookingWebhookUrl);
   if (statusWebhookUrl) setSetting('statusWebhookUrl', statusWebhookUrl);
   if (recordingWebhookUrl) setSetting('recordingWebhookUrl', recordingWebhookUrl);
   if (geminiProxyUrl) setSetting('geminiProxyUrl', geminiProxyUrl);
+  if (airtableProxyUrl) setSetting('airtableProxyUrl', airtableProxyUrl);
   const smsPassword = document.getElementById('settingsSmsPassword').value.trim();
   if (smsPassword) setSetting('smsPassword', smsPassword);
   if (passcode) setSetting('passcode', passcode);
@@ -4958,21 +5010,34 @@ function saveLeadDetails(idx) {
   _origSaveLeadDetails(idx);
   const l = appState.leads[idx];
   if (l && l.airtableId) {
-    const AT_KEY = document.querySelector('meta[name="airtable-api-key"]')?.content;
-    if (AT_KEY) {
-      const fields = {};
-      fields[AT_FIELDS.agent_notes] = l.agent_notes || '';
-      fields[AT_FIELDS.employment] = l.employment || '';
-      fields[AT_FIELDS.income] = l.income || '';
-      fields[AT_FIELDS.deposit] = l.deposit || '';
-      fields[AT_FIELDS.area] = l.area || '';
-      fields[AT_FIELDS.timeframe] = l.timeFrame || '';
-      fields[AT_FIELDS.phone] = l.phone || '';
-      fields[AT_FIELDS.email] = l.email || '';
-      fields[AT_FIELDS.source] = l.source || '';
+    // Session 8 fix (July 5 2026): this previously read a
+    // meta[name="airtable-api-key"] tag that does not exist anywhere in this
+    // file, so this writeback has never actually fired. Now routed through
+    // the same proxy/fallback pair as every other Airtable write, using the
+    // one real key (AIRTABLE_API_KEY) that does exist, same as the rest.
+    // NOTE: AT_FIELDS.source deliberately dropped from this write. Critic
+    // pass (Session 8) caught that AT_FIELDS.source and AT_FIELDS.first_home
+    // point at the SAME Airtable column (fldGpiOssNfEnyvRs). Since this
+    // writeback never actually fired before today, silently activating it
+    // with source included would start overwriting the First Home Buyer
+    // column with the Source value on every details save. Left out until
+    // Kurt confirms which of the two that column is actually meant to be
+    // and, if needed, a second field gets created in Airtable for the other.
+    const fields = {};
+    fields[AT_FIELDS.agent_notes] = l.agent_notes || '';
+    fields[AT_FIELDS.employment] = l.employment || '';
+    fields[AT_FIELDS.income] = l.income || '';
+    fields[AT_FIELDS.deposit] = l.deposit || '';
+    fields[AT_FIELDS.area] = l.area || '';
+    fields[AT_FIELDS.timeframe] = l.timeFrame || '';
+    fields[AT_FIELDS.phone] = l.phone || '';
+    fields[AT_FIELDS.email] = l.email || '';
+    if (getSetting('airtableProxyUrl')) {
+      airtableProxyCall('patch', { recordId: l.airtableId, fields }).catch(err => console.error('AT writeback error:', err));
+    } else {
       fetch(`https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tbleWHVvCC8o5pNVx/${l.airtableId}`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields })
       }).catch(err => console.error('AT writeback error:', err));
     }
