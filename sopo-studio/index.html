@@ -1490,19 +1490,19 @@ let calendarState = {
 // Airtable Proxy" (Make scenario 5577063), holds the real PAT server side.
 async function airtableProxyCall(action, payload = {}) {
   const url = getSetting('airtableProxyUrl');
-  // Session 8 fix (July 6 2026): Make's proxy scenario built the Airtable PATCH body by
-  // hand-splicing {{1.fields}} into a typed JSON string template. Make only auto-escapes JSON
-  // reserved characters for its "Data Structure" body method, not for a raw/string-templated
-  // one, so any note/log value containing a quote, apostrophe, or newline broke the resulting
-  // JSON and Airtable rejected it with 422 Unprocessable Entity. That silent failure is what
-  // caused both Make's failure emails and lead card edits reverting on refresh, the write never
-  // actually saved, so the next sync just pulled the old data back down over it. Fix: stringify
-  // fields HERE in the browser, where JSON.stringify always escapes correctly, and send it as a
-  // plain string (fieldsJson). Make's 'patch' route now pastes that string in verbatim instead
-  // of re-serializing an object itself, so there's no ambiguity left for it to get wrong.
+  // Session 8 fix (July 6 2026, take two): the fieldsJson approach above still let Make
+  // glue three pieces together in its raw body template — a literal `{"fields": `, the
+  // spliced fieldsJson variable, then a literal closing `}`. Make's execution history kept
+  // showing that reconstructed body as correct (`{"fields": {...}}`), and Airtable kept
+  // rejecting it as missing the "fields" key anyway. The reconstructed "Input" preview Make
+  // shows for a raw-body module is not a reliable read of what actually left the wire.
+  // Removing all ambiguity: build the ENTIRE Airtable PATCH body here, in the browser,
+  // as one pre-stringified value (airtableBody). Make's 'patch' route now pastes that
+  // single string in as the whole body with zero surrounding characters of its own, so
+  // there's nothing left for its raw-body templating to reassemble or mis-serialize.
   const body = { action, ...payload };
   if (payload.fields) {
-    body.fieldsJson = JSON.stringify(payload.fields);
+    body.airtableBody = JSON.stringify({ fields: payload.fields });
   }
   const res = await fetch(url, {
     method: 'POST',
