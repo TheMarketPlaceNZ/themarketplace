@@ -1489,7 +1489,7 @@ let calendarState = {
 // same sequencing lesson as the Gemini key rotation. Proxy scenario: "Sopo
 // Airtable Proxy" (Make scenario 5577063), holds the real PAT server side.
 async function airtableProxyCall(action, payload = {}) {
-  const url = getSetting('airtableProxyUrl');
+  const url = getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri');
   // Session 8 fix (July 6 2026, take two): the fieldsJson approach above still let Make
   // glue three pieces together in its raw body template — a literal `{"fields": `, the
   // spliced fieldsJson variable, then a literal closing `}`. Make's execution history kept
@@ -2010,7 +2010,7 @@ async function writeWaitUntilToAirtable(airtableId, dateStr) {
   if (!airtableId) return;
   const fields = { [AT_FIELDS.wait_until]: dateStr };
   try {
-    if (getSetting('airtableProxyUrl')) {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       await airtableProxyCall('patch', { recordId: airtableId, fields });
     } else {
       await fetch(`${AIRTABLE_API}/${airtableId}`, {
@@ -2057,7 +2057,7 @@ async function deleteLeadPermanently(idx) {
   
   if (l.airtableId) {
     try {
-      if (getSetting('airtableProxyUrl')) {
+      if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
         await airtableProxyCall('delete', { recordId: l.airtableId });
       } else {
         await fetch(`${AIRTABLE_API}/${l.airtableId}`, {
@@ -3117,7 +3117,7 @@ async function writeLifecycleLogToAirtable(airtableId, log) {
   if (!airtableId) return;
   const fields = { [AT_FIELDS.lifecycle_log]: log };
   try {
-    if (getSetting('airtableProxyUrl')) {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       await airtableProxyCall('patch', { recordId: airtableId, fields });
     } else {
       await fetch(`${AIRTABLE_API}/${airtableId}`, {
@@ -3184,7 +3184,7 @@ async function writeStageToAirtable(airtableId, internalStage) {
   const atStage = internalStageToAt(internalStage);
   const fields = { [AT_FIELDS.pipeline_stage]: atStage };
   try {
-    if (getSetting('airtableProxyUrl')) {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       await airtableProxyCall('patch', { recordId: airtableId, fields });
     } else {
       await fetch(`${AIRTABLE_API}/${airtableId}`, {
@@ -3206,7 +3206,7 @@ async function writeNotesToAirtable(airtableId, notes) {
   if (!airtableId) return;
   const fields = { [AT_FIELDS.agent_notes]: notes };
   try {
-    if (getSetting('airtableProxyUrl')) {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       await airtableProxyCall('patch', { recordId: airtableId, fields });
     } else {
       await fetch(`${AIRTABLE_API}/${airtableId}`, {
@@ -3236,7 +3236,7 @@ async function syncLeads(silent = false) {
   try {
     // Fetch all records from Airtable, sorted newest first
     let data;
-    if (getSetting('airtableProxyUrl')) {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       data = await airtableProxyCall('list');
     } else {
       const url = `${AIRTABLE_API}?sort[0][field]=full_name&sort[0][direction]=asc&pageSize=100`;
@@ -4097,7 +4097,7 @@ async function renderClientTimeline() {
     try {
       const formula = `FIND("${l.airtableId}", ARRAYJOIN({lead}))`;
       let data;
-      if (getSetting('airtableProxyUrl')) {
+      if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
         data = await airtableProxyCall('list_meetings', { formula });
       } else {
         const resp = await fetch(
@@ -4634,7 +4634,7 @@ function openSettingsModal() {
   document.getElementById('settingsStatusWebhookUrl').value = getSetting('statusWebhookUrl');
   document.getElementById('settingsGeminiProxyUrl').value = getSetting('geminiProxyUrl');
   document.getElementById('settingsRecordingWebhookUrl').value = getSetting('recordingWebhookUrl');
-  document.getElementById('settingsAirtableProxyUrl').value = getSetting('airtableProxyUrl');
+  document.getElementById('settingsAirtableProxyUrl').value = getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri');
   document.getElementById('settingsSmsPassword').value = getSetting('smsPassword');
   document.getElementById('settingsModal').classList.add('open');
 }
@@ -5059,7 +5059,7 @@ function saveLeadDetails(idx) {
     fields[AT_FIELDS.timeframe] = l.timeFrame || '';
     fields[AT_FIELDS.phone] = l.phone || '';
     fields[AT_FIELDS.email] = l.email || '';
-    if (getSetting('airtableProxyUrl')) {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       airtableProxyCall('patch', { recordId: l.airtableId, fields }).catch(err => console.error('AT writeback error:', err));
     } else {
       fetch(`https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tbleWHVvCC8o5pNVx/${l.airtableId}`, {
