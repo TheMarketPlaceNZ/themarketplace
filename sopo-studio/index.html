@@ -4102,15 +4102,18 @@ async function processRecording() {
     return;
   }
 
-  // PERMANENT FIX (Session 7, July 4 2026): the real Gemini key must never ship
-  // to a browser again, that is what caused today's outage. geminiProxyUrl points
-  // at a Make.com scenario that holds the key server side, see
-  // WARM/templates/sopo_recorder_proxy_spec.md for the exact scenario to build.
-  // Once that scenario exists, its webhook URL is safe to hardcode right here
-  // (it is a routing URL, not a secret) or set once in Settings > Gemini Proxy URL.
-  // Until then this falls back to the old direct-to-Gemini path unchanged, so
-  // nothing breaks mid rollout, that path still needs a key in Settings today.
-  const geminiProxyUrl = getSetting('geminiProxyUrl');
+  // PERMANENT FIX (Session 7, July 4 2026, hardcoded Session 17, July 15 2026):
+  // the real Gemini key must never ship to a browser again, that is what caused
+  // the July 4 outage. geminiProxyUrl points at "Sopo Local Recording Processor"
+  // (scenario 5476295), a Make.com scenario that holds the key server side and
+  // does the full transcript/summary job in one call. This URL is a routing
+  // address, not a secret, safe to hardcode same as airtableProxyUrl below.
+  // Session 7 shipped this without the hardcoded default, so it only ever
+  // worked on a device where someone had typed the URL into Settings by hand,
+  // which is why the recorder was still throwing "Gemini API key is required"
+  // on devices that never had that one-time Settings step done. Settings still
+  // overrides this if the proxy URL ever needs to change.
+  const geminiProxyUrl = getSetting('geminiProxyUrl', 'https://hook.us2.make.com/xfpet7ljggq16b3241nylc1t99j0jkjq');
   let apiKey = '';
 
   if (!geminiProxyUrl) {
@@ -4900,7 +4903,7 @@ function openSettingsModal() {
   document.getElementById('settingsSheetUrl').value = getSetting('sheetUrl');
   document.getElementById('settingsBookingWebhookUrl').value = getSetting('bookingWebhookUrl');
   document.getElementById('settingsStatusWebhookUrl').value = getSetting('statusWebhookUrl');
-  document.getElementById('settingsGeminiProxyUrl').value = getSetting('geminiProxyUrl');
+  document.getElementById('settingsGeminiProxyUrl').value = getSetting('geminiProxyUrl', 'https://hook.us2.make.com/xfpet7ljggq16b3241nylc1t99j0jkjq');
   document.getElementById('settingsRecordingWebhookUrl').value = getSetting('recordingWebhookUrl');
   document.getElementById('settingsAirtableProxyUrl').value = getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri');
   document.getElementById('settingsSmsPassword').value = getSetting('smsPassword');
