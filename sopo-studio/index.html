@@ -2476,6 +2476,8 @@ function sendBookingReminder(idx) {
 
 // ===== 3-DAY AUTO-REMINDER CHECK =====
 function checkAutoSMSReminders() {
+  return; // DISABLED 15 Jul 2026 per Kurt — was firing repeat duplicate texts (smsReminderSent flag doesn't survive Airtable re-sync). Logic kept below, untouched, for a future proper fix.
+
   const pwd = getSetting('smsPassword', 'Marketplace1!');
   if (!pwd) return; // can't send without credentials
 
