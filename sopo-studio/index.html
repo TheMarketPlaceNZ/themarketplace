@@ -16,6 +16,7 @@
 <meta name="theme-color" content="#0d1621">
 <title>Sopo's Studio</title>
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
@@ -5466,6 +5467,29 @@ async function triggerInstallPrompt() {
   deferredInstallPrompt = null;
   const btn = document.getElementById('installAppBtn');
   if (btn) btn.style.display = 'none';
+}
+
+// ===== iOS SAFARI FIX =====
+// iOS never fires beforeinstallprompt, so the button above stays hidden forever
+// on iPhone. Detect iOS here and show it anyway with manual instructions instead.
+function isIosSafari() {
+  const ua = window.navigator.userAgent;
+  const isIos = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isStandalone = window.navigator.standalone === true;
+  return isIos && !isStandalone;
+}
+
+function showIosInstallInstructions() {
+  alert("To add Sopo's Studio to your Home Screen:\n\n1. Tap the Share icon in Safari\n2. Scroll down, tap \"Add to Home Screen\"\n3. Tap \"Add\"");
+}
+
+if (isIosSafari()) {
+  const iosBtn = document.getElementById('installAppBtn');
+  if (iosBtn) {
+    iosBtn.style.display = 'block';
+    iosBtn.textContent = '📲 Add to Home Screen';
+    iosBtn.setAttribute('onclick', 'showIosInstallInstructions(); return false;');
+  }
 }
 
 // ===== REGISTER PWA SERVICE WORKER =====
