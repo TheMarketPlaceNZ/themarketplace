@@ -16,7 +16,6 @@
 <meta name="theme-color" content="#0d1621">
 <title>Sopo's Studio</title>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
@@ -1321,7 +1320,7 @@ body {
       <div class="settings-hint">If set, Sopo will be reminded to ask about this on the rescheduled date.</div>
     </div>
     <button class="btn btn-gold full" onclick="saveNewTime()">Save New Time</button>
-    <button class="btn btn-ghost full" onclick="closeRescheduleModal()" style="margin-top:10px;">Cancel</button>
+    <button class="btn btn-ghost full" onclick="closeQuickTimeEditModal()" style="margin-top:10px;">Cancel</button>
   </div>
 </div>
 
@@ -3384,14 +3383,26 @@ function appendLifecycleEntry(lead, text) {
 }
 
 // Write the full lifecycle log back to Airtable
-async function writeLifecycleLogToAirtable(airtableId, log) {
+//
+// 22 Jul 2026 fix: this used to fail silently (console.warn only). If the
+// Make.com "Sopo Airtable Proxy" scenario's patch route ever rejected the
+// write, this function swallowed the error, the note stayed ONLY in local
+// appState, and the very next syncLeads() pulled the still-unchanged record
+// down from Airtable and overwrote local state with it, appState.leads
+// showed the note vanishing, i.e. the "notes wiped on refresh" bug. The
+// proxy scenario itself is being patched separately to actually respond on
+// failure instead of dying silently, but this side needed a fix too: retry
+// once (covers a transient blip), and on a second failure, show a visible
+// red error toast and refuse to let the next sync silently clobber this
+// lead's local note, instead of failing invisibly.
+async function writeLifecycleLogToAirtable(airtableId, log, isRetry = false) {
   if (!airtableId) return;
   const fields = { [AT_FIELDS.lifecycle_log]: log };
   try {
     if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       await airtableProxyCall('patch', { recordId: airtableId, fields });
     } else {
-      await fetch(`${AIRTABLE_API}/${airtableId}`, {
+      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
@@ -3399,9 +3410,29 @@ async function writeLifecycleLogToAirtable(airtableId, log) {
         },
         body: JSON.stringify({ fields })
       });
+      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
     }
+    // Success: clear any earlier "unsaved" flag for this lead so syncLeads()
+    // is safe to overwrite it again.
+    if (appState.unsavedNoteIds) appState.unsavedNoteIds.delete(airtableId);
   } catch(e) {
     console.warn('Airtable lifecycle log write failed:', e.message);
+    if (!isRetry) {
+      // One quiet retry, covers a transient network/Make blip without
+      // bothering the user.
+      return writeLifecycleLogToAirtable(airtableId, log, true);
+    }
+    // Second failure in a row: this is a real save failure, not a blip.
+    // Flag it so syncLeads() knows not to silently overwrite this lead's
+    // local (unsaved) note with stale Airtable data, and tell Sopo so she
+    // can retry the note herself.
+    if (!appState.unsavedNoteIds) appState.unsavedNoteIds = new Set();
+    appState.unsavedNoteIds.add(airtableId);
+    if (typeof showErrorToast === 'function') {
+      showErrorToast('⚠️ Note failed to save, try again');
+    } else {
+      alert('This note failed to save to Airtable. Please try again.');
+    }
   }
 }
 
@@ -3473,14 +3504,17 @@ async function writeStageToAirtable(airtableId, internalStage) {
 }
 
 // Write agent notes back to Airtable
-async function writeNotesToAirtable(airtableId, notes) {
+// 22 Jul 2026 fix: same silent-swallow-then-get-wiped-on-refresh bug as
+// writeLifecycleLogToAirtable above, same fix (retry once, flag+alert on a
+// real failure so syncLeads() knows not to overwrite it).
+async function writeNotesToAirtable(airtableId, notes, isRetry = false) {
   if (!airtableId) return;
   const fields = { [AT_FIELDS.agent_notes]: notes };
   try {
     if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       await airtableProxyCall('patch', { recordId: airtableId, fields });
     } else {
-      await fetch(`${AIRTABLE_API}/${airtableId}`, {
+      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
@@ -3488,9 +3522,21 @@ async function writeNotesToAirtable(airtableId, notes) {
         },
         body: JSON.stringify({ fields })
       });
+      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
     }
+    if (appState.unsavedNoteIds) appState.unsavedNoteIds.delete(airtableId);
   } catch(e) {
     console.warn('Airtable notes write failed:', e.message);
+    if (!isRetry) {
+      return writeNotesToAirtable(airtableId, notes, true);
+    }
+    if (!appState.unsavedNoteIds) appState.unsavedNoteIds = new Set();
+    appState.unsavedNoteIds.add(airtableId);
+    if (typeof showErrorToast === 'function') {
+      showErrorToast('⚠️ Note failed to save, try again');
+    } else {
+      alert('This note failed to save to Airtable. Please try again.');
+    }
   }
 }
 
@@ -3530,8 +3576,19 @@ async function syncLeads(silent = false) {
         (l.email && l.email === fresh.email)
       );
       if (existing) {
+        // 22 Jul 2026 fix: if a note write for this lead is flagged as
+        // unsaved (writeLifecycleLogToAirtable/writeNotesToAirtable already
+        // retried once and failed), Airtable's "fresh" copy is stale by
+        // definition, it never received the write. Keep the local version
+        // here instead of letting ...fresh below silently overwrite it,
+        // otherwise this sync is exactly what makes a just-added note
+        // "vanish" on refresh.
+        const hasUnsavedNote = appState.unsavedNoteIds && existing.airtableId &&
+          appState.unsavedNoteIds.has(existing.airtableId);
         return {
           ...fresh,
+          lifecycleLog: hasUnsavedNote ? existing.lifecycleLog : fresh.lifecycleLog,
+          agent_notes: hasUnsavedNote ? existing.agent_notes : fresh.agent_notes,
           // Preserve local-only fields that don't exist in Airtable yet
           hasBooked: fresh.hasBooked || existing.hasBooked || false,
           bookingTime: fresh.bookingTime || existing.bookingTime || null,
@@ -3841,14 +3898,14 @@ function renderDaySchedules(date) {
         detailsClick = `onclick="openLeadDetail(${ev.leadIndex})"`;
         actionButtons = `
           <div style="display:flex; gap:6px; margin-top:6px;">
-            <button class="btn btn-ghost" style="padding:2px 6px; font-size:9px; border-color:var(--gold-border); color:var(--gold);" onclick="event.stopPropagation(); openRescheduleModal(${ev.leadIndex}, 'lead', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
+            <button class="btn btn-ghost" style="padding:2px 6px; font-size:9px; border-color:var(--gold-border); color:var(--gold);" onclick="event.stopPropagation(); openQuickTimeEditModal(${ev.leadIndex}, 'lead', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
           </div>
         `;
       } else {
         detailsClick = '';
         actionButtons = `
           <div style="display:flex; gap:6px; margin-top:6px;">
-            <button class="btn btn-ghost" style="padding:2px 6px; font-size:9px; border-color:var(--gold-border); color:var(--gold);" onclick="event.stopPropagation(); openRescheduleModal(${ev.blockId}, 'block', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
+            <button class="btn btn-ghost" style="padding:2px 6px; font-size:9px; border-color:var(--gold-border); color:var(--gold);" onclick="event.stopPropagation(); openQuickTimeEditModal(${ev.blockId}, 'block', '${ev.date.toISOString()}', '${ev.title.replace(/'/g, "\\'")}')">Change Time</button>
             <button class="btn btn-red" style="padding:2px 6px; font-size:9px; background:var(--red-dim); color:var(--red);" onclick="event.stopPropagation(); deleteCalendarBlock(${ev.blockId})">Delete</button>
           </div>
         `;
@@ -3962,7 +4019,17 @@ function deleteCalendarBlock(id) {
   }
 }
 
-function openRescheduleModal(idOrIndex, type, currentDateTime, label) {
+// Renamed from openRescheduleModal (22 Jul 2026 fix): this was declared with the
+// exact same name as the real reschedule flow's openRescheduleModal(idx) further
+// up this file (~line 2632). Function declarations of the same name overwrite
+// each other in source order, so this later definition was silently winning
+// globally, meaning the lead card's Reschedule button was calling THIS 4-arg
+// function with only 1 argument, three of them landing as undefined. new
+// Date(undefined) is an Invalid Date, and calling .toISOString() on it throws,
+// which is exactly why the button did nothing. This function is only for the
+// Calendar tab's lightweight "Change Time" quick-edit (local state only, no
+// webhook), so it gets its own name and no longer collides.
+function openQuickTimeEditModal(idOrIndex, type, currentDateTime, label) {
   document.getElementById('rescheduleTargetId').value = idOrIndex;
   document.getElementById('rescheduleTargetType').value = type;
   document.getElementById('rescheduleTargetLabel').textContent = `Rescheduling: ${label}`;
@@ -3992,13 +4059,18 @@ function openRescheduleModal(idOrIndex, type, currentDateTime, label) {
   document.getElementById('rescheduleModal').classList.add('open');
 }
 
-function closeRescheduleModal() {
+// Renamed from closeRescheduleModal (22 Jul 2026 fix): same collision as
+// openQuickTimeEditModal above, with the real closeRescheduleModal() defined
+// near line 2645 for the #rescheduleOverlay slot-picker flow. That real
+// version's Cancel button was silently calling this #rescheduleModal closer
+// instead once this one loaded later and won the name.
+function closeQuickTimeEditModal() {
   document.getElementById('rescheduleModal').classList.remove('open');
 }
 
 document.getElementById('rescheduleModal').addEventListener('click', e => {
   if (e.target === document.getElementById('rescheduleModal')) {
-    closeRescheduleModal();
+    closeQuickTimeEditModal();
   }
 });
 
@@ -4045,7 +4117,7 @@ function saveNewTime() {
   }
   
   saveState();
-  closeRescheduleModal();
+  closeQuickTimeEditModal();
   renderAll();
 }
 
@@ -5305,6 +5377,28 @@ function showSyncToast(msg) {
   setTimeout(() => { toast.style.opacity = '0'; }, 2500);
 }
 
+// 22 Jul 2026: red variant of showSyncToast, used for save failures (e.g.
+// writeLifecycleLogToAirtable) that need to actually catch the user's eye
+// rather than blend in with the routine green sync confirmations.
+function showErrorToast(msg) {
+  let toast = document.getElementById('errorToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'errorToast';
+    toast.style.cssText = `
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: rgba(220,38,38,0.95); color: #fff; padding: 10px 20px;
+      border-radius: 100px; font-size: 13px; font-weight: 600;
+      z-index: 9999; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; white-space: nowrap;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+}
+
 // ===== AIRTABLE WRITEBACK — override saveLeadDetails =====
 const _origSaveLeadDetails = saveLeadDetails;
 function saveLeadDetails(idx) {
@@ -5467,29 +5561,6 @@ async function triggerInstallPrompt() {
   deferredInstallPrompt = null;
   const btn = document.getElementById('installAppBtn');
   if (btn) btn.style.display = 'none';
-}
-
-// ===== iOS SAFARI FIX =====
-// iOS never fires beforeinstallprompt, so the button above stays hidden forever
-// on iPhone. Detect iOS here and show it anyway with manual instructions instead.
-function isIosSafari() {
-  const ua = window.navigator.userAgent;
-  const isIos = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-  const isStandalone = window.navigator.standalone === true;
-  return isIos && !isStandalone;
-}
-
-function showIosInstallInstructions() {
-  alert("To add Sopo's Studio to your Home Screen:\n\n1. Tap the Share icon in Safari\n2. Scroll down, tap \"Add to Home Screen\"\n3. Tap \"Add\"");
-}
-
-if (isIosSafari()) {
-  const iosBtn = document.getElementById('installAppBtn');
-  if (iosBtn) {
-    iosBtn.style.display = 'block';
-    iosBtn.textContent = '📲 Add to Home Screen';
-    iosBtn.setAttribute('onclick', 'showIosInstallInstructions(); return false;');
-  }
 }
 
 // ===== REGISTER PWA SERVICE WORKER =====
