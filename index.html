@@ -1,498 +1,1457 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The MarketPlace NZ | Business Operating Systems Hamilton</title>
-  <meta name="description" content="The MarketPlace NZ builds automated operating systems for Hamilton owner-operators. We handle content, lead capture, SOPs, and bespoke dashboards so you can run your business instead of being run by it.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Marketplace NZ — Found. Chosen. Growth.</title>
+<meta name="description" content="Hamilton's content and marketing agency. We make good businesses impossible to ignore. Websites, Social Media, and Automation — built for leads, not likes.">
+<meta name="keywords" content="digital marketing Hamilton NZ, social media agency Hamilton, website design Hamilton, content marketing New Zealand, marketing agency Hamilton">
+<meta property="og:title" content="The Marketplace NZ — Found. Chosen. Growth.">
+<meta property="og:description" content="We make good businesses impossible to ignore. Everywhere that matters.">
+<meta property="og:type" content="website">
+<!-- AEO Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MarketingAgency",
+  "name": "The Marketplace NZ",
+  "url": "https://www.themarketplace.co.nz",
+  "logo": "https://www.themarketplace.co.nz/logo.png",
+  "description": "Hamilton's content and marketing agency. We make good businesses impossible to ignore through websites, social media strategy, and business automation.",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Hamilton",
+    "addressCountry": "NZ"
+  },
+  "areaServed": "New Zealand",
+  "serviceType": ["Digital Marketing", "Website Design", "Social Media Management", "Business Automation", "Content Creation"],
+  "sameAs": [
+    "https://www.facebook.com/themarketplacenz",
+    "https://www.instagram.com/themarketplacenz",
+    "https://www.linkedin.com/company/themarketplacenz"
+  ]
+}
+</script>
+<!-- Facebook Pixel -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','339603925725454');fbq('track','PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=339603925725454&ev=PageView&noscript=1"/></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Cinzel:wght@400;500;600;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #080808;
+  --near-black: #0D0D0D;
+  --card: #111111;
+  --border: rgba(255,255,255,0.06);
+  --emerald: #1A7A4A;
+  --emerald-bright: #22A865;
+  --emerald-dim: rgba(26,122,74,0.15);
+  --emerald-glow: rgba(26,122,74,0.06);
+  --gold: #C8A45A;
+  --gold-dim: rgba(200,164,90,0.12);
+  --white: #F0EDE8;
+  --white-dim: rgba(240,237,232,0.65);
+  --white-muted: rgba(240,237,232,0.35);
+  --red: #762206;
+}
 
-  <!-- Meta Pixel -->
-  <script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', 'YOUR_PIXEL_ID_PLACEHOLDER');
-  fbq('track', 'PageView');
-  </script>
-  <noscript><img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID_PLACEHOLDER&ev=PageView&noscript=1"/></noscript>
+*{box-sizing:border-box;margin:0;padding:0;}
 
-  <!-- Microsoft Clarity -->
-  <script type="text/javascript">
-  (function(c,l,a,r,i,t,y){
-      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-  })(window, document, "clarity", "script", "YOUR_CLARITY_ID_PLACEHOLDER");
-  </script>
+html{scroll-behavior:smooth;}
 
-  <!-- Schema.org -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "The MarketPlace NZ",
-    "image": "https://themarketplace.co.nz/logo.png",
-    "@id": "https://themarketplace.co.nz",
-    "url": "https://themarketplace.co.nz",
-    "description": "The MarketPlace NZ builds automated business operating systems for Hamilton owner-operators.",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Hamilton East",
-      "addressLocality": "Hamilton",
-      "addressRegion": "Waikato",
-      "postalCode": "3216",
-      "addressCountry": "NZ"
-    },
-    "areaServed": ["Hamilton", "Waikato", "New Zealand"],
-    "sameAs": [
-      "https://www.facebook.com/themarketplace.co.nz",
-      "https://www.linkedin.com/company/113267372"
-    ],
-    "founder": {
-      "@type": "Person",
-      "name": "Kurt Onvlee"
-    }
-  }
-  </script>
+body{
+  font-family:'DM Sans',sans-serif;
+  background:#080808;
+  color:var(--white);
+  overflow-x:hidden;
+  cursor:none;
+}
 
-  <link rel="stylesheet" href="index.css">
+/* CUSTOM CURSOR */
+.cursor{
+  position:fixed;
+  width:8px;height:8px;
+  background:var(--emerald-bright);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:9999;
+  transition:transform 0.1s;
+  mix-blend-mode:difference;
+}
+.cursor-ring{
+  position:fixed;
+  width:32px;height:32px;
+  border:1px solid rgba(34,168,101,0.4);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:9998;
+  transition:all 0.15s ease;
+}
+
+/* NOISE TEXTURE OVERLAY */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:1;
+  opacity:0.4;
+}
+
+/* HEXAGON BACKGROUND PATTERN */
+.hex-bg{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+  z-index:0;
+}
+.hex-bg svg{
+  position:absolute;
+  opacity:0.03;
+}
+
+/* HEXAGON TILE PATTERN */
+.hex-pattern{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background-image:url('https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/hex-bg.png');
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+  opacity:0.18;
+}
+
+.hex-pattern::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:radial-gradient(ellipse at center, rgba(8,8,8,0.3) 0%, rgba(8,8,8,0.7) 100%);
+  pointer-events:none;
+}
+
+/* NAV */
+nav{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:100;
+  padding:0 3rem;
+  height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:rgba(8,8,8,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  transition:all 0.3s;
+}
+
+.nav-logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+}
+
+.nav-logo-mark{
+  width:38px;height:38px;
+  background:var(--emerald);
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+}
+
+.nav-logo-text{
+  font-family:'Cinzel',serif;
+  font-size:13px;
+  font-weight:600;
+  color:var(--white);
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+}
+
+.nav-logo-sub{
+  font-size:9px;
+  color:var(--emerald-bright);
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  margin-top:1px;
+}
+
+.nav-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.btn-login{
+  padding:8px 20px;
+  font-size:12px;
+  font-weight:500;
+  color:var(--white-dim);
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:4px;
+  cursor:none;
+  font-family:'DM Sans',sans-serif;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all 0.2s;
+}
+.btn-login:hover{border-color:var(--emerald);color:var(--emerald-bright);}
+
+.btn-cta{
+  padding:10px 28px;
+  font-size:12px;
+  font-weight:600;
+  color:#fff;
+  background:var(--emerald);
+  border:none;
+  border-radius:4px;
+  cursor:none;
+  font-family:'DM Sans',sans-serif;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all 0.2s;
+  position:relative;
+  overflow:hidden;
+}
+.btn-cta::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%);
+  opacity:0;
+  transition:opacity 0.2s;
+}
+.btn-cta:hover{background:var(--emerald-bright);transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,122,74,0.3);}
+.btn-cta:hover::before{opacity:1;}
+
+/* HERO SECTION */
+.hero{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  padding:100px 3rem 80px;
+}
+
+.hero-bg{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(26,122,74,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(200,164,90,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 80% at 50% 50%, rgba(8,8,8,0.55) 0%, transparent 100%);
+  z-index:1;
+}
+
+.hero-content{
+  position:relative;
+  z-index:2;
+  text-align:center;
+  max-width:1000px;
+  margin:0 auto;
+}
+
+/* SOCIAL PROOF BAR */
+.proof-bar{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  background:rgba(26,122,74,0.08);
+  border:1px solid rgba(26,122,74,0.2);
+  border-radius:100px;
+  padding:8px 20px;
+  margin-bottom:3rem;
+  animation:fadeInDown 0.8s ease both;
+}
+
+.proof-avatars{
+  display:flex;
+}
+.proof-avatar{
+  width:28px;height:28px;
+  border-radius:50%;
+  border:2px solid var(--black);
+  background:var(--emerald);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:#fff;
+  margin-left:-8px;
+}
+.proof-avatar:first-child{margin-left:0;}
+
+.proof-text{
+  font-size:12px;
+  color:var(--white-dim);
+  letter-spacing:0.04em;
+}
+.proof-text strong{color:var(--emerald-bright);}
+
+/* FOUND CHOSEN GROWTH */
+.fcg-row{
+  display:flex;
+  gap:0.08em;
+  justify-content:center;
+  margin-bottom:1.5rem;
+  animation:fadeInUp 0.8s ease 0.2s both;
+}
+
+.fcg-word{
+  position:relative;
+  font-family:'Cinzel',serif;
+  font-size:clamp(52px, 10vw, 120px);
+  font-weight:900;
+  letter-spacing:-0.02em;
+  line-height:1;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(240,237,232,0.12);
+  background-clip:text;
+  -webkit-background-clip:text;
+  text-transform:uppercase;
+  padding:0 0.12em;
+  overflow:hidden;
+}
+
+.fcg-text{
+  position:relative;
+  z-index:2;
+  background:inherit;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.fcg-video{
+  position:absolute;
+  inset:-20%;
+  width:140%;
+  height:140%;
+  object-fit:cover;
+  z-index:0;
+  opacity:0.7;
+  mix-blend-mode:lighten;
+}
+
+.fcg-found{ background:linear-gradient(135deg,#0d2b1a,#1a7a4a); }
+.fcg-chosen{ background:linear-gradient(135deg,#2a1e08,#c8a45a); }
+.fcg-growth{ background:linear-gradient(135deg,#0a1520,#2d7ab5); }
+
+.fcg-word::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:inherit;
+  opacity:0.3;
+  z-index:1;
+}
+
+.fcg-dot{
+  font-family:'Cinzel',serif;
+  font-size:clamp(40px,8vw,90px);
+  color:var(--emerald);
+  line-height:1;
+  align-self:flex-start;
+  padding-top:0.1em;
+  animation:pulse 2s ease-in-out infinite;
+}
+
+.hero-tagline{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(18px,2.5vw,26px);
+  font-weight:300;
+  color:var(--white-dim);
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  margin-bottom:2.5rem;
+  animation:fadeInUp 0.8s ease 0.4s both;
+}
+.hero-tagline span{color:var(--white);}
+
+.hero-actions{
+  display:flex;
+  gap:16px;
+  justify-content:center;
+  flex-wrap:wrap;
+  animation:fadeInUp 0.8s ease 0.6s both;
+}
+
+.btn-hero{
+  padding:16px 40px;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  font-family:'DM Sans',sans-serif;
+  border-radius:4px;
+  text-decoration:none;
+  cursor:none;
+  transition:all 0.25s;
+  position:relative;
+  overflow:hidden;
+}
+
+.btn-hero-primary{
+  background:var(--emerald);
+  color:#fff;
+  border:none;
+  box-shadow:0 0 0 rgba(26,122,74,0);
+}
+.btn-hero-primary:hover{
+  background:var(--emerald-bright);
+  box-shadow:0 12px 40px rgba(26,122,74,0.4);
+  transform:translateY(-2px);
+}
+
+.btn-hero-ghost{
+  background:transparent;
+  color:var(--white-dim);
+  border:1px solid var(--border);
+}
+.btn-hero-ghost:hover{
+  border-color:var(--emerald);
+  color:var(--emerald-bright);
+  transform:translateY(-2px);
+}
+
+/* SCROLL INDICATOR */
+.scroll-indicator{
+  position:absolute;
+  bottom:2rem;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  color:var(--white-muted);
+  font-size:10px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  font-family:'DM Sans',sans-serif;
+  animation:fadeIn 1s ease 1.2s both;
+  z-index:2;
+}
+.scroll-line{
+  width:1px;height:40px;
+  background:linear-gradient(to bottom,var(--emerald),transparent);
+  animation:scrollDown 2s ease-in-out infinite;
+}
+
+/* HEXAGON DECORATIONS */
+.hex-deco{
+  position:absolute;
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+  z-index:1;
+}
+.hex-1{width:400px;height:460px;background:linear-gradient(135deg,rgba(26,122,74,0.04),transparent);top:-10%;right:-5%;animation:float 8s ease-in-out infinite;}
+.hex-2{width:200px;height:230px;background:linear-gradient(135deg,rgba(200,164,90,0.06),transparent);bottom:20%;left:-3%;animation:float 10s ease-in-out 2s infinite reverse;}
+.hex-3{width:120px;height:138px;background:rgba(26,122,74,0.08);border:1px solid rgba(26,122,74,0.15);top:20%;right:8%;animation:float 6s ease-in-out 1s infinite;}
+
+/* SECTIONS */
+section{
+  position:relative;
+  padding:100px 3rem;
+  z-index:2;
+}
+
+section+section{
+  border-top:1px solid var(--border);
+}
+
+.section-label{
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--emerald-bright);
+  font-family:'DM Sans',sans-serif;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.section-label::before{
+  content:'';
+  width:24px;height:1px;
+  background:var(--emerald);
+}
+
+.section-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(28px,4vw,48px);
+  font-weight:700;
+  color:var(--white);
+  line-height:1.1;
+  letter-spacing:-0.01em;
+  margin-bottom:1rem;
+}
+
+.section-sub{
+  font-size:16px;
+  color:var(--white-muted);
+  line-height:1.7;
+  max-width:520px;
+}
+
+/* THE PROBLEM SECTION */
+.problem-section{
+  background:rgba(13,13,13,0.92);
+  backdrop-filter:blur(0px);
+}
+
+.problem-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4rem;
+  align-items:center;
+  max-width:1100px;
+  margin:0 auto;
+}
+
+.problem-statement{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(28px,3.5vw,44px);
+  font-weight:400;
+  color:var(--white);
+  line-height:1.35;
+}
+.problem-statement em{
+  font-style:italic;
+  color:var(--emerald-bright);
+}
+.problem-statement strong{
+  font-weight:700;
+  -webkit-text-stroke:0.5px var(--white);
+}
+
+.problem-points{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.problem-point{
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
+  padding:20px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:8px;
+  transition:all 0.2s;
+}
+.problem-point:hover{
+  border-color:rgba(26,122,74,0.3);
+  background:var(--emerald-glow);
+}
+
+.problem-point-icon{
+  width:36px;height:36px;
+  background:var(--emerald-dim);
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--emerald-bright);
+  font-size:14px;
+  flex-shrink:0;
+}
+
+.problem-point h4{
+  font-size:13px;
+  font-weight:600;
+  color:var(--white);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.problem-point p{
+  font-size:13px;
+  color:var(--white-muted);
+  line-height:1.6;
+}
+
+/* SERVICES SECTION */
+.services-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-top:3rem;
+  max-width:1100px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.service-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:2rem;
+  position:relative;
+  overflow:hidden;
+  transition:all 0.3s;
+}
+
+.service-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:var(--emerald);
+  transform:scaleX(0);
+  transition:transform 0.3s;
+}
+.service-card:hover::before{transform:scaleX(1);}
+.service-card:hover{
+  border-color:rgba(26,122,74,0.3);
+  transform:translateY(-4px);
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+
+.service-hex{
+  width:48px;height:55px;
+  background:var(--emerald-dim);
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  margin-bottom:1.5rem;
+}
+
+.service-card h3{
+  font-family:'Cinzel',serif;
+  font-size:18px;
+  font-weight:600;
+  color:var(--white);
+  margin-bottom:8px;
+  letter-spacing:0.02em;
+}
+
+.service-card p{
+  font-size:13px;
+  color:var(--white-muted);
+  line-height:1.7;
+  margin-bottom:1.5rem;
+}
+
+.service-from{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+  margin-bottom:1rem;
+}
+.service-from-label{font-size:11px;color:var(--white-muted);text-transform:uppercase;letter-spacing:0.08em;}
+.service-from-price{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--emerald-bright);}
+.service-from-period{font-size:12px;color:var(--white-muted);}
+
+.service-features{
+  list-style:none;
+  margin-bottom:1.5rem;
+}
+.service-features li{
+  font-size:12px;
+  color:var(--white-dim);
+  padding:6px 0;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.service-features li::before{
+  content:'✦';
+  color:var(--emerald);
+  font-size:8px;
+  flex-shrink:0;
+}
+.service-features li:last-child{border-bottom:none;}
+
+.service-cta{
+  display:block;
+  width:100%;
+  padding:10px;
+  text-align:center;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--emerald-bright);
+  border:1px solid rgba(26,122,74,0.3);
+  border-radius:4px;
+  text-decoration:none;
+  cursor:none;
+  transition:all 0.2s;
+  font-family:'DM Sans',sans-serif;
+}
+.service-cta:hover{
+  background:var(--emerald);
+  border-color:var(--emerald);
+  color:#fff;
+}
+
+/* PROCESS SECTION */
+.process-track{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  position:relative;
+  max-width:1100px;
+  margin:3rem auto 0;
+}
+
+.process-track::before{
+  content:'';
+  position:absolute;
+  top:28px;left:calc(12.5% + 20px);right:calc(12.5% + 20px);
+  height:1px;
+  background:linear-gradient(to right,transparent,var(--emerald),var(--emerald),transparent);
+  z-index:0;
+}
+
+.process-step{
+  text-align:center;
+  padding:0 1rem;
+  position:relative;
+  z-index:1;
+}
+
+.process-num{
+  width:56px;height:64px;
+  background:var(--card);
+  border:1px solid rgba(26,122,74,0.3);
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;
+  font-size:14px;
+  font-weight:700;
+  color:var(--emerald-bright);
+  margin:0 auto 1.25rem;
+  transition:all 0.3s;
+}
+
+.process-step:hover .process-num{
+  background:var(--emerald);
+  color:#fff;
+  box-shadow:0 0 30px rgba(26,122,74,0.3);
+}
+
+.process-step h4{
+  font-family:'Cinzel',serif;
+  font-size:13px;
+  font-weight:600;
+  color:var(--white);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+
+.process-step p{
+  font-size:12px;
+  color:var(--white-muted);
+  line-height:1.6;
+}
+
+/* PORTFOLIO SECTION */
+.portfolio-section{
+  background:var(--near-black);
+}
+
+.portfolio-feature{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-top:3rem;
+  max-width:1100px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.portfolio-photo{
+  position:relative;
+  aspect-ratio:3/4;
+  border-radius:8px;
+  overflow:hidden;
+  background:var(--card);
+  border:1px solid var(--border);
+}
+
+.portfolio-photo img{
+  width:100%;height:100%;
+  object-fit:cover;
+  transition:transform 0.6s ease;
+  filter:saturate(0.8);
+}
+.portfolio-photo:hover img{
+  transform:scale(1.04);
+  filter:saturate(1);
+}
+
+.portfolio-photo-overlay{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  padding:1.5rem;
+  background:linear-gradient(to top,rgba(8,8,8,0.95) 0%,transparent 100%);
+  transform:translateY(20px);
+  opacity:0;
+  transition:all 0.3s;
+}
+.portfolio-photo:hover .portfolio-photo-overlay{opacity:1;transform:translateY(0);}
+
+.portfolio-photo-overlay h4{font-family:'Cinzel',serif;font-size:14px;font-weight:600;color:var(--white);letter-spacing:0.04em;}
+.portfolio-photo-overlay p{font-size:12px;color:var(--emerald-bright);margin-top:4px;}
+
+.client-logos{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3rem;
+  flex-wrap:wrap;
+  margin-top:3rem;
+  padding-top:2rem;
+  border-top:1px solid var(--border);
+  max-width:1100px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.client-logo-item{
+  font-family:'Cinzel',serif;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.1em;
+  color:var(--white-muted);
+  text-transform:uppercase;
+  transition:color 0.2s;
+  cursor:default;
+}
+.client-logo-item:hover{color:var(--white);}
+
+/* BOOKING SECTION */
+.booking-section{
+  text-align:center;
+}
+
+.booking-card{
+  max-width:600px;
+  margin:3rem auto 0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:3rem;
+  position:relative;
+  overflow:hidden;
+}
+
+.booking-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(to right,transparent,var(--emerald),transparent);
+}
+
+.booking-card h3{
+  font-family:'Cinzel',serif;
+  font-size:22px;
+  font-weight:600;
+  color:var(--white);
+  margin-bottom:8px;
+}
+
+.booking-card p{
+  font-size:14px;
+  color:var(--white-muted);
+  line-height:1.6;
+  margin-bottom:2rem;
+}
+
+.booking-form{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-bottom:1.5rem;
+}
+
+.form-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.form-input{
+  width:100%;
+  padding:12px 16px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  border-radius:4px;
+  color:var(--white);
+  font-size:13px;
+  font-family:'DM Sans',sans-serif;
+  transition:all 0.2s;
+  outline:none;
+}
+.form-input::placeholder{color:var(--white-muted);}
+.form-input:focus{border-color:var(--emerald);background:rgba(26,122,74,0.05);}
+
+.form-submit{
+  width:100%;
+  padding:16px;
+  background:var(--emerald);
+  color:#fff;
+  border:none;
+  border-radius:4px;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  font-family:'DM Sans',sans-serif;
+  cursor:none;
+  transition:all 0.2s;
+}
+.form-submit:hover{background:var(--emerald-bright);box-shadow:0 8px 30px rgba(26,122,74,0.35);}
+
+.booking-note{
+  font-size:11px;
+  color:var(--white-muted);
+  letter-spacing:0.04em;
+}
+
+/* FOOTER */
+footer{
+  padding:3rem;
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:1rem;
+  position:relative;
+  z-index:2;
+}
+
+.footer-brand{
+  font-family:'Cinzel',serif;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.15em;
+  color:var(--white-muted);
+  text-transform:uppercase;
+}
+.footer-brand span{color:var(--emerald-bright);}
+
+.footer-links{
+  display:flex;
+  gap:2rem;
+  list-style:none;
+}
+.footer-links a{
+  font-size:11px;
+  color:var(--white-muted);
+  text-decoration:none;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  transition:color 0.2s;
+  cursor:none;
+}
+.footer-links a:hover{color:var(--emerald-bright);}
+
+.footer-copy{
+  font-size:11px;
+  color:rgba(240,237,232,0.2);
+  letter-spacing:0.06em;
+}
+
+/* SCROLL ANIMATION */
+.reveal{
+  opacity:0;
+  transform:translateY(30px);
+  transition:all 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* SMOOTH SECTION TRANSITIONS */
+.slide-section{
+  position:relative;
+}
+.slide-section::after{
+  content:'';
+  position:absolute;
+  bottom:-1px;left:0;right:0;
+  height:100px;
+  background:linear-gradient(to bottom,transparent,var(--black));
+  pointer-events:none;
+  z-index:3;
+}
+
+/* STRIPE TICKET (hidden, activate when event) */
+.ticket-section{display:none;}
+.ticket-section.active{display:block;}
+
+/* ANIMATIONS */
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-20px);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+@keyframes scrollDown{0%{height:40px;opacity:1;}100%{height:0;opacity:0;}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:0 1.5rem;}
+  section{padding:70px 1.5rem;}
+  .problem-grid{grid-template-columns:1fr;}
+  .services-grid{grid-template-columns:1fr;}
+  .process-track{grid-template-columns:1fr 1fr;gap:2rem;}
+  .process-track::before{display:none;}
+  .portfolio-feature{grid-template-columns:1fr 1fr;}
+  .form-row{grid-template-columns:1fr;}
+  footer{flex-direction:column;text-align:center;}
+  .fcg-word{font-size:clamp(32px,8vw,80px);}
+}
+
+@media(max-width:600px){
+  .nav-logo-text{display:none;}
+  .portfolio-feature{grid-template-columns:1fr;}
+  .hero{padding:90px 1.5rem 70px;}
+  .fcg-row{gap:0;}
+  .fcg-word{font-size:clamp(28px,10vw,60px);}
+}
+</style>
+
+<!-- NOTE: Google Drive videos may not autoplay in all browsers due to CORS.
+     To guarantee video playback, upload the MP4 files directly to your GitHub repo
+     and update the src URLs to point to the raw GitHub file URLs.
+     Example: https://raw.githubusercontent.com/KurtOnvlee/themarketplace-site/main/videos/found.mp4 -->
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="mainHeader">
-    <div class="headerContainer">
-      <div class="logoBlock">
-        <img src="logo.png" alt="The MarketPlace NZ">
+<!-- Hexagon background pattern -->
+<div class="hex-pattern"></div>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark" style="background:transparent;padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/logo.png" style="width:38px;height:38px;object-fit:contain;" alt="The Marketplace NZ Logo" onerror="this.parentElement.innerHTML='M';this.parentElement.style.background='var(--emerald)'"></div>
+    <div>
+      <div class="nav-logo-text">The Marketplace</div>
+      <div class="nav-logo-sub">New Zealand</div>
+    </div>
+  </a>
+  <div class="nav-actions">
+    <a href="https://app.themarketplace.co.nz" class="btn-login">Client Login</a>
+    <a href="#book" class="btn-cta">Talk Growth</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <!-- Impossible to Ignore — hero background video -->
+  <video autoplay muted loop playsinline id="hero-bg-video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.25;pointer-events:none;">
+    <source src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/impossible.mp4" type="video/mp4">
+  </video>
+  <div class="hero-bg" style="z-index:1"></div>
+  <div class="hex-deco hex-1"></div>
+  <div class="hex-deco hex-2"></div>
+  <div class="hex-deco hex-3"></div>
+
+  <div class="hero-content" style="position:relative;z-index:2">
+
+    <!-- Social Proof Bar -->
+    <div class="proof-bar">
+      <div class="proof-avatars">
+        <div class="proof-avatar">J</div>
+        <div class="proof-avatar" style="background:#1a5a3a">S</div>
+        <div class="proof-avatar" style="background:#2d7a5f">M</div>
+        <div class="proof-avatar" style="background:#0d3d24">K</div>
+        <div class="proof-avatar" style="background:#1a7a4a">+</div>
       </div>
-      <div class="actionBlock">
-        <a href="javascript:void(0)" onclick="openPortal()" class="loginLink">Member Login</a>
-        <button onclick="openBooking()" class="actionButton" id="headerCTAButton">Get Started</button>
+      <div class="proof-text">Trusted by <strong>20,000+ business owners</strong> across New Zealand</div>
+    </div>
+
+    <!-- FOUND CHOSEN GROWTH with looping videos -->
+    <div class="fcg-row">
+      <div class="fcg-word fcg-found" data-text="FOUND">
+        <video class="fcg-video" autoplay muted loop playsinline>
+          <source src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/found.mp4" type="video/mp4">
+        </video>
+        <span class="fcg-text">FOUND</span>
+      </div>
+      <div class="fcg-dot">.</div>
+      <div class="fcg-word fcg-chosen" data-text="CHOSEN">
+        <video class="fcg-video" autoplay muted loop playsinline>
+          <source src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/chosen.mp4" type="video/mp4">
+        </video>
+        <span class="fcg-text">CHOSEN</span>
+      </div>
+      <div class="fcg-dot">.</div>
+      <div class="fcg-word fcg-growth" data-text="GROWTH">
+        <video class="fcg-video" autoplay muted loop playsinline>
+          <source src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/growth.mp4" type="video/mp4">
+        </video>
+        <span class="fcg-text">GROWTH</span>
       </div>
     </div>
-  </header>
 
-  <!-- HERO — full viewport, splits Jarvis core canvas on left and copy on right -->
-  <section class="heroSection" aria-label="Hero">
-    <!-- Hero Video Background -->
-    <div class="heroVideoBg">
-      <video src="Initial_Scene.mp4" autoplay loop muted playsinline></video>
-    </div>
+    <div class="hero-tagline">Impossible to ignore. <span>Everywhere that matters.</span></div>
 
-    <h1 class="screenReaderText">
-      The MarketPlace NZ, Business Operating Systems Hamilton. Automated lead intelligence, content production, SOPs, and bespoke dashboards for Hamilton owner-operators.
-    </h1>
-
-    <div class="heroContainer">
-      <!-- Agency copy and call to actions centered -->
-      <div class="heroContent">
-        <span class="heroEyebrow">Hamilton, New Zealand</span>
-
-        <h2 class="heroTagline splitText">
-          Marketing that <span class="gold">saves you time</span> and makes you money.
-        </h2>
-
-        <p class="heroSubtext">
-          Likes and views don't pay the bills. We focus on the only thing that matters. . .Your bottomline.
-        </p>
-
-        <div class="heroActions">
-          <button onclick="openBooking()" class="primaryHeroButton" id="heroCTAButton">Get Started</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="scrollIndicator" aria-hidden="true"></div>
-  </section>
-
-  <!-- TICKER BAR -->
-  <div class="trustBar" aria-hidden="true">
-    <div class="tickerTrack">
-      <div class="tickerContent">
-        <span class="tickerItem">We don't sell reach. We find ready buyers.</span>
-        <span class="tickerItem">311,397 organic views in 28 days. Zero ad spend.</span>
-        <span class="tickerItem">Your pipeline should not depend on word of mouth alone.</span>
-        <span class="tickerItem">Vanity metrics look great in reports. They don't pay your invoices.</span>
-        <span class="tickerItem">Hamilton-based. Systems-first. Results tracked.</span>
-        <span class="tickerItem">We tell you when something isn't working before you ask.</span>
-        <span class="tickerItem">Only 5% of your market is ready to buy right now. We find them.</span>
-        <span class="tickerItem">No lock-in to us. Lock-in to results.</span>
-        <!-- Duplicate for seamless loop -->
-        <span class="tickerItem">We don't sell reach. We find ready buyers.</span>
-        <span class="tickerItem">311,397 organic views in 28 days. Zero ad spend.</span>
-        <span class="tickerItem">Your pipeline should not depend on word of mouth alone.</span>
-        <span class="tickerItem">Vanity metrics look great in reports. They don't pay your invoices.</span>
-        <span class="tickerItem">Hamilton-based. Systems-first. Results tracked.</span>
-        <span class="tickerItem">We tell you when something isn't working before you ask.</span>
-        <span class="tickerItem">Only 5% of your market is ready to buy right now. We find them.</span>
-        <span class="tickerItem">No lock-in to us. Lock-in to results.</span>
-      </div>
+    <div class="hero-actions">
+      <a href="#book" class="btn-hero btn-hero-primary">Talk Growth →</a>
+      <a href="#services" class="btn-hero btn-hero-ghost">View Services</a>
     </div>
   </div>
 
-  <main>
+  <div class="scroll-indicator" style="position:relative;z-index:2">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
 
-    <!-- PROOF SECTION -->
-    <section class="proofSection tileSectionBase" id="proofSection" aria-labelledby="proofHeading">
-      <div class="sectionInner">
-        <p class="proofEyebrow" id="proofHeading">Real client. Real numbers. Hamilton, NZ.</p>
-        <div class="proofCard staggerItem">
-          <div class="proofStat">
-            <span class="proofNumber" data-target="311" data-suffix="K+">0</span>
-            <span class="proofLabel">Organic views in 28 days<br><em>Up 207.6% on the month before.</em></span>
-          </div>
-          <div class="proofDivider" aria-hidden="true"></div>
-          <div class="proofStat">
-            <span class="proofNumber" data-target="83" data-suffix="%">0</span>
-            <span class="proofLabel">Views from people who weren't following her yet<br><em>The algorithm found her buyers. Not the other way around.</em></span>
-          </div>
-          <div class="proofDivider" aria-hidden="true"></div>
-          <div class="proofContext">
-            <p>Sopo Fuifui, Harcourts Hamilton. First home buyer specialist. 115,840 unique viewers last month. Facebook-only presence. No website. No ad spend. Ranked top 10 nationally twice in 18 months.</p>
-            <span class="proofNote">This is what a system built around the right audience looks like.</span>
-          </div>
-        </div>
+<!-- THE PROBLEM -->
+<section class="problem-section slide-section">
+  <div class="problem-grid">
+    <div class="reveal">
+      <div class="section-label">The Reality</div>
+      <div class="problem-statement">
+        Your business is <em>good</em>.<br>
+        Your competitors are just<br>
+        <strong>more visible.</strong>
       </div>
-    </section>
-
-    <!-- PAIN SECTION -->
-    <section class="painSection tileSection" id="painSection" data-dim-target="proofSection" aria-labelledby="painHeading">
-      <div class="sectionInner">
-        <div class="sectionHeader revealOnScroll">
-          <h2 id="painHeading">Sound <span class="gold">familiar?</span></h2>
-          <p class="sectionSub">Most skilled operators in Hamilton are running a great business that is running them into the ground. The work is good. The system needs to support you.</p>
-        </div>
-
-        <div class="painGrid">
-          <div class="painCard staggerItem">
-            <div class="painIcon"></div>
-            <h4>You have no systems</h4>
-            <p>Every lead, every follow-up, every piece of content runs through you personally. If you stop, everything stops. That is not a business. That is a job with no holiday.</p>
-          </div>
-          <div class="painCard staggerItem">
-            <div class="painIcon"></div>
-            <h4>You have no time</h4>
-            <p>You are flat out from 6am to 8pm and the revenue is not growing to match the hours. The problem is not effort. The problem is that the wrong things are taking the most time.</p>
-          </div>
-          <div class="painCard staggerItem">
-            <div class="painIcon"></div>
-            <h4>Your pipeline is unpredictable</h4>
-            <p>Work comes in through referrals and word of mouth. You cannot scale something you cannot predict. You need a pipeline that produces warm, qualified leads on its own.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PILLARS SECTION -->
-    <section class="pillarsSection tileSection" id="pillarsSection" data-dim-target="painSection" aria-labelledby="pillarsHeading">
-      <div class="sectionInner">
-        <div class="sectionHeader revealOnScroll">
-          <h2 id="pillarsHeading" class="splitText">What we <span class="gold">actually build</span></h2>
-          <p class="sectionSub">We are not a marketing agency that runs your social media. We install the operating system your business has been missing since day one.</p>
-        </div>
-
-        <div class="pillarsGrid">
-          <div class="pillarCard staggerItem">
-            <div class="pillarNumber" aria-hidden="true">01</div>
-            <h4>Automated Lead Intelligence</h4>
-            <p>Before we ever sit down with a prospect, we already know who they are, what their competitors are doing, and where the gaps are. Deep research runs automatically the moment someone fills in your form. You walk into every meeting prepared, not cold.</p>
-          </div>
-          <div class="pillarCard staggerItem">
-            <div class="pillarNumber" aria-hidden="true">02</div>
-            <h4>Content That Reaches the 5%</h4>
-            <p>Your market is scrolling before they ever search Google. We position your content in front of the people already looking for what you do — scripted, filmed, posted, and tracked every month. What gets traction, we double down on. What doesn't, we cut. No guesswork, no reports full of numbers that mean nothing to your bank account.</p>
-          </div>
-          <div class="pillarCard staggerItem">
-            <div class="pillarNumber" aria-hidden="true">03</div>
-            <h4>Your Business Operating System</h4>
-            <p>A bespoke dashboard that shows your entire business at a glance. Automated SOPs that handle follow-ups, onboarding, and lead management. Every meeting transcribed with actionables. Every call logged. Nothing missed, nothing dropped.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- HOW IT WORKS — interactive click carousel -->
-    <section class="howSection tileSection" id="howSection" data-dim-target="pillarsSection" aria-labelledby="howHeading">
-      <div class="howCarouselWrap">
-        <div class="sectionHeader" style="margin-bottom:48px; text-align: center;">
-          <h2 id="howHeading">How it <span class="gold">works</span></h2>
-          <p class="sectionSub">From the moment you click Get Started, the machine is already running.</p>
-        </div>
-
-        <div class="howSliderOuter">
-          <!-- Left/Right navigation arrows -->
-          <button class="howNavBtn prev" onclick="prevHowSlide()" aria-label="Previous step">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          </button>
-          <button class="howNavBtn next" onclick="nextHowSlide()" aria-label="Next step">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-          </button>
-
-          <div class="howSliderContainer">
-            <!-- Slide 1 -->
-            <div class="howSlide active" data-step="0">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">1</div>
-                  <div class="howStepContent">
-                    <h4>You click Get Started</h4>
-                    <p>Fill in your details. From that moment, our automated system begins deep research into your business, your competitors, and your current public presence. Before we meet, we already know your landscape.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step1.png" alt="You click Get Started">
-                </div>
-              </div>
-            </div>
-
-            <!-- Slide 2 -->
-            <div class="howSlide" data-step="1">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">2</div>
-                  <div class="howStepContent">
-                    <h4>We meet. Zoom or coffee, your choice.</h4>
-                    <p>Every call is recorded and transcribed automatically. An AI summary with actionables is generated and stored in your profile the moment we hang up. Nothing lives in a notebook that gets lost.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step2.png" alt="Zoom or coffee meeting">
-                </div>
-              </div>
-            </div>
-
-            <!-- Slide 3 -->
-            <div class="howSlide" data-step="2">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">3</div>
-                  <div class="howStepContent">
-                    <h4>We build your machine</h4>
-                    <p>Website rebuilt as a funnel. Content pipeline researched, scripted, filmed, edited, and posted. Operating system built and handed to you. Your dashboard goes live. Your social media becomes a lead engine, not a chore.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step3.png" alt="Building your marketing machine">
-                </div>
-              </div>
-            </div>
-
-            <!-- Slide 4 -->
-            <div class="howSlide" data-step="3">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">4</div>
-                  <div class="howStepContent">
-                    <h4>We track, iterate, and grow</h4>
-                    <p>We analyse everything. What gets traction, we double down on. What does not work, we cut and replace. We are honest about both. Once organic traffic is producing real results, we layer in Meta ads to amplify what is already working.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step4.png" alt="Analytics and growth tracking">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="howProgress">
-          <div class="howDots" aria-hidden="true">
-            <span class="hwDot active" onclick="goToHowStep(0)"></span>
-            <span class="hwDot" onclick="goToHowStep(1)"></span>
-            <span class="hwDot" onclick="goToHowStep(2)"></span>
-            <span class="hwDot" onclick="goToHowStep(3)"></span>
-          </div>
-          <div class="howProgressBar">
-            <div class="howProgressFill" id="howProgressFill" style="width: 25%;"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- WHO THIS IS FOR — horizontal accordion -->
-    <section class="audienceSection tileSection" id="audienceSection" data-dim-target="howSection" aria-labelledby="audienceHeading">
-      <div class="sectionInner">
-        <div class="sectionHeader revealOnScroll">
-          <h2 id="audienceHeading" class="splitText">Who this is <span class="gold">for</span></h2>
-          <p class="sectionSub">We work with a specific type of person. Hover each card to see if you recognise yourself.</p>
-        </div>
-
-        <div class="audienceAccordion" id="audienceAccordion">
-
-          <div class="accCard staggerItem" tabindex="0" id="acc1">
-            <span class="accVertLabel">Time-poor</span>
-            <div class="accBody">
-              <h4>The bottleneck operator</h4>
-              <p>You run a high-margin service business in Hamilton and you are the main constraint in your own growth. Everything requires your sign-off. Everything waits for you.</p>
-            </div>
-          </div>
-
-          <div class="accCard staggerItem" tabindex="0" id="acc2">
-            <span class="accVertLabel">Growth-minded</span>
-            <div class="accBody">
-              <h4>The long-game thinker</h4>
-              <p>You understand that marketing is a tool, not a quick-fix. You want warm leads who are ready to buy, not vanity reach numbers that mean nothing to your bank account.</p>
-            </div>
-          </div>
-
-          <div class="accCard staggerItem" tabindex="0" id="acc3">
-            <span class="accVertLabel">No systems</span>
-            <div class="accBody">
-              <h4>The gut-feel operator</h4>
-              <p>You have no SOPs, no automation, and no system. Your business runs on gut feel and goodwill. It works now. It will not when you try to scale it.</p>
-            </div>
-          </div>
-
-          <div class="accCard staggerItem" tabindex="0" id="acc4">
-            <span class="accVertLabel">Always busy</span>
-            <div class="accBody">
-              <h4>The productive-looking but stuck</h4>
-              <p>You are tired of being busy but not moving forward. Most of your week is spent on things that feel urgent but do not move the needle. That changes with systems.</p>
-            </div>
-          </div>
-
-          <div class="accCard staggerItem" tabindex="0" id="acc5">
-            <span class="accVertLabel">Partnership</span>
-            <div class="accBody">
-              <h4>The relationship-over-vendor seeker</h4>
-              <p>You want a long-term partner, not another supplier who sends a monthly report full of numbers that mean nothing to your bottom line. We treat your business like our own.</p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- VALUES -->
-    <section class="valuesSection tileSection" id="valuesSection" data-dim-target="audienceSection" aria-labelledby="valuesHeading">
-      <div class="sectionInner">
-        <div class="sectionHeader revealOnScroll">
-          <h2 id="valuesHeading">How we <span class="gold">operate</span></h2>
-          <p class="sectionSub">A few things you should know before we work together.</p>
-        </div>
-
-        <div class="valuesGrid">
-          <div class="valueCard staggerItem">
-            <p><strong>We start with organic.</strong> No Meta ads in the first two months. We learn what works on your specific audience before we put money behind it. That way your ad spend works from day one instead of burning while we figure it out.</p>
-          </div>
-          <div class="valueCard staggerItem">
-            <p><strong>We tell you when something bombs.</strong> If a video falls flat, you will hear it from us first, with a clear reason and a plan to fix it. We are not here to make the numbers look good. We are here to make your business grow.</p>
-          </div>
-          <div class="valueCard staggerItem">
-            <p><strong>We do not show you vanity metrics.</strong> Reach, impressions, and follower counts are not success. Leads booked, calls converted, and revenue generated are the only numbers that matter. That is what we track.</p>
-          </div>
-          <div class="valueCard staggerItem">
-            <p><strong>We are building a relationship, not filling a contract.</strong> We want to understand your business well enough to see opportunities you cannot see from the inside. The people who get the most value treat us like a business partner, not a supplier.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- FINAL CTA -->
-    <section class="finalCTASection tileSection revealOnScroll" id="finalCTA" data-dim-target="valuesSection" aria-labelledby="finalCTAHeading">
-      <div class="finalCTAInner">
-        <h2 id="finalCTAHeading" class="splitText">Ready to stop being the <span class="gold">bottleneck?</span></h2>
-        <p class="sectionSub" style="margin-bottom:44px;">Book a free strategy call. We will look at your current setup, identify exactly where the gaps are, and tell you honestly whether we can help.</p>
-        <div class="heroActions">
-          <button onclick="openBooking()" class="primaryHeroButton" id="finalCTAButton">Get Started</button>
-        </div>
-        <span class="finalCTANote">No commitment. Just a conversation.</span>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="mainFooter">
-    <div class="footerInner" style="max-width:1100px;margin:0 auto;">
-      <img src="logo.png" alt="The MarketPlace NZ" class="footerLogo">
-      <p class="footerCopyright">
-        &copy; 2026 The MarketPlace NZ. All rights reserved.<br>
-        Hamilton East, Hamilton, Waikato, New Zealand.
-      </p>
-      <p class="footerTagline">Found. Chosen. Growth.</p>
+      <p style="font-size:15px;color:var(--white-muted);line-height:1.8;margin-top:1.5rem;max-width:420px;">Most business owners are working harder than anyone they know. They are not failing because of their product. They are failing because the people who need them most do not know they exist.</p>
     </div>
-  </footer>
 
-  <!-- BOOKING MODAL -->
-  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Book a strategy call">
-    <!-- Modal Transition Video Overlay -->
-    <video id="modalTransitionVideo" src="Get_Started_animation.mp4" playsinline></video>
-    
-    <div class="bookingModal">
-      <button onclick="closeBooking()" class="closeModalButton" aria-label="Close">&times;</button>
-      <div class="bookingModalContent">
-        <div class="modalStepDots" id="modalStepDots" aria-hidden="true">
-          <div class="modalStepDot active" id="dot1"></div>
-          <div class="modalStepDot" id="dot2"></div>
-          <div class="modalStepDot" id="dot3"></div>
+    <div class="problem-points reveal" style="transition-delay:0.15s">
+      <div class="problem-point">
+        <div class="problem-point-icon">$</div>
+        <div>
+          <h4>Paying for Cold Leads</h4>
+          <p>You pay agencies for leads that go cold before you can close them. Low conversion, high cost, zero transparency.</p>
         </div>
-
-        <div class="modalStep" id="modalStep1">
-          <h3>Book your strategy call</h3>
-          <p>Simple. Your details, your business, your time.</p>
-          <div class="formGroup">
-            <label for="leadName">Your Name</label>
-            <input type="text" id="leadName" autocomplete="name" placeholder="Your full name" class="formInput">
-          </div>
-          <div class="formGroup">
-            <label for="leadEmail">Your Email</label>
-            <input type="email" id="leadEmail" autocomplete="email" placeholder="Your best email" class="formInput">
-          </div>
-          <button onclick="nextStep(2)" class="modalNextButton">Continue</button>
+      </div>
+      <div class="problem-point">
+        <div class="problem-point-icon">📊</div>
+        <div>
+          <h4>Bamboozled by Metrics</h4>
+          <p>Agencies drown you in vanity numbers you don't understand. Views, impressions, reach. None of it pays your bills.</p>
         </div>
-
-        <div class="modalStep" id="modalStep2" style="display:none;">
-          <h3>About your business</h3>
-          <p>A quick look at your setup lets us prepare before we speak.</p>
-          <div class="formGroup">
-            <label for="leadCompany">Business Name</label>
-            <input type="text" id="leadCompany" autocomplete="organization" placeholder="Your business name" class="formInput">
-          </div>
-          <div class="formGroup">
-            <label for="leadUrl">Website (optional)</label>
-            <input type="url" id="leadUrl" placeholder="https://yourbusiness.co.nz" class="formInput">
-          </div>
-          <button onclick="nextStep(3)" class="modalNextButton">Select a Time</button>
-        </div>
-
-        <div class="modalStep" id="modalStep3" style="display:none;">
-          <h3>Pick your slot</h3>
-          <p>Three days open at a time. Select a day and time below.</p>
-          <div class="calendarWidget">
-            <div class="calendarDaysRow" id="calendarDaysRow"></div>
-            <div class="calendarSlotsGrid" id="calendarSlotsGrid"></div>
-          </div>
-          <input type="hidden" id="selectedBookingDate" value="">
-          <input type="hidden" id="selectedBookingTime" value="">
-          <button onclick="submitBooking()" class="modalSubmitButton" id="confirmBookingBtn">Confirm My Call</button>
+      </div>
+      <div class="problem-point">
+        <div class="problem-point-icon">👻</div>
+        <div>
+          <h4>Invisible Online</h4>
+          <p>You're posting consistently and getting nothing. Not because of the algorithm. Because of the content strategy.</p>
         </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- LOGIN MODAL -->
-  <div class="modalOverlay" id="loginModalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Member login">
-    <div class="loginModal">
-      <button onclick="closeLoginModal()" class="closeModalButton" aria-label="Close">&times;</button>
-      <h2>Member Access</h2>
-      <div class="loginGoldLine"></div>
-      <p>Enter your passcode to access your client workspace.</p>
-      <div class="formGroup">
-        <label for="memberPasscode">Passcode</label>
-        <input type="password" id="memberPasscode" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" class="formInput" onkeydown="handleLoginKey(event)">
+<!-- SERVICES -->
+<section id="services">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-label reveal">What We Do</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:0">
+      <h2 class="section-title reveal" style="transition-delay:0.1s">Three pillars.<br>One result.</h2>
+      <p class="section-sub reveal" style="transition-delay:0.2s">We do not sell packages. We build visibility systems. Prices start where indicated — everything else we discuss on the call.</p>
+    </div>
+
+    <div class="services-grid">
+
+      <div class="service-card reveal" style="transition-delay:0.1s">
+        <div class="service-hex">🌐</div>
+        <h3>Websites</h3>
+        <p>Not just beautiful — built to convert. SEO-structured, AEO-ready, and designed to be your hardest-working salesperson.</p>
+        <div class="service-from">
+          <span class="service-from-label">From</span>
+          <span class="service-from-price">$74</span>
+          <span class="service-from-period">/mo</span>
+        </div>
+        <ul class="service-features">
+          <li>Custom design built in code</li>
+          <li>Mobile-first and lightning fast</li>
+          <li>Full SEO and AEO setup</li>
+          <li>Google Analytics and Pixel ready</li>
+          <li>Hosting and maintenance included</li>
+        </ul>
+        <a href="#book" class="service-cta">Book a call</a>
       </div>
-      <button onclick="submitMemberLogin()" class="loginVerifyButton">Verify</button>
-      <div class="loginError" id="loginError">Invalid passcode. Please try again.</div>
+
+      <div class="service-card reveal" style="transition-delay:0.2s;border-color:rgba(26,122,74,0.25);">
+        <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--emerald);color:#fff;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 6px 6px;font-family:'DM Sans',sans-serif;">Most Popular</div>
+        <div class="service-hex" style="background:rgba(26,122,74,0.25);">📱</div>
+        <h3>Social Media</h3>
+        <p>Strategy, scripting, editing, and posting — done for you. Content that attracts clients, not just followers.</p>
+        <div class="service-from">
+          <span class="service-from-label">From</span>
+          <span class="service-from-price">$179</span>
+          <span class="service-from-period">/mo</span>
+        </div>
+        <ul class="service-features">
+          <li>Full content strategy and calendar</li>
+          <li>Video scripting and shot lists</li>
+          <li>Platform-specific editing</li>
+          <li>Scheduling and posting</li>
+          <li>Monthly performance insights</li>
+        </ul>
+        <a href="#book" class="service-cta">Book a call</a>
+      </div>
+
+      <div class="service-card reveal" style="transition-delay:0.3s">
+        <div class="service-hex">⚙️</div>
+        <h3>Automation</h3>
+        <p>Stop doing manually what a system can do for you. Lead capture, follow-up, and workflows that run while you sleep.</p>
+        <div class="service-from">
+          <span class="service-from-label" style="color:var(--gold)">Custom</span>
+          <span class="service-from-price" style="color:var(--gold);font-size:24px;margin-left:8px;">Quoted per scope</span>
+        </div>
+        <ul class="service-features">
+          <li>CRM and lead pipeline setup</li>
+          <li>Email and DM automation</li>
+          <li>Booking and follow-up flows</li>
+          <li>Analytics and reporting</li>
+          <li>Integration with your existing tools</li>
+        </ul>
+        <a href="#book" class="service-cta">Book a call</a>
+      </div>
     </div>
   </div>
+</section>
 
-  <script src="app.js"></script>
+<!-- PROCESS -->
+<section style="background:var(--near-black)">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-label reveal">How It Works</div>
+    <h2 class="section-title reveal" style="transition-delay:0.1s">Four steps to impossible to ignore.</h2>
+
+    <div class="process-track">
+      <div class="process-step reveal" style="transition-delay:0.1s">
+        <div class="process-num">01</div>
+        <h4>The call</h4>
+        <p>30 minutes. We learn your business, your goals, and what you have tried before. No pitch. Just truth.</p>
+      </div>
+      <div class="process-step reveal" style="transition-delay:0.2s">
+        <div class="process-num">02</div>
+        <h4>The audit</h4>
+        <p>We analyse your current presence, your competitors, and the gaps in your market. Data first.</p>
+      </div>
+      <div class="process-step reveal" style="transition-delay:0.3s">
+        <div class="process-num">03</div>
+        <h4>The system</h4>
+        <p>We build your content and marketing system. Designed around your voice, your clients, your goals.</p>
+      </div>
+      <div class="process-step reveal" style="transition-delay:0.4s">
+        <div class="process-num">04</div>
+        <h4>The growth</h4>
+        <p>We execute, monitor, and optimise. You approve everything. Nothing posts without your yes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section class="portfolio-section" id="portfolio">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-label reveal">Our Work</div>
+    <h2 class="section-title reveal" style="transition-delay:0.1s">Results in the field.</h2>
+
+    <div class="portfolio-feature">
+      <div class="portfolio-photo reveal" style="transition-delay:0.1s">
+        <img src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/karting.jpg" alt="The Marketplace NZ — on location video production" id="portfolio-photo-1" data-swap="Replace with Kurt karting track photo URL">
+        <div class="portfolio-photo-overlay">
+          <h4>Kurt Onvlee</h4>
+          <p>On location — Hamilton NZ</p>
+        </div>
+      </div>
+      <div class="portfolio-photo reveal" style="transition-delay:0.2s">
+        <img src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/coffee.jpg" alt="The Marketplace NZ — digital strategy session" id="portfolio-photo-2" data-swap="Replace with Kurt café photo URL">
+        <div class="portfolio-photo-overlay">
+          <h4>In the Field</h4>
+          <p>Client shoot — Hamilton NZ</p>
+        </div>
+      </div>
+      <div class="portfolio-photo reveal" style="transition-delay:0.3s">
+        <img src="https://raw.githubusercontent.com/KurtOnvlee/TMP_main_site/main/assets/house.jpg" alt="The Marketplace NZ — brand building" id="portfolio-photo-3" data-swap="Replace with Kurt house walkthrough photo URL">
+        <div class="portfolio-photo-overlay">
+          <h4>On Location</h4>
+          <p>Walkthrough shoot — Hamilton NZ</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="client-logos reveal">
+      <div class="client-logo-item">Bushveld Kiwi</div>
+      <div class="client-logo-item">Tasty Temptations</div>
+      <div class="client-logo-item">B3</div>
+      <div class="client-logo-item">Davids Emporium</div>
+      <div class="client-logo-item" style="color:var(--emerald);font-size:11px;">+ More</div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOK A CALL -->
+<section id="book" class="booking-section">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="section-label reveal" style="justify-content:center">Get Started</div>
+    <h2 class="section-title reveal" style="transition-delay:0.1s;text-align:center">30 minutes.<br>No pitch. Just the truth.</h2>
+    <p style="color:var(--white-muted);font-size:15px;line-height:1.7;text-align:center;max-width:480px;margin:0.75rem auto 0;" class="reveal" style="transition-delay:0.2s">We will tell you exactly what is wrong with your current visibility and what it would take to fix it. No obligation.</p>
+
+    <div class="booking-card reveal" style="transition-delay:0.2s">
+      <h3>Book your growth call</h3>
+      <p>A quick conversation to understand where you are, where you want to be, and whether we are the right team to get you there.</p>
+
+      <form class="booking-form" onsubmit="handleSubmit(event)">
+        <div class="form-row">
+          <input type="text" class="form-input" placeholder="First name" required id="fname">
+          <input type="text" class="form-input" placeholder="Last name" required id="lname">
+        </div>
+        <div class="form-row">
+          <input type="tel" class="form-input" placeholder="Phone number" required id="phone">
+          <input type="email" class="form-input" placeholder="Email address" required id="email">
+        </div>
+        <input type="url" class="form-input" placeholder="Business website (optional)" id="website">
+        <button type="submit" class="form-submit">Book my free call →</button>
+      </form>
+
+      <p class="booking-note">We respond within 24 hours. No spam. No pressure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <span>The Marketplace</span> NZ — Hamilton, New Zealand
+  </div>
+  <ul class="footer-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#portfolio">Work</a></li>
+    <li><a href="#book">Contact</a></li>
+    <li><a href="https://app.themarketplace.co.nz">Client Login</a></li>
+  </ul>
+  <div class="footer-copy">© 2026 The Marketplace NZ. All rights reserved.</div>
+</footer>
+
+<script>
+// Custom cursor
+var cursor = document.getElementById('cursor');
+var ring = document.getElementById('cursorRing');
+var mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', function(e) {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx - 4 + 'px';
+  cursor.style.top = my - 4 + 'px';
+});
+
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx - 16 + 'px';
+  ring.style.top = ry - 16 + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button, .service-card, .process-step').forEach(function(el) {
+  el.addEventListener('mouseenter', function() {
+    cursor.style.transform = 'scale(2.5)';
+    ring.style.transform = 'scale(1.5)';
+    ring.style.borderColor = 'rgba(34,168,101,0.7)';
+  });
+  el.addEventListener('mouseleave', function() {
+    cursor.style.transform = 'scale(1)';
+    ring.style.transform = 'scale(1)';
+    ring.style.borderColor = 'rgba(34,168,101,0.4)';
+  });
+});
+
+// Scroll reveal
+var reveals = document.querySelectorAll('.reveal');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+reveals.forEach(function(el) { observer.observe(el); });
+
+// Smooth section overlap on scroll
+window.addEventListener('scroll', function() {
+  var scrolled = window.pageYOffset;
+  var nav = document.querySelector('nav');
+  if (scrolled > 50) {
+    nav.style.background = 'rgba(8,8,8,0.95)';
+    nav.style.boxShadow = '0 1px 0 rgba(26,122,74,0.1)';
+  } else {
+    nav.style.background = 'rgba(8,8,8,0.85)';
+    nav.style.boxShadow = 'none';
+  }
+});
+
+// Form submission
+function handleSubmit(e) {
+  e.preventDefault();
+  var btn = e.target.querySelector('.form-submit');
+  var fname = document.getElementById('fname').value;
+  var lname = document.getElementById('lname').value;
+  var phone = document.getElementById('phone').value;
+  var email = document.getElementById('email').value;
+  var website = document.getElementById('website').value;
+
+  // Facebook pixel lead event
+  if (typeof fbq !== 'undefined') {
+    fbq('track', 'Lead', {
+      content_name: 'Growth Call Booking',
+      content_category: 'Lead Form'
+    });
+  }
+
+  btn.textContent = 'Sending...';
+  btn.style.background = 'var(--emerald-dim)';
+
+  // Simulate submission — replace with Calendly or backend
+  setTimeout(function() {
+    btn.textContent = '✓ Request sent — we will be in touch within 24 hours';
+    btn.style.background = '#1a7a4a';
+    e.target.reset();
+  }, 1500);
+}
+
+// Parallax on hero hexagons
+window.addEventListener('scroll', function() {
+  var y = window.pageYOffset;
+  document.querySelector('.hex-1').style.transform = 'translateY(' + y * 0.15 + 'px)';
+  document.querySelector('.hex-2').style.transform = 'translateY(' + y * 0.1 + 'px)';
+});
+
+// Make all internal links smooth
+document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
 </body>
 </html>
