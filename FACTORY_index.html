@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The MarketPlace NZ | Business Operating Systems Hamilton</title>
+  <meta name="description" content="The MarketPlace NZ builds automated operating systems for Hamilton owner-operators. We handle content, lead capture, SOPs, and bespoke dashboards so you can run your business instead of being run by it.">
+
+  <!-- Meta Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'YOUR_PIXEL_ID_PLACEHOLDER');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID_PLACEHOLDER&ev=PageView&noscript=1"/></noscript>
+
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "YOUR_CLARITY_ID_PLACEHOLDER");
+  </script>
+
+  <!-- Schema.org -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "The MarketPlace NZ",
+    "image": "https://themarketplace.co.nz/logo.png",
+    "@id": "https://themarketplace.co.nz",
+    "url": "https://themarketplace.co.nz",
+    "description": "The MarketPlace NZ builds automated business operating systems for Hamilton owner-operators.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Hamilton East",
+      "addressLocality": "Hamilton",
+      "addressRegion": "Waikato",
+      "postalCode": "3216",
+      "addressCountry": "NZ"
+    },
+    "areaServed": ["Hamilton", "Waikato", "New Zealand"],
+    "sameAs": [
+      "https://www.facebook.com/themarketplace.co.nz",
+      "https://www.linkedin.com/company/113267372"
+    ],
+    "founder": {
+      "@type": "Person",
+      "name": "Kurt Onvlee"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="mainHeader">
+    <div class="headerContainer">
+      <div class="logoBlock">
+        <img src="logo.png" alt="The MarketPlace NZ">
+      </div>
+      <div class="actionBlock">
+        <a href="javascript:void(0)" onclick="openPortal()" class="loginLink">Member Login</a>
+        <button onclick="openBooking()" class="actionButton" id="headerCTAButton">Get Started</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO — full viewport, splits Jarvis core canvas on left and copy on right -->
+  <section class="heroSection" aria-label="Hero">
+
+    <h1 class="screenReaderText">
+      The MarketPlace NZ, Business Operating Systems Hamilton. Automated lead intelligence, content production, SOPs, and bespoke dashboards for Hamilton owner-operators.
+    </h1>
+
+    <div class="heroContainer">
+      <!-- Jarvis Core Matrix: pulsating neural grid canvas on the left -->
+      <div class="heroVisualBlock" aria-hidden="true">
+        <canvas id="laptopCanvas" class="laptopCanvas"></canvas>
+      </div>
+
+      <!-- Agency copy and call to actions on the right -->
+      <div class="heroContent">
+        <span class="heroEyebrow">Hamilton, New Zealand</span>
+
+        <h2 class="heroTagline splitText">
+          <span class="gold">Most agencies are chasing the 95%</span> who will never buy from you.
+        </h2>
+
+        <p class="heroSubtext">
+          At any point, roughly 5% of your market is ready to act. We build the system that puts your business in front of them at the exact moment they decide. Not followers. Not impressions. Clients.
+        </p>
+
+        <div class="heroActions">
+          <button onclick="openBooking()" class="primaryHeroButton" id="heroCTAButton">Get Started</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="scrollIndicator" aria-hidden="true"></div>
+  </section>
+
+  <!-- TICKER BAR -->
+  <div class="trustBar" aria-hidden="true">
+    <div class="tickerTrack">
+      <div class="tickerContent">
+        <span class="tickerItem">We don't sell reach. We find ready buyers.</span>
+        <span class="tickerItem">311,397 organic views in 28 days. Zero ad spend.</span>
+        <span class="tickerItem">Your pipeline should not depend on word of mouth alone.</span>
+        <span class="tickerItem">Vanity metrics look great in reports. They don't pay your invoices.</span>
+        <span class="tickerItem">Hamilton-based. Systems-first. Results tracked.</span>
+        <span class="tickerItem">We tell you when something isn't working before you ask.</span>
+        <span class="tickerItem">Only 5% of your market is ready to buy right now. We find them.</span>
+        <span class="tickerItem">No lock-in to us. Lock-in to results.</span>
+        <!-- Duplicate for seamless loop -->
+        <span class="tickerItem">We don't sell reach. We find ready buyers.</span>
+        <span class="tickerItem">311,397 organic views in 28 days. Zero ad spend.</span>
+        <span class="tickerItem">Your pipeline should not depend on word of mouth alone.</span>
+        <span class="tickerItem">Vanity metrics look great in reports. They don't pay your invoices.</span>
+        <span class="tickerItem">Hamilton-based. Systems-first. Results tracked.</span>
+        <span class="tickerItem">We tell you when something isn't working before you ask.</span>
+        <span class="tickerItem">Only 5% of your market is ready to buy right now. We find them.</span>
+        <span class="tickerItem">No lock-in to us. Lock-in to results.</span>
+      </div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- PROOF SECTION -->
+    <section class="proofSection tileSectionBase" id="proofSection" aria-labelledby="proofHeading">
+      <div class="sectionInner">
+        <p class="proofEyebrow" id="proofHeading">Real client. Real numbers. Hamilton, NZ.</p>
+        <div class="proofCard staggerItem">
+          <div class="proofStat">
+            <span class="proofNumber" data-target="311" data-suffix="K+">0</span>
+            <span class="proofLabel">Organic views in 28 days<br><em>Up 207.6% on the month before.</em></span>
+          </div>
+          <div class="proofDivider" aria-hidden="true"></div>
+          <div class="proofStat">
+            <span class="proofNumber" data-target="83" data-suffix="%">0</span>
+            <span class="proofLabel">Views from people who weren't following her yet<br><em>The algorithm found her buyers. Not the other way around.</em></span>
+          </div>
+          <div class="proofDivider" aria-hidden="true"></div>
+          <div class="proofContext">
+            <p>Sopo Fuifui, Harcourts Hamilton. First home buyer specialist. 115,840 unique viewers last month. Facebook-only presence. No website. No ad spend. Ranked top 10 nationally twice in 18 months.</p>
+            <span class="proofNote">This is what a system built around the right audience looks like.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAIN SECTION -->
+    <section class="painSection tileSection" id="painSection" data-dim-target="proofSection" aria-labelledby="painHeading">
+      <div class="sectionInner">
+        <div class="sectionHeader revealOnScroll">
+          <h2 id="painHeading">Sound <span class="gold">familiar?</span></h2>
+          <p class="sectionSub">Most skilled operators in Hamilton are running a great business that is running them into the ground. The work is good. The system needs to support you.</p>
+        </div>
+
+        <div class="painGrid">
+          <div class="painCard staggerItem">
+            <div class="painIcon"></div>
+            <h4>You have no systems</h4>
+            <p>Every lead, every follow-up, every piece of content runs through you personally. If you stop, everything stops. That is not a business. That is a job with no holiday.</p>
+          </div>
+          <div class="painCard staggerItem">
+            <div class="painIcon"></div>
+            <h4>You have no time</h4>
+            <p>You are flat out from 6am to 8pm and the revenue is not growing to match the hours. The problem is not effort. The problem is that the wrong things are taking the most time.</p>
+          </div>
+          <div class="painCard staggerItem">
+            <div class="painIcon"></div>
+            <h4>Your pipeline is unpredictable</h4>
+            <p>Work comes in through referrals and word of mouth. You cannot scale something you cannot predict. You need a pipeline that produces warm, qualified leads on its own.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PILLARS SECTION -->
+    <section class="pillarsSection tileSection" id="pillarsSection" data-dim-target="painSection" aria-labelledby="pillarsHeading">
+      <div class="sectionInner">
+        <div class="sectionHeader revealOnScroll">
+          <h2 id="pillarsHeading" class="splitText">What we <span class="gold">actually build</span></h2>
+          <p class="sectionSub">We are not a marketing agency that runs your social media. We install the operating system your business has been missing since day one.</p>
+        </div>
+
+        <div class="pillarsGrid">
+          <div class="pillarCard staggerItem">
+            <div class="pillarNumber" aria-hidden="true">01</div>
+            <h4>Automated Lead Intelligence</h4>
+            <p>Before we ever sit down with a prospect, we already know who they are, what their competitors are doing, and where the gaps are. Deep research runs automatically the moment someone fills in your form. You walk into every meeting prepared, not cold.</p>
+          </div>
+          <div class="pillarCard staggerItem">
+            <div class="pillarNumber" aria-hidden="true">02</div>
+            <h4>Content That Reaches the 5%</h4>
+            <p>Your market is scrolling before they ever search Google. We position your content in front of the people already looking for what you do — scripted, filmed, posted, and tracked every month. What gets traction, we double down on. What doesn't, we cut. No guesswork, no reports full of numbers that mean nothing to your bank account.</p>
+          </div>
+          <div class="pillarCard staggerItem">
+            <div class="pillarNumber" aria-hidden="true">03</div>
+            <h4>Your Business Operating System</h4>
+            <p>A bespoke dashboard that shows your entire business at a glance. Automated SOPs that handle follow-ups, onboarding, and lead management. Every meeting transcribed with actionables. Every call logged. Nothing missed, nothing dropped.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS — sticky scroll slider -->
+    <section class="howSection tileSection" id="howSection" data-dim-target="pillarsSection" aria-labelledby="howHeading"
+      style="height:400vh;">
+      <div class="howStickyWrap">
+        <div class="sectionHeader" style="margin-bottom:48px;">
+          <h2 id="howHeading">How it <span class="gold">works</span></h2>
+          <p class="sectionSub">From the moment you click Get Started, the machine is already running.</p>
+        </div>
+
+        <div class="howSliderContainer">
+          <div class="howSlide" data-step="0">
+            <div class="howStepNum" aria-hidden="true">1</div>
+            <div class="howStepContent">
+              <h4>You click Get Started</h4>
+              <p>Fill in your details. From that moment, our automated system begins deep research into your business, your competitors, and your current public presence. Before we meet, we already know your landscape.</p>
+            </div>
+          </div>
+
+          <div class="howSlide" data-step="1">
+            <div class="howStepNum" aria-hidden="true">2</div>
+            <div class="howStepContent">
+              <h4>We meet. Zoom or coffee, your choice.</h4>
+              <p>Every call is recorded and transcribed automatically. An AI summary with actionables is generated and stored in your profile the moment we hang up. Nothing lives in a notebook that gets lost.</p>
+            </div>
+          </div>
+
+          <div class="howSlide" data-step="2">
+            <div class="howStepNum" aria-hidden="true">3</div>
+            <div class="howStepContent">
+              <h4>We build your machine</h4>
+              <p>Website rebuilt as a funnel. Content pipeline researched, scripted, filmed, edited, and posted. Operating system built and handed to you. Your dashboard goes live. Your social media becomes a lead engine, not a chore.</p>
+            </div>
+          </div>
+
+          <div class="howSlide" data-step="3">
+            <div class="howStepNum" aria-hidden="true">4</div>
+            <div class="howStepContent">
+              <h4>We track, iterate, and grow</h4>
+              <p>We analyse everything. What gets traction, we double down on. What does not work, we cut and replace. We are honest about both. Once organic traffic is producing real results, we layer in Meta ads to amplify what is already working.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="howProgress">
+          <div class="howDots" aria-hidden="true">
+            <span class="hwDot active"></span>
+            <span class="hwDot"></span>
+            <span class="hwDot"></span>
+            <span class="hwDot"></span>
+          </div>
+          <div class="howProgressBar">
+            <div class="howProgressFill" id="howProgressFill"></div>
+          </div>
+          <span class="howScrollHint">Keep scrolling</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHO THIS IS FOR — horizontal accordion -->
+    <section class="audienceSection tileSection" id="audienceSection" data-dim-target="howSection" aria-labelledby="audienceHeading">
+      <div class="sectionInner">
+        <div class="sectionHeader revealOnScroll">
+          <h2 id="audienceHeading" class="splitText">Who this is <span class="gold">for</span></h2>
+          <p class="sectionSub">We work with a specific type of person. Hover each card to see if you recognise yourself.</p>
+        </div>
+
+        <div class="audienceAccordion" id="audienceAccordion">
+
+          <div class="accCard staggerItem" tabindex="0" id="acc1">
+            <span class="accVertLabel">Time-poor</span>
+            <div class="accBody">
+              <h4>The bottleneck operator</h4>
+              <p>You run a high-margin service business in Hamilton and you are the main constraint in your own growth. Everything requires your sign-off. Everything waits for you.</p>
+            </div>
+          </div>
+
+          <div class="accCard staggerItem" tabindex="0" id="acc2">
+            <span class="accVertLabel">Growth-minded</span>
+            <div class="accBody">
+              <h4>The long-game thinker</h4>
+              <p>You understand that marketing is a tool, not a quick-fix. You want warm leads who are ready to buy, not vanity reach numbers that mean nothing to your bank account.</p>
+            </div>
+          </div>
+
+          <div class="accCard staggerItem" tabindex="0" id="acc3">
+            <span class="accVertLabel">No systems</span>
+            <div class="accBody">
+              <h4>The gut-feel operator</h4>
+              <p>You have no SOPs, no automation, and no system. Your business runs on gut feel and goodwill. It works now. It will not when you try to scale it.</p>
+            </div>
+          </div>
+
+          <div class="accCard staggerItem" tabindex="0" id="acc4">
+            <span class="accVertLabel">Always busy</span>
+            <div class="accBody">
+              <h4>The productive-looking but stuck</h4>
+              <p>You are tired of being busy but not moving forward. Most of your week is spent on things that feel urgent but do not move the needle. That changes with systems.</p>
+            </div>
+          </div>
+
+          <div class="accCard staggerItem" tabindex="0" id="acc5">
+            <span class="accVertLabel">Partnership</span>
+            <div class="accBody">
+              <h4>The relationship-over-vendor seeker</h4>
+              <p>You want a long-term partner, not another supplier who sends a monthly report full of numbers that mean nothing to your bottom line. We treat your business like our own.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- VALUES -->
+    <section class="valuesSection tileSection" id="valuesSection" data-dim-target="audienceSection" aria-labelledby="valuesHeading">
+      <div class="sectionInner">
+        <div class="sectionHeader revealOnScroll">
+          <h2 id="valuesHeading">How we <span class="gold">operate</span></h2>
+          <p class="sectionSub">A few things you should know before we work together.</p>
+        </div>
+
+        <div class="valuesGrid">
+          <div class="valueCard staggerItem">
+            <p><strong>We start with organic.</strong> No Meta ads in the first two months. We learn what works on your specific audience before we put money behind it. That way your ad spend works from day one instead of burning while we figure it out.</p>
+          </div>
+          <div class="valueCard staggerItem">
+            <p><strong>We tell you when something bombs.</strong> If a video falls flat, you will hear it from us first, with a clear reason and a plan to fix it. We are not here to make the numbers look good. We are here to make your business grow.</p>
+          </div>
+          <div class="valueCard staggerItem">
+            <p><strong>We do not show you vanity metrics.</strong> Reach, impressions, and follower counts are not success. Leads booked, calls converted, and revenue generated are the only numbers that matter. That is what we track.</p>
+          </div>
+          <div class="valueCard staggerItem">
+            <p><strong>We are building a relationship, not filling a contract.</strong> We want to understand your business well enough to see opportunities you cannot see from the inside. The people who get the most value treat us like a business partner, not a supplier.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="finalCTASection tileSection revealOnScroll" id="finalCTA" data-dim-target="valuesSection" aria-labelledby="finalCTAHeading">
+      <div class="finalCTAInner">
+        <h2 id="finalCTAHeading" class="splitText">Ready to stop being the <span class="gold">bottleneck?</span></h2>
+        <p class="sectionSub" style="margin-bottom:44px;">Book a free strategy call. We will look at your current setup, identify exactly where the gaps are, and tell you honestly whether we can help.</p>
+        <div class="heroActions">
+          <button onclick="openBooking()" class="primaryHeroButton" id="finalCTAButton">Get Started</button>
+        </div>
+        <span class="finalCTANote">No commitment. Just a conversation.</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mainFooter">
+    <div class="footerInner" style="max-width:1100px;margin:0 auto;">
+      <img src="logo.png" alt="The MarketPlace NZ" class="footerLogo">
+      <p class="footerCopyright">
+        &copy; 2026 The MarketPlace NZ. All rights reserved.<br>
+        Hamilton East, Hamilton, Waikato, New Zealand.
+      </p>
+      <p class="footerTagline">Found. Chosen. Growth.</p>
+    </div>
+  </footer>
+
+  <!-- BOOKING MODAL -->
+  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Book a strategy call">
+    <div class="bookingModal">
+      <button onclick="closeBooking()" class="closeModalButton" aria-label="Close">&times;</button>
+      <div class="bookingModalContent">
+        <div class="modalStepDots" id="modalStepDots" aria-hidden="true">
+          <div class="modalStepDot active" id="dot1"></div>
+          <div class="modalStepDot" id="dot2"></div>
+          <div class="modalStepDot" id="dot3"></div>
+        </div>
+
+        <div class="modalStep" id="modalStep1">
+          <h3>Book your strategy call</h3>
+          <p>Simple. Your details, your business, your time.</p>
+          <div class="formGroup">
+            <label for="leadName">Your Name</label>
+            <input type="text" id="leadName" autocomplete="name" placeholder="Your full name" class="formInput">
+          </div>
+          <div class="formGroup">
+            <label for="leadEmail">Your Email</label>
+            <input type="email" id="leadEmail" autocomplete="email" placeholder="Your best email" class="formInput">
+          </div>
+          <button onclick="nextStep(2)" class="modalNextButton">Continue</button>
+        </div>
+
+        <div class="modalStep" id="modalStep2" style="display:none;">
+          <h3>About your business</h3>
+          <p>A quick look at your setup lets us prepare before we speak.</p>
+          <div class="formGroup">
+            <label for="leadCompany">Business Name</label>
+            <input type="text" id="leadCompany" autocomplete="organization" placeholder="Your business name" class="formInput">
+          </div>
+          <div class="formGroup">
+            <label for="leadUrl">Website (optional)</label>
+            <input type="url" id="leadUrl" placeholder="https://yourbusiness.co.nz" class="formInput">
+          </div>
+          <button onclick="nextStep(3)" class="modalNextButton">Select a Time</button>
+        </div>
+
+        <div class="modalStep" id="modalStep3" style="display:none;">
+          <h3>Pick your slot</h3>
+          <p>Three days open at a time. Select a day and time below.</p>
+          <div class="calendarWidget">
+            <div class="calendarDaysRow" id="calendarDaysRow"></div>
+            <div class="calendarSlotsGrid" id="calendarSlotsGrid"></div>
+          </div>
+          <input type="hidden" id="selectedBookingDate" value="">
+          <input type="hidden" id="selectedBookingTime" value="">
+          <button onclick="submitBooking()" class="modalSubmitButton" id="confirmBookingBtn">Confirm My Call</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div class="modalOverlay" id="loginModalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Member login">
+    <div class="loginModal">
+      <button onclick="closeLoginModal()" class="closeModalButton" aria-label="Close">&times;</button>
+      <h2>Member Access</h2>
+      <div class="loginGoldLine"></div>
+      <p>Enter your passcode to access your client workspace.</p>
+      <div class="formGroup">
+        <label for="memberPasscode">Passcode</label>
+        <input type="password" id="memberPasscode" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" class="formInput" onkeydown="handleLoginKey(event)">
+      </div>
+      <button onclick="submitMemberLogin()" class="loginVerifyButton">Verify</button>
+      <div class="loginError" id="loginError">Invalid passcode. Please try again.</div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
