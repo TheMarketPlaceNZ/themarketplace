@@ -1550,23 +1550,11 @@ h4, h5 {
   align-self: center;
 }
 
-.proofContext {
-  flex: 1.2;
-  min-width: 220px;
-  padding: 0 32px;
-  text-align: left;
-}
-
-.proofContext p {
-  font-size: 15px;
-  color: var(--greyText);
-  line-height: 1.8;
-  margin-bottom: 14px;
-}
-
-.proofNote {
-  display: inline-block;
-  font-size: 12px;
+.proofBottomNote {
+  width: 100%;
+  text-align: center;
+  margin-top: 44px;
+  font-size: 13px;
   color: var(--gold);
   letter-spacing: 0.5px;
   opacity: 0.75;
@@ -1584,7 +1572,7 @@ h4, h5 {
     height: 1px;
   }
   .proofStat { padding: 0; }
-  .proofContext { padding: 0; text-align: center; }
+  .proofBottomNote { margin-top: 12px; }
 }
 
 /* ============================================================
