@@ -281,7 +281,6 @@ function initMagneticButtons() {
    ============================================================ */
 function initMouseSpotlight() {
   const spotlightSections = [
-    document.querySelector('.heroSection'),
     document.querySelector('.finalCTASection')
   ].filter(Boolean);
 

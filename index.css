@@ -1622,8 +1622,6 @@ h4, h5 {
   z-index: 1;
   overflow: hidden;
   pointer-events: none;
-  -webkit-mask-image: radial-gradient(circle 900px at var(--mx) var(--my), rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 85%);
-  mask-image: radial-gradient(circle 900px at var(--mx) var(--my), rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 85%);
 }
 
 .heroVideoBg video {
