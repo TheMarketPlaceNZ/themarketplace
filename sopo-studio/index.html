@@ -2451,7 +2451,6 @@ function renderLeads() {
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); sendBookingReminder(${appState.leads.indexOf(l)})">SMS</button>
         <button class="lead-act-btn" onclick="event.stopPropagation(); pushLead(${appState.leads.indexOf(l)})" title="Manually push to Pre-Broker" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Push</button>
-        <button class="lead-act-btn" onclick="event.stopPropagation(); openShareLinkModal(${appState.leads.indexOf(l)})" title="Email the booking link to a third party" style="background: rgba(59,130,246,0.15); color: #3B82F6; border: 1px solid rgba(59,130,246,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Share</button>
         <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
       </div>
     </div>
@@ -3218,19 +3217,24 @@ function openLeadDetail(idx) {
               </div>
             </div>
             ${l.meetingType?.toLowerCase() === 'zoom' ? `
-              <div style="display:flex; align-items:center; gap:10px;">
-                <a id="zoomJoinBtn" href="${l.zoomStartUrl || l.zoomLink || '#'}" target="${(l.zoomStartUrl || l.zoomLink) ? '_blank' : '_self'}" onclick="event.stopPropagation();" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:12px; padding:12px 20px; text-decoration:none; cursor:pointer;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>
-                  <span style="font-size:14px; font-weight:700; color:#60A5FA;">Join Zoom</span>
-                </a>
-                <button onclick="event.stopPropagation(); confirmNewZoomLink(${appState.leads.indexOf(l)})" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px 16px; cursor:pointer; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:0.5px; white-space:nowrap;">
-                  🔄 New Link
-                </button>
-              </div>
-              <div style="margin-top:10px;">
-                <button onclick="event.stopPropagation(); openRescheduleModal(${appState.leads.indexOf(l)})" style="width:100%; background:rgba(201,169,110,0.1); border:1px solid rgba(201,169,110,0.35); border-radius:12px; padding:11px 16px; cursor:pointer; color:var(--gold); font-size:12px; font-weight:700; letter-spacing:0.5px;">
-                  📅 Reschedule
-                </button>
+              <div style="display:flex; gap:10px;">
+                <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+                  <a id="zoomJoinBtn" href="${l.zoomStartUrl || l.zoomLink || '#'}" target="${(l.zoomStartUrl || l.zoomLink) ? '_blank' : '_self'}" onclick="event.stopPropagation();" style="display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:12px; padding:12px 20px; text-decoration:none; cursor:pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>
+                    <span style="font-size:14px; font-weight:700; color:#60A5FA;">Join Zoom</span>
+                  </a>
+                  <button onclick="event.stopPropagation(); openRescheduleModal(${appState.leads.indexOf(l)})" style="width:100%; background:rgba(201,169,110,0.1); border:1px solid rgba(201,169,110,0.35); border-radius:12px; padding:11px 16px; cursor:pointer; color:var(--gold); font-size:12px; font-weight:700; letter-spacing:0.5px;">
+                    📅 Reschedule
+                  </button>
+                </div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+                  <button onclick="event.stopPropagation(); confirmNewZoomLink(${appState.leads.indexOf(l)})" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px 16px; cursor:pointer; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:0.5px; white-space:nowrap;">
+                    🔄 New Link
+                  </button>
+                  <button onclick="event.stopPropagation(); openShareLinkModal(${appState.leads.indexOf(l)})" style="width:100%; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:11px 16px; cursor:pointer; color:#3B82F6; font-size:12px; font-weight:700; letter-spacing:0.5px;">
+                    📤 Share
+                  </button>
+                </div>
               </div>
             ` : ''}
           </div>
