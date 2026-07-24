@@ -1324,6 +1324,27 @@ body {
   </div>
 </div>
 
+<!-- SHARE BOOKING LINK MODAL (added 24 Jul 2026) -->
+<div class="modal-overlay" id="shareLinkModal">
+  <div class="modal-sheet" style="max-width: 420px;">
+    <button class="modal-close-x" onclick="closeModal('shareLinkModal')">&times;</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Share Booking Link</div>
+    <input type="hidden" id="shareLinkLeadIdx">
+    <div class="settings-row">
+      <div class="settings-label">Send To (Email)</div>
+      <input class="settings-input" id="shareLinkEmail" type="email" placeholder="e.g. buyer@example.com">
+      <div class="settings-hint">Defaults to the lead's own email if on file. Change it to send to a third party (partner, family, referral) instead.</div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Regarding</div>
+      <input class="settings-input" id="shareLinkLeadName" disabled style="opacity:0.7;">
+    </div>
+    <button class="btn btn-gold full" id="shareLinkSendBtn" onclick="sendShareLink()">Send Link</button>
+    <button class="btn btn-ghost full" onclick="closeModal('shareLinkModal')" style="margin-top:10px;">Cancel</button>
+  </div>
+</div>
+
 <!-- VOICE AGENT CALL MODAL -->
 <div class="modal-overlay" id="voiceCallModal">
   <div class="modal-sheet" style="max-width: 400px; text-align: center;">
@@ -2072,7 +2093,19 @@ async function deleteLeadPermanently(idx) {
       return;
     }
   }
-  
+
+  // 24 Jul 2026 fix: the very next autopoll (see airtablePollInterval) calls
+  // syncLeads(), which rebuilds appState.leads purely from whatever Airtable
+  // currently reports. If the delete above is slow, rate-limited, or the
+  // Make.com proxy's delete route silently no-ops, Airtable still has the
+  // record, syncLeads() finds no local match for it (we're about to splice
+  // it out below) and re-adds it fresh, which is exactly the "delete then it
+  // comes back" symptom. Flag the airtableId as deliberately deleted so
+  // syncLeads() can filter it out of every future poll, same pattern as
+  // unsavedNoteIds guards notes from being overwritten.
+  if (!appState.deletedLeadIds) appState.deletedLeadIds = new Set();
+  if (l.airtableId) appState.deletedLeadIds.add(l.airtableId);
+
   appState.leads.splice(idx, 1);
   saveState();
   closeLeadModal();
@@ -2418,6 +2451,7 @@ function renderLeads() {
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); sendBookingReminder(${appState.leads.indexOf(l)})">SMS</button>
         <button class="lead-act-btn" onclick="event.stopPropagation(); pushLead(${appState.leads.indexOf(l)})" title="Manually push to Pre-Broker" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Push</button>
+        <button class="lead-act-btn" onclick="event.stopPropagation(); openShareLinkModal(${appState.leads.indexOf(l)})" title="Email the booking link to a third party" style="background: rgba(59,130,246,0.15); color: #3B82F6; border: 1px solid rgba(59,130,246,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Share</button>
         <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
       </div>
     </div>
@@ -2425,6 +2459,56 @@ function renderLeads() {
 }
 
 function callLead(phone) { if (phone) window.location.href = 'tel:' + phone; }
+
+// 24 Jul 2026: share-booking-link-by-email feature. Prompts for a recipient
+// (third party or the lead themselves), then posts to the dedicated Make.com
+// webhook (Sopo Share Booking Link scenario), which sends the email server-side
+// via the same account used by the resend-confirmation flow. Keeps no API key
+// or SMTP credential in this file, same pattern as airtableProxyCall.
+const SHARE_LINK_WEBHOOK_URL = 'https://hook.us2.make.com/9f6ea13v03c2r45ppxifa15wgiuw8aj0';
+const SOPO_BOOKING_LINK = 'https://www.themarketplace.co.nz/sopo-studio/book_meeting.html';
+
+function openShareLinkModal(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  document.getElementById('shareLinkLeadIdx').value = idx;
+  document.getElementById('shareLinkEmail').value = l.email || '';
+  document.getElementById('shareLinkLeadName').value = l.name || 'Unknown';
+  document.getElementById('shareLinkSendBtn').textContent = 'Send Link';
+  document.getElementById('shareLinkSendBtn').disabled = false;
+  document.getElementById('shareLinkModal').classList.add('open');
+}
+
+async function sendShareLink() {
+  const idx = parseInt(document.getElementById('shareLinkLeadIdx').value, 10);
+  const l = appState.leads[idx];
+  const email = document.getElementById('shareLinkEmail').value.trim();
+  if (!email || !email.includes('@')) {
+    alert('Enter a valid email address to send the booking link to.');
+    return;
+  }
+  const btn = document.getElementById('shareLinkSendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  try {
+    const res = await fetch(SHARE_LINK_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientEmail: email,
+        leadName: l ? l.name : '',
+        bookingLink: SOPO_BOOKING_LINK
+      })
+    });
+    if (!res.ok) throw new Error('non-200 from share webhook');
+    btn.textContent = 'Sent!';
+    setTimeout(() => { document.getElementById('shareLinkModal').classList.remove('open'); }, 900);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Send Link';
+    alert('Could not send the link right now. Please try again in a moment.');
+  }
+}
 
 // ===== SMS EVERYONE INTEGRATION =====
 function formatNZPhoneForSMS(raw) {
@@ -2653,9 +2737,13 @@ async function rsLoadAvailableSlots() {
   const now = new Date();
   const cutoff = new Date(now.getTime() + 60 * 60 * 1000); // 1hr lead time, Sopo booking herself
   try {
-    const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=status%3D%22Available%22&sort%5B0%5D%5Bfield%5D=slot_date&sort%5B0%5D%5Bdirection%5D=asc`;
-    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` } });
-    const data = await res.json();
+    // 24 Jul 2026 fix: this used to hit Airtable directly with AIRTABLE_API_KEY,
+    // which has been an intentionally empty meta tag since the session 7 PAT
+    // redaction. That silently 401'd every time, so the modal opened but never
+    // showed a single date, the actual cause behind "the reschedule button
+    // doesn't work." Routed through the Sopo Airtable Proxy's new get_slots
+    // route instead, same secure pattern every other write in this file uses.
+    const data = await airtableProxyCall('get_slots');
 
     rsSlotsByDate = {};
     (data.records || []).forEach(record => {
@@ -2804,12 +2892,10 @@ async function confirmReschedule() {
     });
     if (!resp.ok) throw new Error('Webhook returned ' + resp.status);
 
-    // Mark the newly chosen slot Booked directly too, same convention as book_meeting.html
-    fetch(`https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tbljkZglwG1Sf32gP/${rsSelectedSlotId}`, {
-      method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { status: 'Booked', booked_by: l.name } })
-    }).catch(() => {});
+    // Mark the newly chosen slot Booked directly too, same convention as book_meeting.html.
+    // 24 Jul 2026 fix: routed through the proxy's new book_slot route instead of
+    // the raw (empty) AIRTABLE_API_KEY, same reasoning as rsLoadAvailableSlots above.
+    airtableProxyCall('book_slot', { recordId: rsSelectedSlotId, fields: { status: 'Booked', booked_by: l.name } }).catch(() => {});
 
     appState.leads[idx].bookingTime = newBookingTime;
     saveState();
@@ -3563,7 +3649,14 @@ async function syncLeads(silent = false) {
       if (!res.ok) throw new Error(`Airtable API error: ${res.status}`);
       data = await res.json();
     }
-    const records = data.records || [];
+    let records = data.records || [];
+
+    // 24 Jul 2026 fix: never let a lead flagged as deliberately deleted
+    // (see deleteLeadPermanently) get resurrected by this poll just because
+    // Airtable still shows the record.
+    if (appState.deletedLeadIds && appState.deletedLeadIds.size) {
+      records = records.filter(r => !appState.deletedLeadIds.has(r.id));
+    }
 
     // Convert records to lead objects
     const freshLeads = records.map(atRecordToLead);
