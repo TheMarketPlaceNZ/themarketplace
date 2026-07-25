@@ -2897,7 +2897,22 @@ async function confirmReschedule() {
   confirmBtn.textContent = 'Rescheduling…';
   confirmBtn.disabled = true;
 
-  const newBookingTime = new Date(`${rsSelectedDate}T${rsSelectedTime24}:00`).toISOString();
+  // 25 Jul 2026 fix (Session 37) — the off-by-one-day bug.
+  // `new Date("2026-08-06T09:00:00")` has no zone suffix, so the browser reads
+  // it as local NZ wall time (correct), and .toISOString() then converts it to
+  // UTC: "2026-08-05T21:00:00.000Z". That is the right INSTANT, and Airtable and
+  // Zoom both need it in that form. But Make was parsing it with an explicit
+  // format string, parseDate(bookingTime; "YYYY-MM-DDTHH:mm:ss"; "Pacific/Auckland"),
+  // which consumes only the literal characters, throws the Z away, and then
+  // asserts those digits are Auckland wall time — turning 6 Aug 9:00am into
+  // 5 Aug 9:00pm. Hence "SMS said 5 August, Airtable said 6 August".
+  // Fix: keep sending the true UTC instant as bookingTime for Airtable/Zoom, and
+  // send the naive local wall-time string separately as bookingLocal purely for
+  // Make to format human-facing text from. Every parseDate in scenario 5342077
+  // now reads bookingLocal, where "YYYY-MM-DDTHH:mm:ss" + Pacific/Auckland is
+  // exactly the right interpretation.
+  const newBookingLocal = `${rsSelectedDate}T${rsSelectedTime24}:00`;
+  const newBookingTime = new Date(newBookingLocal).toISOString();
 
   try {
     // Same webhook that handles first-time bookings — it finds this lead's
@@ -2910,16 +2925,24 @@ async function confirmReschedule() {
         email: l.email,
         bookingDate: rsSelectedDate,
         bookingTime: newBookingTime,
+        bookingLocal: newBookingLocal,
+        // 25 Jul 2026 fix (Session 37): send the chosen slot's own record id.
+        // Make used to re-find this slot by string-matching a formatted date and
+        // time, using the corrupted parse above, so it was hunting for a slot on
+        // the wrong day. Booking by record id removes the guesswork entirely.
+        slotId: rsSelectedSlotId,
         meetingType: l.meetingType || 'zoom',
         source: 'Studio Reschedule'
       })
     });
     if (!resp.ok) throw new Error('Webhook returned ' + resp.status);
 
-    // Mark the newly chosen slot Booked directly too, same convention as book_meeting.html.
-    // 24 Jul 2026 fix: routed through the proxy's new book_slot route instead of
-    // the raw (empty) AIRTABLE_API_KEY, same reasoning as rsLoadAvailableSlots above.
-    airtableProxyCall('book_slot', { recordId: rsSelectedSlotId, fields: { status: 'Booked', booked_by: l.name } }).catch(() => {});
+    // 25 Jul 2026 fix (Session 37): the direct book_slot call that used to sit
+    // here has been removed. The front end and Make were both booking the new
+    // slot independently — the front end by record id (correct) and Make by
+    // fuzzy date match (wrong day), which is how two slots ended up Booked
+    // against one lead. Make now owns the booking, by the slotId sent above.
+    // One writer, one source of truth.
 
     appState.leads[idx].bookingTime = newBookingTime;
     saveState();
