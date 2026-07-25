@@ -1719,7 +1719,20 @@ let appState = {
   tasks: [],
   dustbin: [], // Holds deleted items: { id, deletedAt, type, data }
   calendarBlocks: [],
-  currentFilter: 'all'
+  currentFilter: 'all',
+  // 25 Jul 2026 fix (Session 37): these two were previously created lazily as
+  // JavaScript Sets the first time a delete or a failed note write happened.
+  // saveState() serialises appState with JSON.stringify, and a Set stringifies
+  // to {} — so on the next page load loadState() spread a plain empty OBJECT
+  // back in. That object is truthy, so `if (!appState.deletedLeadIds) ... = new Set()`
+  // never replaced it, and the next `.add()` threw "not a function", killing
+  // the delete function mid-flight before the lead was ever spliced out. That
+  // is the real reason a deleted lead kept reappearing after a refresh even
+  // with the Session 35 guard in place. They are plain arrays now: uglier than
+  // a Set, but they survive localStorage, which is the only property that
+  // actually matters here. Declared up front so they always exist.
+  deletedLeadIds: [],   // airtableIds deliberately deleted — syncLeads must never resurrect these
+  unsavedNoteIds: []    // airtableIds whose note write failed — syncLeads must not overwrite these locally
 };
 let currentLeadIndex = null;
 
@@ -1751,6 +1764,15 @@ function loadState() {
       }
     }
   } catch(e) {}
+
+  // 25 Jul 2026 fix (Session 37): repair state saved by any build before this
+  // one. Those saves contain deletedLeadIds / unsavedNoteIds as {} (a Set that
+  // went through JSON.stringify), which is truthy and has no .push/.includes.
+  // Coerce anything that is not already an array back to an empty array so a
+  // returning browser heals itself on first load instead of throwing.
+  ['deletedLeadIds', 'unsavedNoteIds'].forEach(k => {
+    if (!Array.isArray(appState[k])) appState[k] = [];
+  });
 
   // Always reset filter to 'all' on load — never persist tab selection across sessions.
   appState.currentFilter = 'all';
@@ -2103,8 +2125,10 @@ async function deleteLeadPermanently(idx) {
   // comes back" symptom. Flag the airtableId as deliberately deleted so
   // syncLeads() can filter it out of every future poll, same pattern as
   // unsavedNoteIds guards notes from being overwritten.
-  if (!appState.deletedLeadIds) appState.deletedLeadIds = new Set();
-  if (l.airtableId) appState.deletedLeadIds.add(l.airtableId);
+  if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
+  if (l.airtableId && !appState.deletedLeadIds.includes(l.airtableId)) {
+    appState.deletedLeadIds.push(l.airtableId);
+  }
 
   appState.leads.splice(idx, 1);
   saveState();
@@ -3505,7 +3529,9 @@ async function writeLifecycleLogToAirtable(airtableId, log, isRetry = false) {
     }
     // Success: clear any earlier "unsaved" flag for this lead so syncLeads()
     // is safe to overwrite it again.
-    if (appState.unsavedNoteIds) appState.unsavedNoteIds.delete(airtableId);
+    if (Array.isArray(appState.unsavedNoteIds)) {
+      appState.unsavedNoteIds = appState.unsavedNoteIds.filter(id => id !== airtableId);
+    }
   } catch(e) {
     console.warn('Airtable lifecycle log write failed:', e.message);
     if (!isRetry) {
@@ -3517,8 +3543,10 @@ async function writeLifecycleLogToAirtable(airtableId, log, isRetry = false) {
     // Flag it so syncLeads() knows not to silently overwrite this lead's
     // local (unsaved) note with stale Airtable data, and tell Sopo so she
     // can retry the note herself.
-    if (!appState.unsavedNoteIds) appState.unsavedNoteIds = new Set();
-    appState.unsavedNoteIds.add(airtableId);
+    if (!Array.isArray(appState.unsavedNoteIds)) appState.unsavedNoteIds = [];
+    if (!appState.unsavedNoteIds.includes(airtableId)) {
+      appState.unsavedNoteIds.push(airtableId);
+    }
     if (typeof showErrorToast === 'function') {
       showErrorToast('⚠️ Note failed to save, try again');
     } else {
@@ -3615,14 +3643,18 @@ async function writeNotesToAirtable(airtableId, notes, isRetry = false) {
       });
       if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
     }
-    if (appState.unsavedNoteIds) appState.unsavedNoteIds.delete(airtableId);
+    if (Array.isArray(appState.unsavedNoteIds)) {
+      appState.unsavedNoteIds = appState.unsavedNoteIds.filter(id => id !== airtableId);
+    }
   } catch(e) {
     console.warn('Airtable notes write failed:', e.message);
     if (!isRetry) {
       return writeNotesToAirtable(airtableId, notes, true);
     }
-    if (!appState.unsavedNoteIds) appState.unsavedNoteIds = new Set();
-    appState.unsavedNoteIds.add(airtableId);
+    if (!Array.isArray(appState.unsavedNoteIds)) appState.unsavedNoteIds = [];
+    if (!appState.unsavedNoteIds.includes(airtableId)) {
+      appState.unsavedNoteIds.push(airtableId);
+    }
     if (typeof showErrorToast === 'function') {
       showErrorToast('⚠️ Note failed to save, try again');
     } else {
@@ -3659,8 +3691,8 @@ async function syncLeads(silent = false) {
     // 24 Jul 2026 fix: never let a lead flagged as deliberately deleted
     // (see deleteLeadPermanently) get resurrected by this poll just because
     // Airtable still shows the record.
-    if (appState.deletedLeadIds && appState.deletedLeadIds.size) {
-      records = records.filter(r => !appState.deletedLeadIds.has(r.id));
+    if (Array.isArray(appState.deletedLeadIds) && appState.deletedLeadIds.length) {
+      records = records.filter(r => !appState.deletedLeadIds.includes(r.id));
     }
 
     // Convert records to lead objects
@@ -3681,8 +3713,8 @@ async function syncLeads(silent = false) {
         // here instead of letting ...fresh below silently overwrite it,
         // otherwise this sync is exactly what makes a just-added note
         // "vanish" on refresh.
-        const hasUnsavedNote = appState.unsavedNoteIds && existing.airtableId &&
-          appState.unsavedNoteIds.has(existing.airtableId);
+        const hasUnsavedNote = Array.isArray(appState.unsavedNoteIds) && existing.airtableId &&
+          appState.unsavedNoteIds.includes(existing.airtableId);
         return {
           ...fresh,
           lifecycleLog: hasUnsavedNote ? existing.lifecycleLog : fresh.lifecycleLog,
@@ -4928,8 +4960,10 @@ function moveLeadToDustbin(idx) {
   // reappearing" bug. Same deletedLeadIds guard deleteLeadPermanently uses;
   // restoreDustbinItem removes it again so a restored lead resyncs normally.
   if (l.airtableId) {
-    if (!appState.deletedLeadIds) appState.deletedLeadIds = new Set();
-    appState.deletedLeadIds.add(l.airtableId);
+    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
+    if (!appState.deletedLeadIds.includes(l.airtableId)) {
+      appState.deletedLeadIds.push(l.airtableId);
+    }
   }
 
   appState.leads.splice(idx, 1);
@@ -5039,8 +5073,8 @@ function restoreDustbinItem(idx) {
       }
     }
     // Lift the syncLeads() guard so this lead resyncs normally again
-    if (appState.deletedLeadIds && item.data.airtableId) {
-      appState.deletedLeadIds.delete(item.data.airtableId);
+    if (Array.isArray(appState.deletedLeadIds) && item.data.airtableId) {
+      appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== item.data.airtableId);
     }
   } else if (item.type === 'meeting') {
     appState.meetings.unshift(item.data);
@@ -5075,18 +5109,39 @@ async function deleteDustbinPermanently(idx) {
   // This is now the one true final delete: revert the slot to Available,
   // cancel the Zoom meeting, then delete the Airtable Lead record itself.
   if (item.type === 'lead' && item.data && item.data.airtableId) {
+    const atId = item.data.airtableId;
+
+    // 25 Jul 2026 fix (Session 37): the guard used to be set AFTER the await.
+    // If Make took a few seconds, an autopoll fired mid-flight, found the
+    // still-present Airtable record, matched nothing in appState.leads (the
+    // lead lives in the dustbin, not the lead list) and resurrected it — the
+    // lead then existed in both places at once. Flag it BEFORE the call so no
+    // poll during the round trip can bring it back, and roll the flag back in
+    // the catch so a genuine failure leaves state exactly as it was.
+    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
+    const guardWasAlreadySet = appState.deletedLeadIds.includes(atId);
+    if (!guardWasAlreadySet) appState.deletedLeadIds.push(atId);
+    saveState();
+
     try {
+      // zoomMeetingId is sent as an advisory hint only. The delete_lead_full
+      // route reads zoom_meeting_id off the live Lead record server side
+      // before deleting it, because this dustbin entry is a local snapshot
+      // frozen at the moment the lead was binned and its Zoom id may be stale
+      // (e.g. a New Zoom Link was issued afterwards).
       await airtableProxyCall('delete_lead_full', {
-        recordId: item.data.airtableId,
+        recordId: atId,
         zoomMeetingId: item.data.zoomMeetingId || ''
       });
     } catch(e) {
       console.warn('Permanent delete (Airtable/slot/Zoom) failed:', e.message);
+      if (!guardWasAlreadySet) {
+        appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== atId);
+      }
+      saveState();
       alert('Could not fully delete this lead from Airtable, please check your connection and try again. Nothing has been removed locally.');
       return;
     }
-    if (!appState.deletedLeadIds) appState.deletedLeadIds = new Set();
-    appState.deletedLeadIds.add(item.data.airtableId);
   }
 
   appState.dustbin.splice(idx, 1);
