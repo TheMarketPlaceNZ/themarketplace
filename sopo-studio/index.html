@@ -2496,7 +2496,8 @@ async function sendShareLink() {
       body: JSON.stringify({
         recipientEmail: email,
         leadName: l ? l.name : '',
-        bookingLink: SOPO_BOOKING_LINK
+        bookingLink: SOPO_BOOKING_LINK,
+        zoomLink: l ? (l.zoomLink || '') : ''
       })
     });
     if (!res.ok) throw new Error('non-200 from share webhook');
@@ -4911,15 +4912,26 @@ function moveLeadToDustbin(idx) {
   };
   
   appState.dustbin.push(dustbinItem);
-  
+
   // Track in local deleted blocklist
   if (!appState.deletedLeads) appState.deletedLeads = [];
   if (l.email) appState.deletedLeads.push(l.email.toLowerCase());
   if (l.phone) appState.deletedLeads.push(l.phone);
-  
+
   // Mark as deleted in Google Sheet (cross-device permanent fix)
   fireStatusWebhook(l.email, 'deleted');
-  
+
+  // 24 Jul 2026 fix: moving a lead to the Dustbin is a soft delete — the
+  // Airtable record is untouched. Without this guard, the very next
+  // autopoll (syncLeads) rebuilds appState.leads from Airtable, finds no
+  // local match for this lead, and re-adds it — the "delete button keeps
+  // reappearing" bug. Same deletedLeadIds guard deleteLeadPermanently uses;
+  // restoreDustbinItem removes it again so a restored lead resyncs normally.
+  if (l.airtableId) {
+    if (!appState.deletedLeadIds) appState.deletedLeadIds = new Set();
+    appState.deletedLeadIds.add(l.airtableId);
+  }
+
   appState.leads.splice(idx, 1);
   saveState();
   renderAll();
@@ -5026,6 +5038,10 @@ function restoreDustbinItem(idx) {
         appState.deletedLeads = appState.deletedLeads.filter(phone => phone !== item.data.phone);
       }
     }
+    // Lift the syncLeads() guard so this lead resyncs normally again
+    if (appState.deletedLeadIds && item.data.airtableId) {
+      appState.deletedLeadIds.delete(item.data.airtableId);
+    }
   } else if (item.type === 'meeting') {
     appState.meetings.unshift(item.data);
   } else if (item.type === 'client-meeting') {
@@ -5048,14 +5064,36 @@ function restoreDustbinItem(idx) {
   }
 }
 
-function deleteDustbinPermanently(idx) {
-  if (confirm("Permanently delete this item? This cannot be undone.")) {
-    appState.dustbin.splice(idx, 1);
-    saveState();
-    renderAll();
-    if (document.getElementById('dustbinModal').classList.contains('open')) {
-      renderDustbin();
+async function deleteDustbinPermanently(idx) {
+  const item = appState.dustbin[idx];
+  if (!item) return;
+  if (!confirm("Permanently delete this item? This cannot be undone.")) return;
+
+  // 24 Jul 2026 fix: this used to only remove the local dustbin entry —
+  // the Airtable record, the lead's booked Availability Slot, and the
+  // Zoom meeting were all left behind, so the "permanent" delete wasn't.
+  // This is now the one true final delete: revert the slot to Available,
+  // cancel the Zoom meeting, then delete the Airtable Lead record itself.
+  if (item.type === 'lead' && item.data && item.data.airtableId) {
+    try {
+      await airtableProxyCall('delete_lead_full', {
+        recordId: item.data.airtableId,
+        zoomMeetingId: item.data.zoomMeetingId || ''
+      });
+    } catch(e) {
+      console.warn('Permanent delete (Airtable/slot/Zoom) failed:', e.message);
+      alert('Could not fully delete this lead from Airtable, please check your connection and try again. Nothing has been removed locally.');
+      return;
     }
+    if (!appState.deletedLeadIds) appState.deletedLeadIds = new Set();
+    appState.deletedLeadIds.add(item.data.airtableId);
+  }
+
+  appState.dustbin.splice(idx, 1);
+  saveState();
+  renderAll();
+  if (document.getElementById('dustbinModal').classList.contains('open')) {
+    renderDustbin();
   }
 }
 
