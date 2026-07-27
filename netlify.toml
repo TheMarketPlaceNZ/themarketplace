@@ -1,11 +1,6 @@
 [build]
   publish = "."
 
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
 [[redirects]]
   from = "/checkin"
   to = "/sopo-studio/checkin.html"
@@ -19,4 +14,9 @@
 [[redirects]]
   from = "/sopo"
   to = "/sopo-studio/index.html"
+  status = 302
+
+[[redirects]]
+  from = "/paddy-onboarding"
+  to = "/paddy-studio/onboarding.html"
   status = 302
