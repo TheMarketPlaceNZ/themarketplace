@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omega Financial Services — Client Onboarding | The MarketPlace NZ</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0d14;
+    --surface: #12161f;
+    --card: #181d28;
+    --border: #1e2535;
+    --accent: #2563eb;
+    --accent-bright: #3b82f6;
+    --accent-glow: rgba(37,99,235,0.15);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --dim: #94a3b8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 10;
+  }
+
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo-name { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--text); text-transform: uppercase; }
+  .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+
+  .nav { padding: 10px 0; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.18s; user-select: none; }
+  .nav-item.active { background: var(--accent-glow); border-left-color: var(--accent); }
+  .nav-item.done .nav-label { color: var(--green); }
+  .nav-item.active .nav-label { color: var(--accent-bright); font-weight: 600; }
+  .nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .nav-label { font-size: 12px; color: var(--muted); flex: 1; }
+  .nav-tick { font-size: 11px; color: var(--green); }
+
+  .save-badge { margin: auto 20px 20px; font-size: 11px; color: var(--green); background: var(--green-dim); padding: 5px 12px; border-radius: 20px; text-align: center; opacity: 0; transition: opacity 0.3s; }
+  .save-badge.show { opacity: 1; }
+
+  .main { margin-left: 220px; flex: 1; padding: 40px 48px; max-width: 780px; }
+
+  .progress-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .progress-track { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 36px; }
+  .progress-fill { height: 100%; background: var(--accent-bright); border-radius: 2px; transition: width 0.5s ease; width: 0%; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h1 { font-size: 28px; font-weight: 700; color: #fff; line-height: 1.2; margin-bottom: 12px; }
+  h2 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+  .lead { font-size: 13px; color: var(--dim); line-height: 1.7; margin-bottom: 20px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin-bottom: 14px; }
+
+  .field-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .field-prompt { font-size: 12.5px; color: var(--dim); line-height: 1.55; margin-bottom: 12px; }
+
+  input[type="text"], input[type="tel"], input[type="email"], textarea, select {
+    width: 100%; background: #0f1420; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* INTERVIEW STYLE: radio A/B/C + D self fill */
+  .choice-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .choice-item {
+    display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px;
+    color: var(--text); padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; transition: all 0.15s;
+  }
+  .choice-item:hover { border-color: var(--accent); }
+  .choice-item.selected { background: var(--accent-glow); border-color: var(--accent); }
+  .choice-item input { width: auto; margin: 2px 0 0 0; accent-color: var(--accent); flex-shrink: 0; }
+  .choice-letter { font-weight: 700; color: var(--accent-bright); margin-right: 2px; }
+  .choice-other-box { display: none; margin-top: 4px; }
+  .choice-other-box.show { display: block; }
+
+  .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .swatch { width: 34px; height: 34px; border-radius: 6px; cursor: pointer; border: 3px solid transparent; transition: all 0.15s; flex-shrink: 0; }
+  .swatch.selected { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+
+  .font-option { padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; }
+  .font-option.selected { background: var(--accent-glow); border-color: var(--accent); }
+  .font-option-name { font-size: 15px; color: var(--text); margin-bottom: 2px; }
+  .font-option-desc { font-size: 11px; color: var(--muted); }
+
+  .info-box { background: var(--accent-glow); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; font-size: 12.5px; color: var(--accent-bright); line-height: 1.65; }
+
+  .btn-primary { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 13px 32px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; font-family: inherit; transition: background 0.15s; }
+  .btn-primary:hover { background: var(--accent-bright); }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+  #celebrate { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 100; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+  #celebrate.show { display: flex; }
+  .celebrate-icon { font-size: 64px; margin-bottom: 16px; animation: pop 0.4s ease; }
+  .celebrate-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .celebrate-sub { font-size: 13px; color: var(--dim); }
+  @keyframes pop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+
+  .complete-box { background: var(--green-dim); border: 1px solid var(--green); border-radius: 10px; padding: 22px 26px; margin-top: 20px; }
+  .complete-box-title { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 14px; }
+
+  @media (max-width: 680px) {
+    .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; overflow-x: auto; }
+    .sidebar-logo { padding: 12px 16px; border-bottom: none; border-right: 1px solid var(--border); white-space: nowrap; }
+    .nav { display: flex; flex-direction: row; padding: 0; }
+    .nav-item { padding: 12px 14px; border-left: none; border-bottom: 3px solid transparent; flex-direction: column; gap: 3px; min-width: 70px; text-align: center; }
+    .nav-item.active { border-bottom-color: var(--accent); border-left: none; background: transparent; }
+    .nav-label { font-size: 10px; }
+    .save-badge { display: none; }
+    .shell { flex-direction: column; }
+    .main { margin-left: 0; padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="celebrate">
+  <div class="celebrate-icon">✅</div>
+  <div class="celebrate-title">Section Complete</div>
+  <div class="celebrate-sub">Loading next section...</div>
+</div>
+
+<div class="shell">
+
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">The MarketPlace</div>
+      <div class="logo-sub">Client Onboarding</div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="save-badge" id="save-badge">✓ Progress saved</div>
+  </div>
+
+  <div class="main">
+    <div class="progress-label" id="prog-label">0% complete</div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+
+    <!-- WELCOME -->
+    <div class="section active" id="sec-welcome">
+      <div class="eyebrow">The MarketPlace NZ</div>
+      <h1>Welcome, Paddy.</h1>
+      <p class="lead">This is where we learn how you actually think, not just what your business does. The better we understand you, the better we can make you sound like you, not like every other broker in Hamilton.</p>
+      <div class="info-box">
+        <strong style="color:#fff;">7 sections. Around 15 to 20 minutes.</strong><br>
+        Most questions give you a few common answers to pick from, plus a "none of these" option where you can just tell us in your own words. Pick whichever is faster. Your progress saves automatically.
+      </div>
+      <button class="btn-primary" onclick="advance('welcome')">Start My Onboarding →</button>
+    </div>
+
+    <!-- SECTION 1: BUSINESS BASICS -->
+    <div class="section" id="sec-basics">
+      <div class="eyebrow">Section 1 of 6</div>
+      <h2>Business Basics</h2>
+      <p class="lead">Confirm your details so we get your contact info right everywhere it appears.</p>
+
+      <div class="card">
+        <label class="field-label">Full Name</label>
+        <input type="text" id="fullName" placeholder="e.g. Piyush Lubana">
+      </div>
+      <div class="card">
+        <label class="field-label">Business Name</label>
+        <input type="text" id="businessName" value="Omega Financial Services">
+      </div>
+      <div class="card">
+        <label class="field-label">Phone Number</label>
+        <input type="tel" id="phone" placeholder="e.g. 021 123 4567">
+      </div>
+      <div class="card">
+        <label class="field-label">Email</label>
+        <input type="email" id="email" placeholder="your@email.co.nz">
+      </div>
+
+      <button class="btn-primary" onclick="advance('basics')">Save and Continue →</button>
+    </div>
+
+    <!-- SECTION 2: HOW YOU SEE YOURSELF -->
+    <div class="section" id="sec-selfview">
+      <div class="eyebrow">Section 2 of 6</div>
+      <h2>How You See Yourself</h2>
+      <p class="lead">No wrong answers here. We are trying to find your actual voice, not a marketing version of it.</p>
+
+      <div class="card">
+        <label class="field-label">When you're doing your job well, what's actually happening for the client?</label>
+        <div class="choice-list" data-group="rolePerception">
+          <label class="choice-item"><input type="radio" name="rolePerception" value="I'm solving a problem they didn't know how to solve"><span><span class="choice-letter">A.</span> I'm solving a problem they didn't know how to solve</span></label>
+          <label class="choice-item"><input type="radio" name="rolePerception" value="I'm getting them the best rate or deal available"><span><span class="choice-letter">B.</span> I'm getting them the best rate or deal available</span></label>
+          <label class="choice-item"><input type="radio" name="rolePerception" value="I'm being the calm, reliable person in a stressful process"><span><span class="choice-letter">C.</span> I'm being the calm, reliable person in a stressful process</span></label>
+          <label class="choice-item"><input type="radio" name="rolePerception" value="Other" data-other="rolePerceptionOther"><span><span class="choice-letter">D.</span> None of these, here's how I'd actually put it:</span></label>
+        </div>
+        <div class="choice-other-box" id="box-rolePerceptionOther"><textarea id="rolePerceptionOther" placeholder="In your own words..."></textarea></div>
+      </div>
+
+      <div class="card">
+        <label class="field-label">What's the most common frustration or fear you see in a client before they come to you?</label>
+        <div class="choice-list" data-group="clientPainPoints">
+          <label class="choice-item"><input type="radio" name="clientPainPoints" value="They've been burned or ignored by a bank or broker before"><span><span class="choice-letter">A.</span> They've been burned or ignored by a bank or broker before</span></label>
+          <label class="choice-item"><input type="radio" name="clientPainPoints" value="They don't understand the process and feel out of their depth"><span><span class="choice-letter">B.</span> They don't understand the process and feel out of their depth</span></label>
+          <label class="choice-item"><input type="radio" name="clientPainPoints" value="They're worried about being sold something they don't need"><span><span class="choice-letter">C.</span> They're worried about being sold something they don't need</span></label>
+          <label class="choice-item"><input type="radio" name="clientPainPoints" value="Other" data-other="clientPainPointsOther"><span><span class="choice-letter">D.</span> None of these, here's what I actually see:</span></label>
+        </div>
+        <div class="choice-other-box" id="box-clientPainPointsOther"><textarea id="clientPainPointsOther" placeholder="In your own words..."></textarea></div>
+      </div>
+
+      <div class="card">
+        <label class="field-label">What's the hardest part of your job that clients never see?</label>
+        <div class="choice-list" data-group="ownPainPoints">
+          <label class="choice-item"><input type="radio" name="ownPainPoints" value="Chasing paperwork and documents from clients or banks"><span><span class="choice-letter">A.</span> Chasing paperwork and documents from clients or banks</span></label>
+          <label class="choice-item"><input type="radio" name="ownPainPoints" value="Managing client expectations on timelines"><span><span class="choice-letter">B.</span> Managing client expectations on timelines</span></label>
+          <label class="choice-item"><input type="radio" name="ownPainPoints" value="Staying on top of constantly changing lending rules"><span><span class="choice-letter">C.</span> Staying on top of constantly changing lending rules</span></label>
+          <label class="choice-item"><input type="radio" name="ownPainPoints" value="Other" data-other="ownPainPointsOther"><span><span class="choice-letter">D.</span> None of these, here's what's actually hard:</span></label>
+        </div>
+        <div class="choice-other-box" id="box-ownPainPointsOther"><textarea id="ownPainPointsOther" placeholder="In your own words..."></textarea></div>
+      </div>
+
+      <button class="btn-primary" onclick="advance('selfview')">Save and Continue →</button>
+    </div>
+
+    <!-- SECTION 3: POSITIONING -->
+    <div class="section" id="sec-positioning">
+      <div class="eyebrow">Section 3 of 6</div>
+      <h2>Positioning</h2>
+      <p class="lead">This is the part that actually makes you memorable instead of just another Hamilton broker.</p>
+
+      <div class="card">
+        <label class="field-label">If you had to go all in on one type of client, which would you pick?</label>
+        <div class="choice-list" data-group="idealNiche">
+          <label class="choice-item"><input type="radio" name="idealNiche" value="First home buyers"><span><span class="choice-letter">A.</span> First home buyers</span></label>
+          <label class="choice-item"><input type="radio" name="idealNiche" value="Refinancers"><span><span class="choice-letter">B.</span> Refinancers</span></label>
+          <label class="choice-item"><input type="radio" name="idealNiche" value="Investors"><span><span class="choice-letter">C.</span> Investors</span></label>
+          <label class="choice-item"><input type="radio" name="idealNiche" value="Self employed borrowers"><span><span class="choice-letter">D.</span> Self employed borrowers</span></label>
+        </div>
+        <label class="field-label" style="margin-top:14px;">Why that one?</label>
+        <textarea id="nicheReason" placeholder="What makes that client type the right fit for you?"></textarea>
+      </div>
+
+      <div class="card">
+        <label class="field-label">If a client described you to a friend in one line, what do you want that line to be?</label>
+        <div class="choice-list" data-group="desiredDescription">
+          <label class="choice-item"><input type="radio" name="desiredDescription" value="Straight up, no BS"><span><span class="choice-letter">A.</span> Straight up, no BS</span></label>
+          <label class="choice-item"><input type="radio" name="desiredDescription" value="Genuinely cares, not just chasing commission"><span><span class="choice-letter">B.</span> Genuinely cares, not just chasing commission</span></label>
+          <label class="choice-item"><input type="radio" name="desiredDescription" value="Knows his stuff, the expert you trust"><span><span class="choice-letter">C.</span> Knows his stuff, the expert you trust</span></label>
+          <label class="choice-item"><input type="radio" name="desiredDescription" value="Other" data-other="desiredDescriptionOther"><span><span class="choice-letter">D.</span> None of these, here's what I want people to say:</span></label>
+        </div>
+        <div class="choice-other-box" id="box-desiredDescriptionOther"><textarea id="desiredDescriptionOther" placeholder="In your own words..."></textarea></div>
+      </div>
+
+      <div class="card">
+        <label class="field-label">Describe your best client ever, and what made them good to work with.</label>
+        <textarea id="bestClientStory" placeholder="Tell us the actual story..." style="min-height:100px;"></textarea>
+      </div>
+
+      <div class="card">
+        <label class="field-label">Do you have any client testimonials, reviews, or messages you're happy for us to use or reuse?</label>
+        <select id="hasTestimonials">
+          <option value="">Select...</option>
+          <option>Yes, I have some I can share</option>
+          <option>No, but I could ask past clients</option>
+          <option>No, we'd need to start collecting these</option>
+        </select>
+        <label class="field-label" style="margin-top:14px;">Paste any you have handy</label>
+        <textarea id="testimonialText" placeholder="Paste a review, message, or testimonial here..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="advance('positioning')">Save and Continue →</button>
+    </div>
+
+    <!-- SECTION 4: PERSONAL BRAND -->
+    <div class="section" id="sec-brand">
+      <div class="eyebrow">Section 4 of 6</div>
+      <h2>Your Personal Brand</h2>
+      <p class="lead">This is what your videos and graphics will actually look and sound like, so get specific.</p>
+
+      <div class="card">
+        <label class="field-label">Brand Colour</label>
+        <div class="field-prompt">Pick a starting point, or type a hex code if you already have one.</div>
+        <div class="swatch-row" id="swatches"></div>
+        <input type="text" id="brandColour" placeholder="Or enter hex code e.g. #2563eb" oninput="updateSwatchFromInput(this.value)">
+      </div>
+
+      <div class="card">
+        <label class="field-label">Font Style</label>
+        <div class="field-prompt">Pick the font that feels most like you.</div>
+        <div id="font-options"></div>
+      </div>
+
+      <div class="card">
+        <label class="field-label">Music genre for your video edits</label>
+        <div class="choice-list" data-group="musicGenre">
+          <label class="choice-item"><input type="radio" name="musicGenre" value="Upbeat and energetic"><span><span class="choice-letter">A.</span> Upbeat and energetic</span></label>
+          <label class="choice-item"><input type="radio" name="musicGenre" value="Chill and lo-fi"><span><span class="choice-letter">B.</span> Chill and lo-fi</span></label>
+          <label class="choice-item"><input type="radio" name="musicGenre" value="Corporate and clean"><span><span class="choice-letter">C.</span> Corporate and clean</span></label>
+          <label class="choice-item"><input type="radio" name="musicGenre" value="Other" data-other="musicGenreOther"><span><span class="choice-letter">D.</span> None of these, here's what I actually like:</span></label>
+        </div>
+        <div class="choice-other-box" id="box-musicGenreOther"><textarea id="musicGenreOther" placeholder="In your own words..."></textarea></div>
+      </div>
+
+      <div class="card">
+        <label class="field-label">How comfortable are you on camera?</label>
+        <select id="onCameraComfort">
+          <option value="">Select...</option>
+          <option>Very comfortable, happy to lead every video</option>
+          <option>Fine with it, just don't overthink the script</option>
+          <option>Prefer voiceover or interview style over straight to camera</option>
+          <option>Would rather not be on camera much at all</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="advance('brand')">Save and Continue →</button>
+    </div>
+
+    <!-- SECTION 5: CONTENT -->
+    <div class="section" id="sec-content">
+      <div class="eyebrow">Section 5 of 6</div>
+      <h2>Content You'll Actually Enjoy Making</h2>
+      <p class="lead">This feeds straight into your weekly reels, so let's make sure it's something you'll actually keep up.</p>
+
+      <div class="card">
+        <label class="field-label">What kind of content would you actually enjoy making regularly?</label>
+        <div class="choice-list" data-group="contentStyle">
+          <label class="choice-item"><input type="radio" name="contentStyle" value="Quick tips or explainers on camera"><span><span class="choice-letter">A.</span> Quick tips or explainers on camera</span></label>
+          <label class="choice-item"><input type="radio" name="contentStyle" value="Behind the scenes of deals or client wins, anonymised"><span><span class="choice-letter">B.</span> Behind the scenes of deals or client wins, anonymised</span></label>
+          <label class="choice-item"><input type="radio" name="contentStyle" value="Q&A or mythbusting common misconceptions"><span><span class="choice-letter">C.</span> Q&A or mythbusting common misconceptions</span></label>
+          <label class="choice-item"><input type="radio" name="contentStyle" value="Other" data-other="contentStyleOther"><span><span class="choice-letter">D.</span> None of these, here's what I'd rather do:</span></label>
+        </div>
+        <div class="choice-other-box" id="box-contentStyleOther"><textarea id="contentStyleOther" placeholder="In your own words..."></textarea></div>
+      </div>
+
+      <div class="card">
+        <label class="field-label">Best day and time each week to film, realistically?</label>
+        <input type="text" id="filmingDayTime" placeholder="e.g. Tuesday mornings before 10am">
+      </div>
+
+      <div class="card">
+        <label class="field-label">Logo, existing photos, or video worth reusing?</label>
+        <textarea id="logoNotes" placeholder="Tell us what you've already got, or that you have nothing yet..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="advance('content')">Submit and Complete →</button>
+    </div>
+
+    <!-- SECTION 6: COMPLETE -->
+    <div class="section" id="sec-complete">
+      <div style="text-align:center;margin-bottom:28px;">
+        <div style="font-size:56px;margin-bottom:12px;">🚀</div>
+        <div class="eyebrow" style="text-align:center;">Onboarding Complete</div>
+        <h1 style="text-align:center;">You're all set, Paddy.</h1>
+        <p class="lead" style="text-align:center;">Everything you've submitted is now with Kurt. He'll be in touch shortly to confirm the build timeline.</p>
+      </div>
+      <div class="complete-box">
+        <div class="complete-box-title">✓ What happens next</div>
+        <p style="font-size:12.5px;color:var(--dim);line-height:1.7;">Your answers become the brief for your positioning, your ongoing content, and your Facebook and social setup. Kurt will confirm the build schedule directly with you.</p>
+      </div>
+      <div class="card" style="margin-top:16px;text-align:center;">
+        <div style="font-size:13px;color:var(--dim);">Questions in the meantime?<br>
+        <a href="mailto:kurt@themarketplace.co.nz" style="color:var(--accent-bright);text-decoration:none;">kurt@themarketplace.co.nz</a></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const WEBHOOK = 'https://hook.us2.make.com/qssrvqgp15dqgblsun2otdgl7ocdh1g2';
+const SAVE_KEY = 'tmp_paddy_onboarding_v1';
+
+const SECTIONS = [
+  { id: 'welcome',     label: 'Welcome',       icon: '👋' },
+  { id: 'basics',      label: 'Business',      icon: '🏢' },
+  { id: 'selfview',    label: 'Self View',     icon: '🧭' },
+  { id: 'positioning', label: 'Positioning',   icon: '🎯' },
+  { id: 'brand',       label: 'Personal Brand',icon: '🎨' },
+  { id: 'content',     label: 'Content',       icon: '🎬' },
+  { id: 'complete',    label: 'All Done',      icon: '🚀' },
+];
+
+const FONTS = [
+  { name: 'Inter',            desc: 'Clean and modern' },
+  { name: 'Montserrat',       desc: 'Strong and confident' },
+  { name: 'Lato',             desc: 'Friendly and open' },
+  { name: 'Oswald',           desc: 'Bold and direct' },
+];
+
+const SWATCHES = ['#2563eb','#1e40af','#059669','#0891b2','#7c3aed','#d97706','#dc2626','#16213e'];
+
+let currentIdx = 0;
+let completed = [];
+
+window.addEventListener('DOMContentLoaded', () => {
+  buildNav();
+  buildFontOptions();
+  buildSwatches();
+  wireChoiceGroups();
+  loadSaved();
+  updateNav();
+  updateProgress();
+});
+
+function buildNav() {
+  const nav = document.getElementById('nav');
+  nav.innerHTML = SECTIONS.map((s, i) => `
+    <div class="nav-item" id="nav-${s.id}" onclick="jumpTo(${i})">
+      <span class="nav-icon">${s.icon}</span>
+      <span class="nav-label">${s.label}</span>
+      <span class="nav-tick" id="tick-${s.id}" style="display:none;">✓</span>
+    </div>
+  `).join('');
+}
+
+function buildFontOptions() {
+  document.getElementById('font-options').innerHTML = FONTS.map(f => `
+    <div class="font-option" onclick="selectFont('${f.name}')" id="font-${f.name.replace(/ /g,'-')}">
+      <div class="font-option-name" style="font-family:'${f.name}',sans-serif;">${f.name}</div>
+      <div class="font-option-desc">${f.desc}</div>
+    </div>
+  `).join('');
+}
+
+function buildSwatches() {
+  document.getElementById('swatches').innerHTML = SWATCHES.map(hex => `
+    <div class="swatch" style="background:${hex};" onclick="selectSwatch('${hex}')" title="${hex}"></div>
+  `).join('');
+}
+
+function wireChoiceGroups() {
+  document.querySelectorAll('.choice-list').forEach(group => {
+    group.querySelectorAll('.choice-item').forEach(item => {
+      item.addEventListener('click', () => {
+        group.querySelectorAll('.choice-item').forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+        const input = item.querySelector('input');
+        input.checked = true;
+        const otherKey = input.getAttribute('data-other');
+        const groupName = group.getAttribute('data-group');
+        document.querySelectorAll(`[id^="box-"][id$="Other"]`).forEach(box => {});
+        const box = otherKey ? document.getElementById('box-' + otherKey) : null;
+        // Hide any other-box belonging to this group that isn't this one
+        group.querySelectorAll('.choice-item input[data-other]').forEach(o => {
+          const b = document.getElementById('box-' + o.getAttribute('data-other'));
+          if (b && o !== input) b.classList.remove('show');
+        });
+        if (box) box.classList.add('show');
+        saveProgress();
+      });
+    });
+  });
+}
+
+function jumpTo(idx) {
+  if (idx > currentIdx && !completed.includes(SECTIONS[currentIdx].id)) return;
+  showSection(idx);
+}
+
+function showSection(idx) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + SECTIONS[idx].id).classList.add('active');
+  currentIdx = idx;
+  updateNav();
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+function updateNav() {
+  SECTIONS.forEach((s, i) => {
+    const item = document.getElementById('nav-' + s.id);
+    const tick = document.getElementById('tick-' + s.id);
+    if (!item) return;
+    item.classList.toggle('active', i === currentIdx);
+    const done = completed.includes(s.id);
+    item.classList.toggle('done', done);
+    tick.style.display = done ? 'block' : 'none';
+  });
+}
+
+function updateProgress() {
+  const total = SECTIONS.length - 1;
+  const pct = Math.round((completed.length / total) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  const remaining = total - completed.length;
+  document.getElementById('prog-label').textContent =
+    pct + '% complete' + (remaining > 0 ? ' — ' + remaining + ' section' + (remaining > 1 ? 's' : '') + ' remaining' : ' — all done');
+}
+
+function advance(sectionId) {
+  if (!completed.includes(sectionId)) completed.push(sectionId);
+  saveProgress();
+
+  const cel = document.getElementById('celebrate');
+  cel.classList.add('show');
+
+  setTimeout(() => {
+    cel.classList.remove('show');
+    const nextIdx = Math.min(currentIdx + 1, SECTIONS.length - 1);
+    showSection(nextIdx);
+
+    if (SECTIONS[nextIdx].id === 'complete') {
+      sendSummary();
+    }
+  }, 1600);
+}
+
+function saveProgress() {
+  try {
+    const data = gatherAllData();
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ data, completed, currentIdx }));
+    const badge = document.getElementById('save-badge');
+    badge.classList.add('show');
+    setTimeout(() => badge.classList.remove('show'), 2000);
+  } catch(e) {}
+}
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved.completed) completed = saved.completed;
+    if (saved.currentIdx) currentIdx = saved.currentIdx;
+    if (saved.data) restoreData(saved.data);
+    showSection(currentIdx);
+  } catch(e) {}
+}
+
+function restoreData(data) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('fullName', data.fullName); set('businessName', data.businessName);
+  set('phone', data.phone); set('email', data.email);
+  set('rolePerceptionOther', data.rolePerceptionOther);
+  set('clientPainPointsOther', data.clientPainPointsOther);
+  set('ownPainPointsOther', data.ownPainPointsOther);
+  set('nicheReason', data.nicheReason);
+  set('desiredDescriptionOther', data.desiredDescriptionOther);
+  set('bestClientStory', data.bestClientStory);
+  set('hasTestimonials', data.hasTestimonials);
+  set('testimonialText', data.testimonialText);
+  set('brandColour', data.brandColour);
+  set('musicGenreOther', data.musicGenreOther);
+  set('onCameraComfort', data.onCameraComfort);
+  set('contentStyleOther', data.contentStyleOther);
+  set('filmingDayTime', data.filmingDayTime);
+  set('logoNotes', data.logoNotes);
+
+  ['rolePerception','clientPainPoints','ownPainPoints','idealNiche','desiredDescription','musicGenre','contentStyle'].forEach(name => {
+    if (data[name]) {
+      const input = document.querySelector(`input[name="${name}"][value="${CSS.escape(data[name])}"]`) ||
+                    document.querySelector(`input[name="${name}"][data-other][value="Other"]`);
+      if (input) {
+        input.checked = true;
+        input.closest('.choice-item').classList.add('selected');
+        const otherKey = input.getAttribute('data-other');
+        if (otherKey && data[name] === 'Other') document.getElementById('box-' + otherKey).classList.add('show');
+      }
+    }
+  });
+
+  if (data.font) selectFont(data.font);
+  if (data.brandColour) selectSwatch(data.brandColour);
+}
+
+function gatherAllData() {
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const radioVal = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; };
+
+  return {
+    fullName: val('fullName'), businessName: val('businessName'), phone: val('phone'), email: val('email'),
+    rolePerception: radioVal('rolePerception'), rolePerceptionOther: val('rolePerceptionOther'),
+    clientPainPoints: radioVal('clientPainPoints'), clientPainPointsOther: val('clientPainPointsOther'),
+    ownPainPoints: radioVal('ownPainPoints'), ownPainPointsOther: val('ownPainPointsOther'),
+    idealNiche: radioVal('idealNiche'), nicheReason: val('nicheReason'),
+    desiredDescription: radioVal('desiredDescription'), desiredDescriptionOther: val('desiredDescriptionOther'),
+    bestClientStory: val('bestClientStory'),
+    hasTestimonials: val('hasTestimonials'), testimonialText: val('testimonialText'),
+    brandColour: val('brandColour'),
+    font: document.querySelector('.font-option.selected')?.querySelector('.font-option-name')?.textContent || '',
+    musicGenre: radioVal('musicGenre'), musicGenreOther: val('musicGenreOther'),
+    onCameraComfort: val('onCameraComfort'),
+    contentStyle: radioVal('contentStyle'), contentStyleOther: val('contentStyleOther'),
+    filmingDayTime: val('filmingDayTime'), logoNotes: val('logoNotes'),
+    submittedAt: new Date().toISOString(),
+  };
+}
+
+async function sendSummary() {
+  try {
+    const data = gatherAllData();
+    await fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  } catch(e) {}
+}
+
+function selectFont(name) {
+  document.querySelectorAll('.font-option').forEach(el => el.classList.remove('selected'));
+  const key = name.replace(/ /g,'-');
+  const el = document.getElementById('font-' + key);
+  if (el) el.classList.add('selected');
+  saveProgress();
+}
+
+function selectSwatch(hex) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  document.querySelectorAll('.swatch').forEach(s => { if (s.title === hex) s.classList.add('selected'); });
+  document.getElementById('brandColour').value = hex;
+  saveProgress();
+}
+
+function updateSwatchFromInput(val) {
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) selectSwatch(val);
+}
+
+document.addEventListener('change', saveProgress);
+document.addEventListener('input', () => setTimeout(saveProgress, 500));
+</script>
+</body>
+</html>
