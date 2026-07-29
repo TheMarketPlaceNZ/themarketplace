@@ -767,59 +767,7 @@ function prevHowSlide() {
    BOOKING MODAL — Open / Close / Steps
    ============================================================ */
 function openBooking() {
-  const overlay = document.getElementById('modalOverlay');
-  const video = document.getElementById('modalTransitionVideo');
-  const modal = document.querySelector('.bookingModal');
-
-  if (overlay) {
-    overlay.style.display = 'flex';
-    resetBookingSteps();
-    fetchBusySlots();
-
-    if (video && modal) {
-      // Hide the modal initially, remove blur class
-      modal.style.opacity = '0';
-      modal.style.transform = 'scale(0.88)';
-      modal.style.pointerEvents = 'none';
-      overlay.classList.remove('active-blur');
-
-      // Play the takeover animation at 80% opacity (transparency)
-      video.style.opacity = '0.8';
-      video.currentTime = 0;
-      video.play().catch(e => {
-        console.warn("Autoplay failed, playing muted as fallback:", e);
-        video.muted = true;
-        video.play();
-      });
-
-      // When the video ends, transition the modal tile on screen and blur original background
-      let transitioned = false;
-      const revealModal = () => {
-        if (transitioned) return;
-        transitioned = true;
-        
-        // Hide transition video completely so it doesn't superimpose in the background
-        video.style.opacity = '0';
-        
-        // Apply 60px background blur to overlay
-        overlay.classList.add('active-blur');
-        
-        // Reveal booking modal card
-        modal.style.opacity = '1';
-        modal.style.transform = 'scale(1)';
-        modal.style.pointerEvents = 'auto';
-      };
-
-      video.onended = revealModal;
-      
-      // Safety timeout fallback (e.g. video fails to load or end event doesn't fire)
-      setTimeout(revealModal, 2200);
-    } else if (modal) {
-      modal.style.opacity = '1';
-      modal.style.transform = 'scale(1)';
-      modal.style.pointerEvents = 'auto';
-    }
-  }
+  window.location.href = "https://n8n.themarketplace.co.nz/form/tmp-book-a-time";
 }
 
 function closeBooking() {
