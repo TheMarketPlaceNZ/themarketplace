@@ -3196,8 +3196,8 @@ function openLeadDetail(idx) {
           <input type="date" class="settings-input" id="editLeadBdayWife" value="${l.birthdayWife || ''}" style="padding:6px; font-size:12px; width:100%;">
         </div>
         <div class="lead-info-item" style="grid-column: 1/-1;">
-          <div class="lead-info-label">Kids Birthdays</div>
-          <input type="text" class="settings-input" id="editLeadBdayKids" value="${l.birthdayKids || ''}" placeholder="e.g. Leo: 2018-06-06, Mia: 2021-12-15" style="padding:6px; font-size:12px; width:100%;">
+          <div class="lead-info-label">Lead Entered Database</div>
+          <div style="padding:6px; font-size:12px; width:100%; color:var(--muted);">${l.timestamp ? new Date(l.timestamp).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown'}</div>
         </div>
       </div>
       
@@ -3408,8 +3408,7 @@ function saveLeadDetails(idx) {
   l.source = document.getElementById('editLeadSource').value.trim();
   l.birthdayHusband = document.getElementById('editLeadBdayHusband').value;
   l.birthdayWife = document.getElementById('editLeadBdayWife').value;
-  l.birthdayKids = document.getElementById('editLeadBdayKids').value.trim();
-  
+
   l.score = scoreLead(l); // Recalculate score
   
   saveState();
