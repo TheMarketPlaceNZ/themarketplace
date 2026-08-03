@@ -1531,7 +1531,16 @@ async function airtableProxyCall(action, payload = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error(`Airtable proxy error: ${res.status}`);
+  if (!res.ok) {
+    // 3 Aug 2026 fix: this used to discard the actual reason ("Airtable
+    // rejected this write...") and just throw the HTTP status, so a real
+    // save failure only ever showed "Airtable proxy error: 502" in the
+    // console, no way to tell why. The Make scenario's onerror routes
+    // already return a real JSON message, read it.
+    let detail = '';
+    try { detail = (await res.json()).message || ''; } catch(e) {}
+    throw new Error(`Airtable proxy error: ${res.status}${detail ? ' - ' + detail : ''}`);
+  }
   return res.json();
 }
 
@@ -1732,7 +1741,8 @@ let appState = {
   // a Set, but they survive localStorage, which is the only property that
   // actually matters here. Declared up front so they always exist.
   deletedLeadIds: [],   // airtableIds deliberately deleted — syncLeads must never resurrect these
-  unsavedNoteIds: []    // airtableIds whose note write failed — syncLeads must not overwrite these locally
+  unsavedNoteIds: [],   // airtableIds whose note write failed — syncLeads must not overwrite these locally
+  unsavedStageIds: []   // airtableIds whose stage write failed — syncLeads must not overwrite these locally
 };
 let currentLeadIndex = null;
 
@@ -1770,7 +1780,7 @@ function loadState() {
   // went through JSON.stringify), which is truthy and has no .push/.includes.
   // Coerce anything that is not already an array back to an empty array so a
   // returning browser heals itself on first load instead of throwing.
-  ['deletedLeadIds', 'unsavedNoteIds'].forEach(k => {
+  ['deletedLeadIds', 'unsavedNoteIds', 'unsavedStageIds'].forEach(k => {
     if (!Array.isArray(appState[k])) appState[k] = [];
   });
 
@@ -3623,7 +3633,14 @@ async function submitCallNote() {
 }
 
 // Write a stage change back to Airtable
-async function writeStageToAirtable(airtableId, internalStage) {
+// 3 Aug 2026 fix: this was the one write function that never got the 22 Jul
+// retry/flag/toast treatment. On failure it just console.warned and gave up,
+// and syncLeads' merge never protected stage the way it protects notes, so
+// a failed or slow stage write got silently overwritten on the very next
+// sync, i.e. "push to Pre-Broker, refresh, lead is back at the start."
+// Same fix pattern as writeNotesToAirtable: retry once, flag+alert on a
+// real second failure so syncLeads() knows not to overwrite it.
+async function writeStageToAirtable(airtableId, internalStage, isRetry = false) {
   if (!airtableId) return;
   const atStage = internalStageToAt(internalStage);
   const fields = { [AT_FIELDS.pipeline_stage]: atStage };
@@ -3631,7 +3648,7 @@ async function writeStageToAirtable(airtableId, internalStage) {
     if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
       await airtableProxyCall('patch', { recordId: airtableId, fields });
     } else {
-      await fetch(`${AIRTABLE_API}/${airtableId}`, {
+      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
@@ -3639,9 +3656,25 @@ async function writeStageToAirtable(airtableId, internalStage) {
         },
         body: JSON.stringify({ fields })
       });
+      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
+    }
+    if (Array.isArray(appState.unsavedStageIds)) {
+      appState.unsavedStageIds = appState.unsavedStageIds.filter(id => id !== airtableId);
     }
   } catch(e) {
     console.warn('Airtable stage write failed:', e.message);
+    if (!isRetry) {
+      return writeStageToAirtable(airtableId, internalStage, true);
+    }
+    if (!Array.isArray(appState.unsavedStageIds)) appState.unsavedStageIds = [];
+    if (!appState.unsavedStageIds.includes(airtableId)) {
+      appState.unsavedStageIds.push(airtableId);
+    }
+    if (typeof showErrorToast === 'function') {
+      showErrorToast('Stage change failed to save, try again');
+    } else {
+      alert('This stage change failed to save to Airtable. Please try again.');
+    }
   }
 }
 
@@ -3738,8 +3771,14 @@ async function syncLeads(silent = false) {
         // "vanish" on refresh.
         const hasUnsavedNote = Array.isArray(appState.unsavedNoteIds) && existing.airtableId &&
           appState.unsavedNoteIds.includes(existing.airtableId);
+        // 3 Aug 2026 fix: same protection now applies to stage. Without this,
+        // a stage write that failed (or hadn't landed yet) got clobbered by
+        // this exact merge on the next sync.
+        const hasUnsavedStage = Array.isArray(appState.unsavedStageIds) && existing.airtableId &&
+          appState.unsavedStageIds.includes(existing.airtableId);
         return {
           ...fresh,
+          stage: hasUnsavedStage ? existing.stage : fresh.stage,
           lifecycleLog: hasUnsavedNote ? existing.lifecycleLog : fresh.lifecycleLog,
           agent_notes: hasUnsavedNote ? existing.agent_notes : fresh.agent_notes,
           // Preserve local-only fields that don't exist in Airtable yet
