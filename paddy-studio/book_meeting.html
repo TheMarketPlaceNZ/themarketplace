@@ -233,7 +233,13 @@ footer { position:relative; margin-top:32px; text-align:center; font-size:10px; 
    email. Someone who books without checking in first will not match,
    so the check in page stays the front door.
    ================================================================ */
-const PROXY_WEBHOOK   = 'https://hook.us2.make.com/buarw6qr4ys15ohc4q31ox8iugup71k7';
+/* Slot loading has its own dedicated single purpose workflow, "Paddy Slots
+   Read" (5877482). One webhook, one Airtable call, one response, no router.
+   A router with nine branches all racing to answer the same HTTP request is
+   not safe to put a browser behind, and the old shared proxy also encoded
+   the table name "Availability Slots" twice, which 403'd every single time.
+   Both problems disappear with a workflow of its own. */
+const SLOTS_WEBHOOK   = 'https://hook.us2.make.com/9ksje4am9x5rh1ju1g7qgshqyb1llm4i';
 const BOOKING_WEBHOOK = 'https://hook.us2.make.com/5kx9t419278yplcgeqhxi52ys3xjrqzd';
 
 let slotsByDate = {}, calYear = 0, calMonth = 0;
@@ -264,9 +270,9 @@ function pad(n) { return String(n).padStart(2,'0'); }
 
 async function loadSlots() {
   try {
-    const res = await fetch(PROXY_WEBHOOK, {
+    const res = await fetch(SLOTS_WEBHOOK, {
       method: 'POST', headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ action: 'get_slots' })
+      body: JSON.stringify({ source: 'book_meeting' })
     });
     const data = await res.json();
     const records = (data && (data.records || (data.body && data.body.records))) || [];

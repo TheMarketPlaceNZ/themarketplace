@@ -913,6 +913,17 @@ select.input { cursor:pointer; appearance:none;
    meeting/won set, which did not match the CRM at all.
    ================================================================ */
 
+/* READS come from their own dedicated single purpose workflow, "Paddy Leads
+   Read" (5877483): one webhook, one Airtable call, one response, no router.
+   WRITES still go through the shared proxy, where a router is fine because
+   each write matches exactly one branch.
+
+   The reason for the split: a router where nine branches race to answer the
+   same HTTP request is not safe to put a browser behind. Whichever branch
+   replied first won, which is why this dashboard reported "Offline" from the
+   day it was built. Separate workflows also mean a failure in one pauses
+   only that one, which was the original intent of this architecture. */
+const LEADS_READ_WEBHOOK = 'https://hook.us2.make.com/zvr132eqmx4gdy9knpwfmv2c5i1089rv';
 const PROXY_WEBHOOK     = 'https://hook.us2.make.com/buarw6qr4ys15ohc4q31ox8iugup71k7';
 const BOOKING_WEBHOOK   = 'https://hook.us2.make.com/5kx9t419278yplcgeqhxi52ys3xjrqzd';
 const RECORDING_WEBHOOK = 'https://hook.us2.make.com/a5f43jei8hvspndi8h16pwt0111y7zte';
@@ -1109,6 +1120,34 @@ function liveLeads()  { return appState.leads.filter(l => !appState.deletedIds.i
 let proxyChain = Promise.resolve();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+/* Reads go straight to the dedicated read workflow. Still queued behind the
+   same chain so a read can never overlap a write and trip Make's one
+   execution at a time limit. */
+function readLeads() {
+  const run = () => attemptRead(0);
+  const queued = proxyChain.then(run, run);
+  proxyChain = queued.catch(() => {});
+  return queued;
+}
+async function attemptRead(attempt) {
+  let res;
+  try {
+    res = await fetch(LEADS_READ_WEBHOOK, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'studio' })
+    });
+  } catch (netErr) {
+    if (attempt < 3) { await sleep(900 * (attempt + 1)); return attemptRead(attempt + 1); }
+    throw netErr;
+  }
+  if ((res.status === 503 || res.status === 429) && attempt < 3) {
+    await sleep(1100 * (attempt + 1));
+    return attemptRead(attempt + 1);
+  }
+  if (!res.ok) throw new Error('Read error ' + res.status);
+  return res.json();
+}
+
 function proxyCall(action, payload = {}) {
   const run = () => attemptProxy(action, payload);
   const queued = proxyChain.then(run, run);
@@ -1180,7 +1219,7 @@ async function syncLeads(silent = false) {
   const dot = document.getElementById('syncDot'), txt = document.getElementById('syncText');
   if (!silent) { dot.style.background = 'var(--amber)'; txt.textContent = 'Syncing'; }
   try {
-    const data = await proxyCall('list');
+    const data = await readLeads();
     const records = (data && (data.records || (data.body && data.body.records))) || [];
     if (Array.isArray(records)) {
       const remote = records.map(recordToLead).filter(l => !appState.deletedIds.includes(l.airtableId));
