@@ -17,6 +17,26 @@
   status = 302
 
 [[redirects]]
+  from = "/paddy"
+  to = "/paddy-studio/index.html"
+  status = 302
+
+[[redirects]]
+  from = "/paddy-checkin"
+  to = "/paddy-studio/checkin.html"
+  status = 302
+
+[[redirects]]
+  from = "/paddy-book"
+  to = "/paddy-studio/book_meeting.html"
+  status = 302
+
+[[redirects]]
+  from = "/paddy-debrief"
+  to = "/paddy-studio/debrief.html"
+  status = 302
+
+[[redirects]]
   from = "/paddy-onboarding"
   to = "/paddy-studio/onboarding.html"
   status = 302
