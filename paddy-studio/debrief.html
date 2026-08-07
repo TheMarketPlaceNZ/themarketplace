@@ -384,12 +384,11 @@ body::before{
 
       <div id="failBlock" style="display:none;">
         <div class="eyebrow">Step four</div>
-        <div class="headline" style="margin-bottom:14px;">That did not go through.</div>
-        <div class="notice bad" id="failMsg"></div>
-        <div class="sub" style="margin:16px 0;">Your recording is still held in this page. Retry sends the same audio again — do not reload, or it is lost.</div>
-        <div class="btn-row">
-          <button class="btn btn-ghost" onclick="discardRecording()">Discard</button>
-          <button class="btn btn-gilt" onclick="sendRecording()">Retry send</button>
+        <div class="headline" style="margin-bottom:14px;" id="failTitle">Google connection issue</div>
+        <div class="notice" id="failMsg"></div>
+        <div class="btn-row" style="margin-top:20px;">
+          <button class="btn btn-ghost" onclick="sendRecording()">Try again</button>
+          <button class="btn btn-gilt" onclick="openStudio()">Back to Studio</button>
         </div>
       </div>
     </div>
@@ -498,6 +497,7 @@ function unlock() {
 /* ---------- STATE ---------- */
 let leads = [], selected = null, meetingType = '', meetingSource = 'In Person';
 let step = 1;
+let serviceDown = false;   /* set when the transcription pipeline refuses us */
 
 function initApp() {
   buildOptions();
@@ -631,6 +631,7 @@ function go(n) {
     r.classList.toggle('now', i === n);
     r.classList.toggle('done', i < n);
   });
+  if (n === 3) greyOutRecorder();
   if (n === 3 && selected) {
     document.getElementById('ctxRow').innerHTML = `
       <div class="avatar">${esc(initials(selected))}</div>
@@ -810,16 +811,28 @@ async function sendRecording() {
   try {
     const res = await fetch(RECORDING_WEBHOOK, { method:'POST', body: form });
     stageTimers.forEach(clearTimeout);
-    if (!res.ok) throw new Error('The pipeline returned ' + res.status + '.');
+
+    /* A 5xx is the pipeline itself failing, which in practice means the
+       transcription service upstream refused it. Flag it as an upstream
+       problem so the adviser sees a plain explanation, not a status code. */
+    if (!res.ok) {
+      const e = new Error('The pipeline returned ' + res.status + '.');
+      e.upstream = res.status >= 500;
+      throw e;
+    }
 
     let payload = null;
     try { payload = JSON.parse(await res.text()); } catch (e) {}
 
+    serviceDown = false;
     setProg('send','done'); setProg('tx','done'); setProg('ai','done'); setProg('crm','done');
     showDone(payload);
   } catch (err) {
     stageTimers.forEach(clearTimeout);
-    showFail(err.message || 'The recording could not be sent.');
+    /* A dropped connection is indistinguishable from the service being down
+       from where this page sits, so treat both the same way. */
+    const upstream = err.upstream !== false;
+    showFail(err.message || 'The recording could not be sent.', upstream);
   }
 }
 
@@ -841,18 +854,37 @@ function showDone(payload) {
   }
 }
 
-function showFail(msg) {
+/* The adviser does not need our stack traces. A 5xx from the pipeline means the
+   transcription service upstream is refusing us, which is a Google side issue
+   being worked on, so say that plainly and calmly instead of surfacing a
+   status code that reads like the app is broken. Anything else, say the honest
+   generic thing. Either way the recorder is greyed out afterwards so he is not
+   invited to talk for ten minutes into something that cannot accept it. */
+function showFail(msg, upstream) {
+  serviceDown = !!upstream;
+
   document.getElementById('processingBlock').style.display = 'none';
   document.getElementById('doneBlock').style.display = 'none';
   document.getElementById('failBlock').style.display = '';
-  document.getElementById('failMsg').textContent = msg;
+
+  document.getElementById('failTitle').textContent = upstream
+    ? 'Google connection issue'
+    : 'That did not send';
+  document.getElementById('failMsg').textContent = upstream
+    ? 'The transcription service is not accepting recordings at the moment. TMP is working to resolve it. Nothing you have done is lost — try again shortly, or carry on and record this debrief later.'
+    : msg;
+
+  greyOutRecorder();
 }
 
-function discardRecording() {
-  if (!confirm('Discard this recording? It cannot be recovered.')) return;
-  recordedBlob = null; chunks = [];
-  resetRecorder();
-  go(3);
+/* Grey the ring out so a failed service cannot silently eat another debrief. */
+function greyOutRecorder() {
+  if (!serviceDown) return;
+  const ring = document.getElementById('recRing');
+  if (ring) ring.classList.add('busy');
+  const n = document.getElementById('recNotice');
+  if (n) n.innerHTML = '<div class="notice">Recording is paused while the transcription service is unavailable. TMP is working to resolve it.</div>';
+  document.getElementById('recHint').textContent = 'Temporarily unavailable.';
 }
 
 function resetRecorder() {
@@ -878,11 +910,12 @@ function recordAnother() {
 
 function openStudio() { window.location.href = 'index.html'; }
 
-/* Losing a recording to a stray back swipe is unforgivable. */
+/* Guard a recording that is actually in progress, and nothing else. An earlier
+   version also blocked navigation while a failed send was on screen, which trapped
+   the adviser on the error page with no way out. Being stuck is worse than
+   losing a recording he was never going to be able to send anyway. */
 window.addEventListener('beforeunload', e => {
-  if (isRecording || (recordedBlob && document.getElementById('failBlock').style.display !== 'none')) {
-    e.preventDefault(); e.returnValue = '';
-  }
+  if (isRecording) { e.preventDefault(); e.returnValue = ''; }
 });
 
 if ('serviceWorker' in navigator) {
