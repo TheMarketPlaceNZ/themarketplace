@@ -750,8 +750,13 @@ select.input { cursor:pointer; appearance:none;
 
           <div>
             <div class="card" style="margin-bottom:14px;">
-              <div class="section-title" style="margin-bottom:6px;" id="selectedDayTitle">Today</div>
-              <div class="hint" style="margin-bottom:0;">Client meetings and personal blocks for this day.</div>
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="flex:1;min-width:0;">
+                  <div class="section-title" style="margin-bottom:6px;" id="selectedDayTitle">Today</div>
+                  <div class="hint" style="margin-bottom:0;">Client meetings and personal blocks for this day.</div>
+                </div>
+                <button class="btn btn-gilt" onclick="connectGoogleCalendar()" style="flex-shrink:0;white-space:nowrap;">Connect Calendar</button>
+              </div>
             </div>
             <div class="card" style="margin-bottom:14px;">
               <div class="section-title">Block Out Time</div>
@@ -846,12 +851,9 @@ select.input { cursor:pointer; appearance:none;
       <input class="input" id="setRecording" placeholder="Leave blank to use the live default">
     </div>
 
+    <!-- Connect Calendar now lives on the Calendar tab, beside the day it affects.
+         Burying a one-click connect inside Settings is how it never gets clicked. -->
     <div class="set-row divider">
-      <div class="lbl">Google Calendar</div>
-      <button class="btn btn-gilt full" onclick="connectGoogleCalendar()">Connect Google Calendar</button>
-      <div class="hint">One click. You sign into your own Google account and grant access. No password sharing, no token copying.</div>
-    </div>
-    <div class="set-row">
       <div class="lbl">Zoom</div>
       <button class="btn btn-ghost full" onclick="connectZoom()">Connect Zoom</button>
       <div id="zoomLockedBox" class="notice" style="display:none;margin-top:10px;">
@@ -1224,6 +1226,15 @@ function recordToLead(r) {
     insurance:  !!f.insurance_attached,
     notes:      f.notes || '',
     bookingTime:f.booking_time || '',
+    /* Meeting format is what the client actually chose on the booking page.
+       Do NOT infer it from whether a Zoom link exists — the booking scenario
+       creates a Zoom meeting for every booking, in person included, so a link
+       is always there. It is simply not shown to the client unless they asked
+       for it, and it is what makes the "switch this to a call" case instant. */
+    meetingFormat: pick(f.meeting_format) || '',
+    zoomLink:   f.zoom_link || '',
+    zoomStart:  f.zoom_start_url || '',
+    zoomId:     f.zoom_meeting_id || '',
     createdAt:  f.checkin_date || r.createdTime || '',
     lifecycleLog: parseLog(f.lifecycle_log)
   };
@@ -1543,6 +1554,7 @@ function openLeadDetail(idx, cardEl) {
     </div>
 
     <div class="m-pane active" id="paneTabdetails">
+      ${meetingBlockHtml(l, idx)}
       <div class="field-grid pop-blur" style="animation-delay:120ms;">
         <div class="field"><label>First Name</label><input class="input" id="edFirst" value="${esc(l.firstName || l.name || '')}"></div>
         <div class="field"><label>Surname</label><input class="input" id="edLast" value="${esc(l.surname||'')}"></div>
@@ -1593,6 +1605,104 @@ function openLeadDetail(idx, cardEl) {
       <div id="timelineList">${renderTimeline(l)}</div>
     </div>`;
   document.getElementById('leadModal').classList.add('open');
+}
+
+/* ---------- MEETING BLOCK ----------
+   Everything about the next meeting in one place: when, what form it takes,
+   and the two links that matter. Paddy's start link and the client's join
+   link are deliberately different buttons. Handing a client the start URL
+   would let them open the meeting as host, which also carries his Zoom
+   session token in the query string. */
+function meetingBlockHtml(l, idx) {
+  if (!l.airtableId) return '';
+
+  const when = l.bookingTime ? nzDateTime(l.bookingTime) : '';
+  const isZoom = l.meetingFormat === 'Zoom';
+  const fmt = l.meetingFormat || (l.bookingTime ? 'Not recorded' : '');
+
+  let body;
+  if (!l.bookingTime) {
+    body = `<div class="hint" style="margin-bottom:10px;">No meeting booked yet. Send them the booking link and the rest happens on its own.</div>
+      <button class="btn btn-ghost" onclick="copyBookingText()">Copy booking link</button>`;
+  } else {
+    const linkRow = l.zoomLink
+      ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+           <button class="btn btn-gilt" onclick="window.open('${esc(l.zoomStart || l.zoomLink)}','_blank')">Start meeting</button>
+           <button class="btn btn-ghost" onclick="copyZoom(${idx})">Copy client link</button>
+           <button class="btn btn-ghost" onclick="createZoomLink(${idx})" id="zoomNewBtn${idx}">New link</button>
+         </div>
+         <div class="hint" style="margin-top:9px;margin-bottom:0;">Start opens it as host. Copy sends the client's joining link, never yours.</div>`
+      : `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+           <button class="btn btn-gilt" onclick="createZoomLink(${idx})" id="zoomNewBtn${idx}">Create Zoom link</button>
+         </div>
+         <div class="hint" style="margin-top:9px;margin-bottom:0;">No Zoom meeting on this record. Creating one takes a couple of seconds.</div>`;
+
+    body = `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <div style="font-family:var(--serif);font-size:19px;color:var(--ink);">${esc(when)}</div>
+        <span class="badge ${isZoom ? 's-booked' : 's-enquiry'}">${esc(fmt)}</span>
+      </div>${linkRow}`;
+  }
+
+  return `<div class="card pop-blur" style="margin-bottom:16px;animation-delay:90ms;">
+      <div class="section-title" style="margin-bottom:8px;">Next Meeting</div>
+      ${body}
+    </div>`;
+}
+
+/* Airtable hands back UTC. Paddy thinks in New Zealand time, so render it that
+   way explicitly rather than trusting whatever the device is set to. */
+function nzDateTime(iso) {
+  try {
+    return new Date(iso).toLocaleString('en-NZ', {
+      weekday:'short', day:'numeric', month:'short',
+      hour:'numeric', minute:'2-digit', hour12:true,
+      timeZone:'Pacific/Auckland'
+    });
+  } catch (e) { return iso; }
+}
+
+function copyZoom(idx) {
+  const l = appState.leads[idx]; if (!l || !l.zoomLink) return;
+  copy(l.zoomLink);
+}
+
+/* Creates a Zoom meeting on demand through its own dedicated workflow, so a
+   failure here pauses only this one thing. The scenario writes the links and
+   the timeline entry itself, which is why this re-syncs rather than guessing
+   at the new state locally. */
+const ZOOM_LINK_WEBHOOK = 'https://hook.us2.make.com/tixfnfrbfp0oop5whcsf0i16okmr97nr';
+
+function createZoomLink(idx) {
+  const l = appState.leads[idx];
+  if (!l || !l.airtableId) return;
+  if (l.zoomLink && !confirm('This replaces the existing Zoom link. Anyone holding the old one will not be able to join. Continue?')) return;
+
+  const btn = document.getElementById('zoomNewBtn' + idx);
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+
+  fetch(ZOOM_LINK_WEBHOOK, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      recordId: l.airtableId,
+      leadName: fullName(l),
+      startTime: l.bookingTime || '',
+      duration: 30
+    })
+  })
+  .then(r => r.ok ? r.json() : Promise.reject(new Error('Zoom service returned ' + r.status)))
+  .then(d => {
+    if (!d || !d.joinUrl) throw new Error('No link came back.');
+    l.zoomLink  = d.joinUrl;
+    l.zoomStart = d.startUrl || '';
+    l.zoomId    = d.meetingId || '';
+    saveState();
+    openLeadDetail(idx, null);          // redraw with the new link in place
+    syncLeads(true);                    // pick up the timeline entry Make wrote
+  })
+  .catch(() => {
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Zoom link'; }
+    alert('Could not create the Zoom link just now. Try again in a moment.');
+  });
 }
 
 function selectHtml(id, opts, val) {
