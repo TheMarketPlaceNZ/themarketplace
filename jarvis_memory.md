@@ -16,7 +16,7 @@ Agency Founders: Henk Cloete and Kurt Onvlee
 * Security: Glassmorphic passcode gate requiring zero server maintenance costs.
 * Credentials:
   * Username: Sopo FuiFui
-  * Passcode: sopo2026
+  * Passcode: rotated — see password manager, not stored in repo (previous value sopo2026 was exposed via public GitHub repo and has been retired)
   * Session validation stored locally in localStorage.
   * Added Feature: Integrated Strategy Desk and voice recorder console in index.html, enabling live meeting recordings directly on mobile browsers.
 

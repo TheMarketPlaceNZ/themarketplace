@@ -1031,11 +1031,11 @@ function submitMemberLogin() {
   const err      = document.getElementById('loginError');
   if (!passcode) return;
 
-  if (passcode === 'sopo2026') {
+  if (passcode === 'CHANGE_ME_CLIENT_PASSCODE') {
     if (err) err.style.display = 'none';
     closeLoginModal();
     window.open('sopo-studio/index.html', '_blank');
-  } else if (passcode === 'Pass#321Word') {
+  } else if (passcode === 'CHANGE_ME_JARVIS_PASSCODE') {
     if (err) err.style.display = 'none';
     closeLoginModal();
     localStorage.setItem('jarvisGateUnlocked', 'true');
