@@ -1043,11 +1043,15 @@ function submitMemberLogin() {
   const err      = document.getElementById('loginError');
   if (!passcode) return;
 
-  if (passcode === 'sopo2026') {
+  if (passcode === 'ledger-copper-9590') {
     if (err) err.style.display = 'none';
     closeLoginModal();
     window.open('sopo-studio/index.html', '_blank');
-  } else if (passcode === 'Pass#321Word') {
+  } else if (passcode === 'ridge-brook-1021') {
+    if (err) err.style.display = 'none';
+    closeLoginModal();
+    window.open('paddy-studio/index.html', '_blank');
+  } else if (passcode === 'falcon-lantern-3463') {
     if (err) err.style.display = 'none';
     closeLoginModal();
     localStorage.setItem('jarvisGateUnlocked', 'true');

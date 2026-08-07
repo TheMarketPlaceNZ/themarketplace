@@ -537,7 +537,7 @@
     function checkGatePasscode() {
       const pin = document.getElementById("gatePasscode").value.trim();
       // Lock gate behind the hello password
-      if (pin === "Pass#321Word") {
+      if (pin === "falcon-lantern-3463") {
         document.getElementById("gateOverlay").style.display = "none";
         localStorage.setItem("jarvisGateUnlocked", "true");
         loadDashboard();
@@ -1197,8 +1197,8 @@
 
     function checkVaultPasscode() {
       const pin = document.getElementById("vaultGateInput").value.trim();
-      // Unlocked by either the corporate hello password or the Sopo studio portal gate passcode
-      if (pin === "sopo2026" || pin === "Pass#321Word") {
+      // Unlocked by either the Sopo studio portal gate passcode or the Jarvis passcode
+      if (pin === "ledger-copper-9590" || pin === "falcon-lantern-3463") {
         document.getElementById("vaultGate").style.display = "none";
         document.getElementById("vaultContent").style.display = "block";
       } else if (pin.length >= 8) {
@@ -1759,74 +1759,67 @@
 
       <!-- Protected Content -->
       <div class="vaultContent" id="vaultContent">
-        
+
+        <div class="vaultItem" style="border-color:#a33;">
+          <div class="vaultItemMeta">
+            <div class="vaultItemLabel" style="color:#e88;">⚠ Credentials removed from this page</div>
+            <div class="vaultItemValue">
+              Real account passwords used to be hardcoded here in plain text and shipped to
+              every visitor of the public site — regardless of this passcode gate, which only
+              hides/shows this box in the browser and does not stop the file itself being
+              downloaded. Since this repo was public, those passwords were exposed. They have
+              been rotated and removed from the code. Store the new ones in a real password
+              manager (1Password / Bitwarden), not in this file.
+            </div>
+          </div>
+        </div>
+
         <div class="vaultItem">
           <div class="vaultItemMeta">
             <div class="vaultItemLabel">Company GitHub Account</div>
-            <div class="vaultItemValue">User: TheMarketPlaceNZ | Email: admin@themarketplace.co.nz</div>
-          </div>
-          <div class="vaultItemActions">
-            <button class="vaultCopyBtn" id="cp-git" onclick="copyVaultValue('H&K_GitHubPassWord', 'cp-git')">Copy Password</button>
+            <div class="vaultItemValue">User: TheMarketPlaceNZ | Email: admin@themarketplace.co.nz — password in password manager</div>
           </div>
         </div>
 
         <div class="vaultItem">
           <div class="vaultItemMeta">
             <div class="vaultItemLabel">1st Domains Registrar</div>
-            <div class="vaultItemValue">Account Number: 10036300 (Henk Cloete)</div>
-          </div>
-          <div class="vaultItemActions">
-            <button class="vaultCopyBtn" id="cp-1st" onclick="copyVaultValue('H&K_1stDomainsPassWord', 'cp-1st')">Copy Password</button>
+            <div class="vaultItemValue">Account Number: 10036300 (Henk Cloete) — password in password manager</div>
           </div>
         </div>
 
         <div class="vaultItem">
           <div class="vaultItemMeta">
             <div class="vaultItemLabel">Central Admin Email</div>
-            <div class="vaultItemValue">admin@themarketplace.co.nz</div>
-          </div>
-          <div class="vaultItemActions">
-            <button class="vaultCopyBtn" id="cp-eadmin" onclick="copyVaultValue('H&K_1stDomainsPassWord', 'cp-eadmin')">Copy Password</button>
+            <div class="vaultItemValue">admin@themarketplace.co.nz — password in password manager</div>
           </div>
         </div>
 
         <div class="vaultItem">
           <div class="vaultItemMeta">
             <div class="vaultItemLabel">General Hello Email</div>
-            <div class="vaultItemValue">hello@themarketplace.co.nz</div>
-          </div>
-          <div class="vaultItemActions">
-            <button class="vaultCopyBtn" id="cp-ehello" onclick="copyVaultValue('Pass#321Word', 'cp-ehello')">Copy Password</button>
+            <div class="vaultItemValue">hello@themarketplace.co.nz — password in password manager</div>
           </div>
         </div>
 
         <div class="vaultItem">
           <div class="vaultItemMeta">
             <div class="vaultItemLabel">Kurt Personal Business Email</div>
-            <div class="vaultItemValue">kurt@themarketplace.co.nz</div>
-          </div>
-          <div class="vaultItemActions">
-            <button class="vaultCopyBtn" id="cp-ekurt" onclick="copyVaultValue('Pass#321Word', 'cp-ekurt')">Copy Password</button>
+            <div class="vaultItemValue">kurt@themarketplace.co.nz — password in password manager</div>
           </div>
         </div>
 
         <div class="vaultItem">
           <div class="vaultItemMeta">
             <div class="vaultItemLabel">Sopo Studio Client Passcode</div>
-            <div class="vaultItemValue">Username: Sopo FuiFui | Code: sopo2026</div>
-          </div>
-          <div class="vaultItemActions">
-            <button class="vaultCopyBtn" id="cp-sopo" onclick="copyVaultValue('sopo2026', 'cp-sopo')">Copy Code</button>
+            <div class="vaultItemValue">Username: Sopo FuiFui — code in password manager (rotated)</div>
           </div>
         </div>
 
         <div class="vaultItem">
           <div class="vaultItemMeta">
             <div class="vaultItemLabel">Netlify Corporate Host</div>
-            <div class="vaultItemValue">henkcloete123@gmail.com</div>
-          </div>
-          <div class="vaultItemActions">
-            <button class="vaultCopyBtn" id="cp-net" onclick="copyVaultValue('H&K_1stDomainsPassWord', 'cp-net')">Copy Password</button>
+            <div class="vaultItemValue">henkcloete123@gmail.com — password in password manager</div>
           </div>
         </div>
 
