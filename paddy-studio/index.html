@@ -1158,7 +1158,10 @@ function proxyCall(action, payload = {}) {
 async function attemptProxy(action, payload, attempt = 0) {
   const url  = getSetting('proxyUrl', PROXY_WEBHOOK);
   const body = { action, ...payload };
-  if (payload.fields) body.airtableBody = JSON.stringify({ fields: payload.fields });
+  /* airtableBody must be a real object, not a JSON string. Make maps it
+     straight into the HTTP body, and a string arrives at Airtable quoted,
+     which returns [422] Could not find field "fields" in the request body. */
+  if (payload.fields) body.airtableBody = { fields: payload.fields };
   delete body.fields;
 
   let res;

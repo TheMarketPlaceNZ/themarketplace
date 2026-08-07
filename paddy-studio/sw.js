@@ -1,7 +1,7 @@
 /* Bump CACHE_NAME on every deploy or the old shell is served from cache
    and the new build never reaches the device. This is the single most
    common cause of "I uploaded it but nothing changed". */
-const CACHE_NAME = 'paddy-studio-v4';
+const CACHE_NAME = 'paddy-studio-v5';
 const ASSETS = [
   'index.html',
   'checkin.html',
