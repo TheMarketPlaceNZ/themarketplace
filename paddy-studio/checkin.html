@@ -57,25 +57,59 @@ h1 { font-family:var(--serif); font-size:38px; font-weight:400; line-height:1.1;
 .grp.pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 label {
   display:block; font-size:9.5px; font-weight:600; letter-spacing:0.16em;
-  text-transform:uppercase; color:var(--muted); margin-bottom:7px;
+  text-transform:uppercase; color:var(--dim); margin-bottom:8px;
 }
+
+/* Fields used to sit at --void, DARKER than the card they sit on, so on a
+   phone in daylight they read as flat panels rather than things you tap.
+   They now sit LIGHTER than the card with a visible edge, which is what
+   makes a box look like a box. */
+.ctl { position:relative; }
 input, select, textarea {
-  width:100%; padding:13px 15px; background:var(--void);
-  border:1px solid var(--hairline); border-radius:10px;
-  color:var(--ink); font-size:14px; font-family:'Inter',sans-serif;
-  outline:none; transition:.22s;
+  width:100%; padding:14px 15px; background:#171B22;
+  border:1px solid rgba(255,255,255,0.16); border-radius:10px;
+  color:var(--ink); font-size:15px; font-family:'Inter',sans-serif;
+  outline:none; transition:.18s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
+input:hover, select:hover, textarea:hover { border-color:rgba(255,255,255,0.26); }
 input:focus, select:focus, textarea:focus {
-  border-color:var(--hairline-g); box-shadow:0 0 0 3px var(--gilt-wash);
+  background:#1B2028; border-color:var(--gilt);
+  box-shadow:0 0 0 3px var(--gilt-wash), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-input::placeholder, textarea::placeholder { color:var(--muted); }
+input::placeholder, textarea::placeholder { color:#5C636F; }
 textarea { resize:vertical; min-height:88px; }
 select {
   appearance:none; cursor:pointer; padding-right:38px;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C636F' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B929E' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 13px center; background-size:15px;
 }
-select:invalid { color:var(--muted); }
+select:invalid { color:#5C636F; }
+
+/* Answered fields earn a quiet tick, so at a glance you can see what is left. */
+.tickmark {
+  position:absolute; right:13px; top:50%; transform:translateY(-50%) scale(.6);
+  width:18px; height:18px; border-radius:50%;
+  background:rgba(74,222,128,0.14); border:1px solid rgba(74,222,128,0.5);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:.18s; pointer-events:none;
+}
+.grp.ok .tickmark { opacity:1; transform:translateY(-50%) scale(1); }
+.grp.ok input, .grp.ok textarea { border-color:rgba(74,222,128,0.3); padding-right:40px; }
+.grp.ok select { border-color:rgba(74,222,128,0.3); }
+.grp.ok select ~ .tickmark { display:none; }   /* the chevron already lives there */
+
+.grp.warn input, .grp.warn select, .grp.warn textarea { border-color:rgba(242,178,76,0.55); }
+.grp.warn .tickmark { opacity:0; }
+
+.msg { font-size:12px; line-height:1.5; margin-top:7px; display:none; }
+.grp.warn .msg { display:block; color:#F2B24C; }
+.msg a { color:var(--gilt-bright); cursor:pointer; text-decoration:underline; }
+
+.progress-note {
+  font-size:12px; color:var(--muted); text-align:center;
+  margin-top:14px; min-height:16px; line-height:1.5;
+}
 
 .btn {
   width:100%; padding:16px; border:none; border-radius:11px; cursor:pointer;
@@ -83,7 +117,11 @@ select:invalid { color:var(--muted); }
   letter-spacing:0.16em; text-transform:uppercase; transition:.2s;
   background:linear-gradient(180deg, var(--gilt-bright), var(--gilt)); color:#14100A;
 }
-.btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.btn:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
+.btn:disabled {
+  background:#1B2028; color:#5C636F; cursor:not-allowed;
+  border:1px solid rgba(255,255,255,0.09); transform:none; filter:none;
+}
 .btn.ghost {
   background:transparent; border:1px solid var(--hairline);
   color:var(--dim); margin-top:10px; letter-spacing:0.08em; text-transform:none;
@@ -152,32 +190,49 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
       <div id="formSection">
         <form id="checkinForm" onsubmit="handleCheckin(event)">
           <div class="grp pair">
-            <div>
+            <div class="grp" id="grpFirst" style="margin-bottom:0;">
               <label for="firstName">First name</label>
-              <input type="text" id="firstName" required placeholder="Priya" autocomplete="given-name">
+              <div class="ctl">
+                <input type="text" id="firstName" required placeholder="Priya" autocomplete="given-name">
+                <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </div>
             </div>
-            <div>
+            <div class="grp" id="grpLast" style="margin-bottom:0;">
               <label for="surname">Surname</label>
-              <input type="text" id="surname" required placeholder="Sharma" autocomplete="family-name">
+              <div class="ctl">
+                <input type="text" id="surname" required placeholder="Sharma" autocomplete="family-name">
+                <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </div>
             </div>
           </div>
 
-          <div class="grp">
+          <div class="grp" id="grpEmail">
             <label for="emailAddress">Email</label>
-            <input type="email" id="emailAddress" required placeholder="you@email.co.nz" autocomplete="email">
+            <div class="ctl">
+              <input type="email" id="emailAddress" required placeholder="you@email.co.nz" autocomplete="email" spellcheck="false">
+              <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </div>
+            <div class="msg" id="msgEmail"></div>
           </div>
 
-          <div class="grp">
+          <div class="grp" id="grpPhone">
             <label for="phoneNumber">Mobile</label>
-            <input type="tel" id="phoneNumber" required placeholder="021 234 5678" autocomplete="tel">
+            <div class="ctl">
+              <input type="tel" id="phoneNumber" required placeholder="021 234 5678" autocomplete="tel" inputmode="tel">
+              <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </div>
+            <div class="msg" id="msgPhone"></div>
           </div>
 
-          <div class="grp">
+          <div class="grp" id="grpArea">
             <label for="targetArea">Which area</label>
-            <input type="text" id="targetArea" required placeholder="Rototuna, Dinsdale, Hamilton East">
+            <div class="ctl">
+              <input type="text" id="targetArea" required placeholder="Rototuna, Dinsdale, Hamilton East">
+              <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </div>
           </div>
 
-          <div class="grp">
+          <div class="grp" id="grpType">
             <label for="enquiryType">What do you need</label>
             <select id="enquiryType" required>
               <option value="" disabled selected>Choose one</option>
@@ -190,7 +245,7 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
             </select>
           </div>
 
-          <div class="grp">
+          <div class="grp" id="grpTime">
             <label for="purchaseTime">Your timeframe</label>
             <select id="purchaseTime" required>
               <option value="" disabled selected>Choose one</option>
@@ -207,7 +262,8 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
             <textarea id="extraNotes" placeholder="Optional. Anything that might affect your situation."></textarea>
           </div>
 
-          <button type="submit" class="btn">Send my details</button>
+          <button type="submit" class="btn" id="submitBtn" disabled>Send my details</button>
+          <div class="progress-note" id="progressNote"></div>
         </form>
       </div>
 
@@ -264,30 +320,195 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let pendingPayload = null;
 
-function isValidNZMobile(raw) {
-  return /^02[0-9]{7,9}$/.test(raw.replace(/[\s\-()]/g, ''));
+/* ============================================================
+   VALIDATION
+
+   Two different jobs, deliberately kept apart.
+
+   GATING decides whether Send is available at all. It only ever asks
+   "has this actually been filled in, and is it structurally an attempt?"
+   An email needs an @ and a dot after it. A mobile needs enough digits.
+   Nothing subtler than that, because this is a lead form: a client who
+   cannot submit is a client Paddy never hears from, and he will never
+   know they tried.
+
+   ADVICE is everything else, and never blocks. Typo domains, throwaway
+   addresses, odd prefixes. These get an amber note and a one-tap fix,
+   and the client can ignore all of it and send anyway. A mistyped email
+   from a real person is still a real lead with a real phone number.
+
+   No third party verification API is called from here. Nothing can prove
+   a mailbox or a number is live without mailing or texting it, and the
+   ones that claim to cost money per lookup and reject perfectly good
+   addresses. Format, plausibility and typo-catching cover the vast
+   majority of genuine mistakes for nothing.
+   ============================================================ */
+
+/* Domains people actually mistype, and the correction. Kept short on
+   purpose — an over-eager suggester that "corrects" a real domain is
+   worse than one that stays quiet. */
+const DOMAIN_FIXES = {
+  'gmial.com':'gmail.com', 'gmai.com':'gmail.com', 'gmaill.com':'gmail.com',
+  'gmail.co':'gmail.com', 'gmail.con':'gmail.com', 'gnail.com':'gmail.com',
+  'gmail.cm':'gmail.com', 'gamil.com':'gmail.com',
+  'hotmial.com':'hotmail.com', 'hotmai.com':'hotmail.com', 'hotmail.co':'hotmail.com',
+  'hotmail.con':'hotmail.com', 'hotnail.com':'hotmail.com',
+  'outlok.com':'outlook.com', 'outloo.com':'outlook.com', 'outlook.co':'outlook.com',
+  'yaho.com':'yahoo.com', 'yahoo.co':'yahoo.com', 'yahooo.com':'yahoo.com',
+  'xtra.co.n':'xtra.co.nz', 'xtra.com':'xtra.co.nz', 'xtra.co':'xtra.co.nz',
+  'icloud.co':'icloud.com', 'iclod.com':'icloud.com',
+  'live.co':'live.com', 'me.co':'me.com'
+};
+
+/* Throwaway inbox providers. Worth a word, never a wall. */
+const DISPOSABLE = ['mailinator.com','guerrillamail.com','10minutemail.com','tempmail.com',
+                    'trashmail.com','yopmail.com','sharklasers.com','throwawaymail.com','maildrop.cc'];
+
+/* Structural only. Deliberately permissive — real addresses are stranger
+   than most regexes allow, and this one only has to catch "not an attempt". */
+function emailLooksStructural(v) {
+  return /^[^\s@]+@[^\s@.]+\.[^\s@]{2,}$/.test(v.trim());
 }
+
+function emailAdvice(v) {
+  const at = v.lastIndexOf('@');
+  if (at < 0) return null;
+  const domain = v.slice(at + 1).toLowerCase().trim();
+  if (DOMAIN_FIXES[domain]) {
+    return { fix: v.slice(0, at + 1) + DOMAIN_FIXES[domain],
+             text: 'Did you mean <a onclick="applyEmailFix()">' + esc(v.slice(0, at + 1) + DOMAIN_FIXES[domain]) + '</a>?' };
+  }
+  if (DISPOSABLE.indexOf(domain) > -1) {
+    return { fix: null, text: 'That looks like a temporary inbox. Paddy will send your booking link there, so use one you check if you can.' };
+  }
+  return null;
+}
+let pendingEmailFix = null;
+function applyEmailFix() {
+  if (!pendingEmailFix) return;
+  const el = document.getElementById('emailAddress');
+  el.value = pendingEmailFix;
+  validateAll();
+  el.focus();
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* NZ mobiles: 021, 022, 027, plus the less common 020 and 029. Accepts
+   +64 and 0064 forms, and anything the client typed with spaces, dashes
+   or brackets. Returns the plain national form or null. */
+function normaliseNZMobile(raw) {
+  let d = String(raw || '').replace(/[\s\-().]/g, '');
+  if (d.indexOf('+64') === 0) d = '0' + d.slice(3);
+  else if (d.indexOf('0064') === 0) d = '0' + d.slice(4);
+  else if (d.indexOf('64') === 0 && d.length > 10) d = '0' + d.slice(2);
+  if (!/^0\d{8,10}$/.test(d)) return null;
+  return d;
+}
+/* The gate accepts ANY plausible NZ number, landlines included. An older
+   client with no mobile is still a client, and locking them out of the form
+   to enforce a texting preference would be a silent, invisible loss. The
+   landline gets a note suggesting a mobile; it never stops them sending. */
+function phoneLooksStructural(v) {
+  return !!normaliseNZMobile(v);
+}
+function phoneAdvice(v) {
+  const d = normaliseNZMobile(v);
+  if (!d) return null;
+  if (/^0[34679]/.test(d) && !/^02/.test(d)) {
+    return { text: 'That looks like a landline. Paddy texts the booking link, so a mobile reaches you faster.' };
+  }
+  if (/^02/.test(d) && !/^0(20|21|22|27|29)/.test(d)) {
+    return { text: 'That is not a prefix we recognise. Worth a second look.' };
+  }
+  return null;
+}
+/* Presentation only. The payload carries the normalised form. */
+function prettyMobile(d) {
+  if (!d) return '';
+  if (d.length === 10) return d.slice(0,3) + ' ' + d.slice(3,6) + ' ' + d.slice(6);
+  if (d.length === 9)  return d.slice(0,3) + ' ' + d.slice(3,6) + ' ' + d.slice(6);
+  return d;
+}
+
+const REQUIRED = [
+  { id:'firstName',    grp:'grpFirst' },
+  { id:'surname',      grp:'grpLast'  },
+  { id:'emailAddress', grp:'grpEmail' },
+  { id:'phoneNumber',  grp:'grpPhone' },
+  { id:'targetArea',   grp:'grpArea'  },
+  { id:'enquiryType',  grp:'grpType'  },
+  { id:'purchaseTime', grp:'grpTime'  }
+];
+
+function validateAll() {
+  let missing = 0;
+
+  REQUIRED.forEach(f => {
+    const el  = document.getElementById(f.id);
+    const grp = document.getElementById(f.grp);
+    const v   = (el.value || '').trim();
+    let ok = v.length > 0;
+
+    if (ok && f.id === 'emailAddress') ok = emailLooksStructural(v);
+    if (ok && f.id === 'phoneNumber')  ok = phoneLooksStructural(v);
+
+    grp.classList.toggle('ok', ok);
+    if (!ok) missing++;
+  });
+
+  /* Advice runs independently of the gate and never contributes to it. */
+  const emailEl = document.getElementById('emailAddress');
+  const emailGrp = document.getElementById('grpEmail');
+  const emailMsg = document.getElementById('msgEmail');
+  const ev = (emailEl.value || '').trim();
+  const eAdv = ev && emailLooksStructural(ev) ? emailAdvice(ev) : null;
+  pendingEmailFix = eAdv ? eAdv.fix : null;
+  if (eAdv) { emailGrp.classList.add('warn'); emailMsg.innerHTML = eAdv.text; }
+  else { emailGrp.classList.remove('warn'); emailMsg.innerHTML = ''; }
+
+  const phoneGrp = document.getElementById('grpPhone');
+  const phoneMsg = document.getElementById('msgPhone');
+  const pv = (document.getElementById('phoneNumber').value || '').trim();
+  const pAdv = pv ? phoneAdvice(pv) : null;
+  if (pAdv) { phoneGrp.classList.add('warn'); phoneMsg.textContent = pAdv.text; }
+  else { phoneGrp.classList.remove('warn'); phoneMsg.textContent = ''; }
+
+  const btn  = document.getElementById('submitBtn');
+  const note = document.getElementById('progressNote');
+  btn.disabled = missing > 0;
+  note.textContent = missing > 0
+    ? (missing === 1 ? 'One more to go.' : missing + ' still to fill in.')
+    : '';
+}
+
+REQUIRED.forEach(f => {
+  const el = document.getElementById(f.id);
+  el.addEventListener('input', validateAll);
+  el.addEventListener('change', validateAll);
+  el.addEventListener('blur', validateAll);
+});
+/* Tidy the mobile into a readable form once they leave the field, without
+   fighting them while they are still typing it. */
+document.getElementById('phoneNumber').addEventListener('blur', function () {
+  const d = normaliseNZMobile(this.value);
+  if (d && /^02/.test(d)) { this.value = prettyMobile(d); validateAll(); }
+});
+validateAll();
+
+function isValidNZMobile(raw) { return phoneLooksStructural(raw); }
 
 function handleCheckin(event) {
   event.preventDefault();
-  const phoneEl = document.getElementById('phoneNumber');
-  const phone = phoneEl.value.trim();
 
-  if (!isValidNZMobile(phone)) {
-    phoneEl.style.borderColor = 'var(--red)';
-    phoneEl.focus();
-    let hint = document.getElementById('phoneHint');
-    if (!hint) {
-      hint = document.createElement('div');
-      hint.id = 'phoneHint'; hint.className = 'hint';
-      phoneEl.parentNode.insertBefore(hint, phoneEl.nextSibling);
-    }
-    hint.textContent = 'That does not look like a NZ mobile. They start 021, 022 or 027.';
-    return;
-  }
-  phoneEl.style.borderColor = '';
-  const oldHint = document.getElementById('phoneHint');
-  if (oldHint) oldHint.remove();
+  /* No blocking check here any more. The Send button is only enabled once
+     every required field is filled and the email and mobile are structurally
+     sound, so by the time this runs the hard gate has already passed. Softer
+     concerns were raised as advice and the client has chosen to proceed —
+     that decision is theirs, not the form's. */
+  const phoneEl = document.getElementById('phoneNumber');
+  const phone = prettyMobile(normaliseNZMobile(phoneEl.value)) || phoneEl.value.trim();
 
   const first = document.getElementById('firstName').value.trim();
   const last  = document.getElementById('surname').value.trim();
