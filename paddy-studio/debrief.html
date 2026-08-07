@@ -488,8 +488,12 @@ function unlock() {
   document.getElementById('shell').classList.add('visible');
   initApp();
 }
-/* Arriving from the studio in the same tab session should not ask twice. */
-if (sessionStorage.getItem('paddy_authed') === '1') unlock();
+/* The resume-session check lives at the BOTTOM of this script, not here.
+   Calling unlock() at this point runs initApp() before the `let` bindings
+   below have initialised, which throws a TDZ ReferenceError and leaves the
+   page rendering a header over an empty body. It only breaks for someone
+   arriving already authenticated, which is exactly how Paddy arrives from
+   the studio, so it is precisely the path least likely to be noticed. */
 
 /* ---------- STATE ---------- */
 let leads = [], selected = null, meetingType = '', meetingSource = 'In Person';
@@ -884,6 +888,10 @@ window.addEventListener('beforeunload', e => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+/* Arriving from the studio in the same tab session should not ask twice.
+   This MUST stay the last statement in the file — see the note by checkAuth. */
+if (sessionStorage.getItem('paddy_authed') === '1') unlock();
 </script>
 </body>
 </html>
