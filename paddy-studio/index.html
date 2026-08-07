@@ -1618,7 +1618,10 @@ function meetingBlockHtml(l, idx) {
 
   const when = l.bookingTime ? nzDateTime(l.bookingTime) : '';
   const isZoom = l.meetingFormat === 'Zoom';
-  const fmt = l.meetingFormat || (l.bookingTime ? 'Not recorded' : '');
+  /* Bookings taken before meeting_format existed have no value. Show nothing
+     rather than a placeholder — "Not recorded" sitting beside a meeting reads
+     as though the debrief was missed, which is a different thing entirely. */
+  const fmt = l.meetingFormat || '';
 
   let body;
   if (!l.bookingTime) {
@@ -1639,7 +1642,7 @@ function meetingBlockHtml(l, idx) {
 
     body = `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <div style="font-family:var(--serif);font-size:19px;color:var(--ink);">${esc(when)}</div>
-        <span class="badge ${isZoom ? 's-booked' : 's-enquiry'}">${esc(fmt)}</span>
+        ${fmt ? `<span class="badge ${isZoom ? 's-booked' : 's-enquiry'}">${esc(fmt)}</span>` : ''}
       </div>${linkRow}`;
   }
 
