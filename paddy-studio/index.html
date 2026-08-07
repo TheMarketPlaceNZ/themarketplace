@@ -842,11 +842,6 @@ select.input { cursor:pointer; appearance:none;
     </div>
 
     <div class="set-row divider">
-      <div class="lbl">Gemini API Key</div>
-      <input class="input" id="setGemini" type="password" placeholder="Paste your key">
-      <div class="hint">Used only by the debrief recorder to transcribe meetings. Stored in this browser only, never in a file.</div>
-    </div>
-    <div class="set-row">
       <div class="lbl">Recording Webhook URL</div>
       <input class="input" id="setRecording" placeholder="Leave blank to use the live default">
     </div>
@@ -865,8 +860,8 @@ select.input { cursor:pointer; appearance:none;
     </div>
 
     <div class="set-row divider">
-      <div class="lbl">Change Passcode</div>
-      <input class="input" id="setPasscode" type="password" placeholder="Leave blank to keep the current one">
+      <div class="lbl">Passcode</div>
+      <div class="hint">Your passcode is held on the server as a one way hash, never in this page and never on this device. That means nobody, including TMP, can read it back. To change it, ask TMP and it is swapped over in under a minute.</div>
     </div>
     <div class="set-row">
       <div class="lbl">Reset Archive Cache</div>
@@ -927,7 +922,13 @@ const LEADS_READ_WEBHOOK = 'https://hook.us2.make.com/zvr132eqmx4gdy9knpwfmv2c5i
 const PROXY_WEBHOOK     = 'https://hook.us2.make.com/buarw6qr4ys15ohc4q31ox8iugup71k7';
 const BOOKING_WEBHOOK   = 'https://hook.us2.make.com/5kx9t419278yplcgeqhxi52ys3xjrqzd';
 const RECORDING_WEBHOOK = 'https://hook.us2.make.com/a5f43jei8hvspndi8h16pwt0111y7zte';
-const DEFAULT_PASSCODE  = 'paddy2026';
+
+/* The passcode is NOT in this file, and must never be put back into it.
+   index.html is served publicly, so anything written here is readable by
+   anyone who views source. The code is checked by a Netlify function that
+   holds only a SHA-256 hash of it, so even the hosting dashboard cannot
+   reveal what the code actually is. See netlify/functions/member-auth.js. */
+const AUTH_FN = '/.netlify/functions/member-auth';
 
 /* Real PADDY_CRM Leads field IDs, base apptVuMrK7wi45JOF, table tblmJZByahAR9emV9.
    area / timeframe / loan_amount / lender / client_segment / insurance_attached /
@@ -1009,6 +1010,12 @@ function setSetting(k, v)     { localStorage.setItem('paddy_' + k, v); }
 function saveState()          { localStorage.setItem('paddy_state_v2', JSON.stringify(appState)); }
 
 function loadState() {
+  /* Earlier builds kept a passcode and a Gemini API key in this browser's
+     storage. Neither is used any more — the code is checked server side and
+     the transcription key lives in Make — so sweep the old copies off the
+     device rather than leaving secrets lying about in localStorage. */
+  ['paddy_passcode', 'paddy_apiKey'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+
   try {
     const s = localStorage.getItem('paddy_state_v2');
     if (s) appState = { ...appState, ...JSON.parse(s) };
@@ -1032,17 +1039,40 @@ function migrateV1Lead(l) {
   return { ...l, stage: map[l.stage] || 'Enquiry', timeframe: l.timeFrame || l.timeframe || '' };
 }
 
-/* ---------- AUTH ---------- */
-function checkAuth() {
-  const code = document.getElementById('passcodeInput').value;
-  if (code === getSetting('passcode', DEFAULT_PASSCODE)) {
-    document.getElementById('authScreen').classList.add('hidden');
-    document.getElementById('appShell').classList.add('visible');
-    initApp();
-  } else {
-    document.getElementById('authError').textContent = 'That passcode did not match. Try again.';
-    document.getElementById('passcodeInput').value = '';
-    setTimeout(() => document.getElementById('authError').textContent = '', 2200);
+/* ---------- AUTH ----------
+   Checked server side and fails CLOSED: a wrong code, a dropped
+   connection or a broken deploy all end in the same place, locked out.
+   Only a code that resolves to this studio opens this studio, so another
+   client's valid passcode cannot walk in through this door. */
+async function checkAuth() {
+  const inp = document.getElementById('passcodeInput');
+  const err = document.getElementById('authError');
+  const code = (inp.value || '').trim();
+  if (!code) return;
+
+  err.textContent = 'Checking…';
+  try {
+    const res  = await fetch(AUTH_FN, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ passcode: code })
+    });
+    const data = res.ok ? await res.json() : null;
+    if (data && data.ok && String(data.path || '').indexOf('paddy-studio') === 0) {
+      err.textContent = '';
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('appShell').classList.add('visible');
+      initApp();
+      return;
+    }
+    deny('That passcode did not match. Try again.');
+  } catch (e) {
+    deny('Could not reach the door. Check your connection and try again.');
+  }
+
+  function deny(msg) {
+    err.textContent = msg;
+    inp.value = '';
+    setTimeout(() => { if (err.textContent === msg) err.textContent = ''; }, 2600);
   }
 }
 document.getElementById('passcodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkAuth(); });
@@ -1837,19 +1867,14 @@ function renderNurture() {
 function openSettingsModal() {
   document.getElementById('setProxy').value     = getSetting('proxyUrl','');
   document.getElementById('setBooking').value   = getSetting('bookingUrl','');
-  document.getElementById('setGemini').value    = getSetting('apiKey','');
   document.getElementById('setRecording').value = getSetting('recordingWebhookUrl','');
-  document.getElementById('setPasscode').value  = '';
   closeSidebar();
   document.getElementById('settingsModal').classList.add('open');
 }
 function saveSettings() {
   setSetting('proxyUrl',            document.getElementById('setProxy').value.trim());
   setSetting('bookingUrl',          document.getElementById('setBooking').value.trim());
-  setSetting('apiKey',              document.getElementById('setGemini').value.trim());
   setSetting('recordingWebhookUrl', document.getElementById('setRecording').value.trim() || RECORDING_WEBHOOK);
-  const p = document.getElementById('setPasscode').value.trim();
-  if (p) setSetting('passcode', p);
   closeModal('settingsModal');
   syncLeads();
 }

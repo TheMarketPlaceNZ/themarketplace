@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080A">
+<title>Debrief · Adviser Studio</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PADDY LUBANA · MEETING DEBRIEF
+   Design system: "Obsidian & Gilt" — tokens below are copied
+   verbatim from index.html. Do not invent new colours here; if
+   the studio's palette moves, move this with it.
+   ============================================================ */
+:root {
+  --void:#07080A; --surface:#0D0F13; --surface-2:#12151A; --surface-3:#191D24; --raised:#1E232B;
+  --gilt:#C9A54B; --gilt-bright:#EBCE86; --gilt-deep:#8A6F2A;
+  --gilt-wash:rgba(201,165,75,0.10); --gilt-glow:rgba(201,165,75,0.22);
+  --ink:#F4F5F7; --ink-2:#C3C8D1; --dim:#8B929E; --muted:#5C636F;
+  --hairline:rgba(255,255,255,0.07); --hairline-2:rgba(255,255,255,0.12); --hairline-g:rgba(201,165,75,0.28);
+  --green:#4ADE80; --green-dim:rgba(74,222,128,0.12);
+  --amber:#F2B24C; --amber-dim:rgba(242,178,76,0.12);
+  --red:#F0685F; --red-dim:rgba(240,104,95,0.12);
+  --r-xs:6px; --r-sm:10px; --r-md:14px; --r-lg:20px;
+  --shadow-lift:0 18px 48px -20px rgba(0,0,0,0.9);
+  --serif:'Instrument Serif', Georgia, serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--void); color:var(--ink); min-height:100vh;
+  -webkit-font-smoothing:antialiased; font-feature-settings:'tnum' 1;
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 620px at 8% -8%, rgba(201,165,75,0.055), transparent 60%),
+    radial-gradient(760px 520px at 96% 4%, rgba(127,169,217,0.035), transparent 62%);
+}
+::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px;}
+.micro{font-size:9.5px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);}
+
+/* ===================== AUTH GATE ===================== */
+#authScreen{
+  position:fixed; inset:0; z-index:200; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; background:var(--void); padding:28px; text-align:center;
+}
+#authScreen::before{content:'';position:absolute;inset:0;background:radial-gradient(620px 480px at 50% 34%, rgba(201,165,75,0.10), transparent 68%);}
+#authScreen.hidden{display:none;}
+.auth-monogram{
+  position:relative;width:74px;height:74px;border-radius:50%;border:1px solid var(--hairline-g);
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);
+  font-size:30px;color:var(--gilt-bright);margin-bottom:26px;
+  box-shadow:0 0 0 8px rgba(201,165,75,0.04), inset 0 0 30px rgba(201,165,75,0.07);
+}
+.auth-logo{position:relative;font-family:var(--serif);font-size:36px;color:var(--ink);margin-bottom:8px;}
+.auth-sub{position:relative;font-size:10px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;color:var(--gilt);margin-bottom:44px;}
+.auth-label{position:relative;font-size:11px;color:var(--dim);margin-bottom:12px;letter-spacing:0.08em;}
+.auth-input{
+  position:relative;width:100%;max-width:300px;padding:15px 18px;background:var(--surface-2);
+  border:1px solid var(--hairline);border-radius:var(--r-sm);color:var(--ink);font-size:17px;
+  text-align:center;letter-spacing:0.35em;outline:none;transition:.25s;font-family:'Inter',sans-serif;
+}
+.auth-input:focus{border-color:var(--hairline-g);box-shadow:0 0 0 4px var(--gilt-wash);}
+.auth-btn{
+  position:relative;width:100%;max-width:300px;margin-top:14px;padding:15px;
+  background:linear-gradient(180deg,var(--gilt-bright),var(--gilt));color:#1A1405;border:none;
+  border-radius:var(--r-sm);font-size:12px;font-weight:700;letter-spacing:0.16em;
+  text-transform:uppercase;cursor:pointer;transition:.2s;font-family:'Inter',sans-serif;
+}
+.auth-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.auth-btn:disabled{opacity:.5;cursor:progress;transform:none;}
+.auth-error{position:relative;color:var(--red);font-size:12px;margin-top:16px;min-height:16px;}
+.auth-foot{position:relative;margin-top:52px;font-size:10px;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;}
+
+/* ===================== SHELL ===================== */
+#shell{display:none;position:relative;z-index:1;min-height:100vh;flex-direction:column;align-items:center;}
+#shell.visible{display:flex;}
+
+.topbar{
+  width:100%; border-bottom:1px solid var(--hairline);
+  background:rgba(10,12,15,0.72); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  padding:14px 20px; display:flex; align-items:center; gap:12px;
+  position:sticky; top:0; z-index:50;
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(150deg,var(--gilt-bright),var(--gilt-deep));
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:17px;color:#14100A;
+}
+.brand-title{font-size:14px;font-weight:600;color:var(--ink);line-height:1.2;}
+.brand-sub{font-size:8.5px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--gilt);}
+.topbar-exit{
+  margin-left:auto;font-size:11px;color:var(--dim);cursor:pointer;padding:8px 12px;
+  border:1px solid var(--hairline);border-radius:var(--r-sm);transition:.18s;white-space:nowrap;
+}
+.topbar-exit:hover{color:var(--ink);border-color:var(--hairline-2);}
+
+.wrap{width:100%;max-width:520px;padding:26px 20px 64px;}
+
+/* Progress rail — hairline structure, not a chunky stepper. */
+.rail{display:flex;align-items:center;gap:0;margin-bottom:30px;}
+.rail-step{display:flex;align-items:center;flex:1;}
+.rail-dot{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  border:1px solid var(--hairline);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:600;color:var(--muted);transition:.3s;
+}
+.rail-step.done .rail-dot{border-color:var(--hairline-g);color:var(--gilt);background:var(--gilt-wash);}
+.rail-step.now  .rail-dot{border-color:var(--gilt);color:#1A1405;background:linear-gradient(180deg,var(--gilt-bright),var(--gilt));box-shadow:0 0 0 4px var(--gilt-wash);}
+.rail-line{flex:1;height:1px;background:var(--hairline);margin:0 6px;transition:.3s;}
+.rail-step.done .rail-line{background:var(--gilt-deep);}
+.rail-step:last-child .rail-line{display:none;}
+
+.step{display:none;flex-direction:column;gap:18px;}
+.step.active{display:flex;animation:rise .32s cubic-bezier(.2,.7,.3,1);}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+.eyebrow{font-size:9.5px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gilt);}
+.headline{font-family:var(--serif);font-size:30px;line-height:1.15;color:var(--ink);}
+.sub{font-size:13px;color:var(--dim);line-height:1.6;}
+
+.card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px;}
+
+.search{
+  width:100%;padding:13px 15px;background:var(--surface-2);border:1px solid var(--hairline);
+  border-radius:var(--r-sm);color:var(--ink);font-size:14px;outline:none;font-family:'Inter',sans-serif;transition:.2s;
+}
+.search:focus{border-color:var(--hairline-g);box-shadow:0 0 0 4px var(--gilt-wash);}
+.search::placeholder{color:var(--muted);}
+
+.list{display:flex;flex-direction:column;gap:7px;max-height:44vh;overflow-y:auto;padding-right:2px;}
+.row{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-md);transition:.18s;
+}
+.row:hover{border-color:var(--hairline-2);background:var(--surface-2);}
+.row.sel{border-color:var(--hairline-g);background:var(--gilt-wash);}
+.row.disabled{opacity:.4;cursor:not-allowed;}
+.avatar{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  border:1px solid var(--hairline-g);background:var(--surface-3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:15px;color:var(--gilt-bright);
+}
+.row-main{flex:1;min-width:0;}
+.row-name{font-size:14px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-meta{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chip{
+  font-size:9.5px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+  padding:4px 8px;border-radius:var(--r-xs);border:1px solid var(--hairline);color:var(--dim);flex-shrink:0;
+}
+.chip.gilt{border-color:var(--hairline-g);color:var(--gilt);background:var(--gilt-wash);}
+
+.opts{display:flex;flex-direction:column;gap:7px;}
+.opt{
+  padding:13px 15px;cursor:pointer;background:var(--surface);border:1px solid var(--hairline);
+  border-radius:var(--r-md);transition:.18s;display:flex;align-items:center;gap:12px;
+}
+.opt:hover{border-color:var(--hairline-2);background:var(--surface-2);}
+.opt.sel{border-color:var(--hairline-g);background:var(--gilt-wash);}
+.opt-tick{
+  width:16px;height:16px;border-radius:50%;border:1px solid var(--hairline-2);flex-shrink:0;transition:.18s;
+}
+.opt.sel .opt-tick{border-color:var(--gilt);background:var(--gilt);box-shadow:inset 0 0 0 3px var(--surface);}
+.opt-label{font-size:14px;font-weight:500;color:var(--ink);}
+.opt-note{font-size:11px;color:var(--muted);margin-top:2px;}
+
+.btn{
+  width:100%;padding:15px;border-radius:var(--r-sm);font-size:12px;font-weight:700;
+  letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;border:none;
+  font-family:'Inter',sans-serif;transition:.2s;
+}
+.btn-gilt{background:linear-gradient(180deg,var(--gilt-bright),var(--gilt));color:#1A1405;}
+.btn-gilt:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);}
+.btn-ghost{background:transparent;border:1px solid var(--hairline);color:var(--dim);}
+.btn-ghost:hover{color:var(--ink);border-color:var(--hairline-2);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;filter:none;}
+.btn-row{display:flex;gap:10px;}
+
+/* ===================== RECORDER ===================== */
+.rec-stage{
+  display:flex;flex-direction:column;align-items:center;gap:22px;
+  padding:32px 20px;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);
+}
+.rec-timer{
+  font-family:var(--serif);font-size:56px;line-height:1;color:var(--ink);
+  font-variant-numeric:tabular-nums;letter-spacing:0.01em;transition:color .3s;
+}
+.rec-timer.live{color:var(--gilt-bright);}
+.rec-ring{
+  position:relative;width:132px;height:132px;border-radius:50%;cursor:pointer;
+  border:1px solid var(--hairline-g);background:radial-gradient(circle at 50% 30%, rgba(201,165,75,0.13), rgba(201,165,75,0.02));
+  display:flex;align-items:center;justify-content:center;transition:transform .12s, border-color .3s, background .3s;
+}
+.rec-ring:active{transform:scale(.96);}
+.rec-ring.live{
+  border-color:var(--red);
+  background:radial-gradient(circle at 50% 30%, rgba(240,104,95,0.16), rgba(240,104,95,0.02));
+  animation:halo 2s ease-out infinite;
+}
+@keyframes halo{
+  0%{box-shadow:0 0 0 0 rgba(240,104,95,0.30);}
+  70%{box-shadow:0 0 0 26px rgba(240,104,95,0);}
+  100%{box-shadow:0 0 0 0 rgba(240,104,95,0);}
+}
+.rec-ring.busy{pointer-events:none;opacity:.5;}
+.rec-hint{font-size:12px;color:var(--dim);text-align:center;min-height:34px;line-height:1.6;}
+
+/* Level meter — honest feedback that the mic is actually picking Paddy up. */
+.meter{display:flex;align-items:flex-end;gap:3px;height:26px;}
+.meter i{width:3px;height:3px;background:var(--hairline-2);border-radius:2px;transition:height .09s linear, background .09s linear;}
+
+/* ===================== PROGRESS ===================== */
+.prog{display:flex;flex-direction:column;gap:12px;}
+.prog-item{display:flex;align-items:center;gap:11px;font-size:13px;color:var(--muted);transition:.3s;}
+.prog-item .pdot{
+  width:16px;height:16px;border-radius:50%;border:1px solid var(--hairline);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:9px;
+}
+.prog-item.now{color:var(--ink);}
+.prog-item.now .pdot{border-color:var(--gilt);border-top-color:transparent;animation:spin .8s linear infinite;}
+.prog-item.done{color:var(--ink-2);}
+.prog-item.done .pdot{border-color:var(--hairline-g);color:var(--gilt);background:var(--gilt-wash);}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.notice{
+  font-size:12px;line-height:1.6;color:var(--amber);background:var(--amber-dim);
+  border:1px solid rgba(242,178,76,0.28);border-radius:var(--r-sm);padding:11px 13px;
+}
+.notice.bad{color:var(--red);background:var(--red-dim);border-color:rgba(240,104,95,0.28);}
+
+.seal{
+  width:64px;height:64px;border-radius:50%;border:1px solid var(--hairline-g);
+  display:flex;align-items:center;justify-content:center;margin:0 auto;
+  background:var(--gilt-wash);box-shadow:0 0 0 8px rgba(201,165,75,0.04);
+}
+.summary{
+  font-size:13px;line-height:1.75;color:var(--ink-2);white-space:pre-wrap;
+  max-height:40vh;overflow-y:auto;font-family:'Inter',sans-serif;
+}
+.summary-h{font-size:9.5px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gilt);margin-bottom:10px;}
+
+@media(max-width:420px){
+  .headline{font-size:26px;}
+  .rec-timer{font-size:46px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ PASSCODE GATE ============ -->
+<div id="authScreen">
+  <div class="auth-monogram">PL</div>
+  <div class="auth-logo">Debrief</div>
+  <div class="auth-sub">Paddy Lubana</div>
+  <div class="auth-label">Enter your passcode</div>
+  <input class="auth-input" type="password" id="passcodeInput" placeholder="••••••" maxlength="32" autocomplete="off">
+  <button class="auth-btn" id="authBtn" onclick="checkAuth()">Unlock</button>
+  <div class="auth-error" id="authError"></div>
+  <div class="auth-foot">Omega Financial Services · Hamilton</div>
+</div>
+
+<!-- ============ SHELL ============ -->
+<div id="shell">
+
+  <div class="topbar">
+    <div class="brand-mark">PL</div>
+    <div>
+      <div class="brand-title">Meeting Debrief</div>
+      <div class="brand-sub">Adviser Studio</div>
+    </div>
+    <div class="topbar-exit" onclick="openStudio()">Studio →</div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="rail" id="rail">
+      <div class="rail-step" data-i="1"><div class="rail-dot">1</div><div class="rail-line"></div></div>
+      <div class="rail-step" data-i="2"><div class="rail-dot">2</div><div class="rail-line"></div></div>
+      <div class="rail-step" data-i="3"><div class="rail-dot">3</div><div class="rail-line"></div></div>
+      <div class="rail-step" data-i="4"><div class="rail-dot">4</div><div class="rail-line"></div></div>
+    </div>
+
+    <!-- ── STEP 1 · CLIENT ── -->
+    <div class="step" id="step1">
+      <div>
+        <div class="eyebrow">Step one</div>
+        <div class="headline">Who did you meet?</div>
+      </div>
+      <input class="search" id="leadSearch" placeholder="Search your client book" oninput="renderLeads()" autocomplete="off">
+      <div class="list" id="leadList"></div>
+      <div id="leadNotice"></div>
+      <button class="btn btn-gilt" id="btn1" onclick="go(2)" disabled>Continue</button>
+    </div>
+
+    <!-- ── STEP 2 · MEETING ── -->
+    <div class="step" id="step2">
+      <div>
+        <div class="eyebrow">Step two</div>
+        <div class="headline">What kind of meeting?</div>
+      </div>
+      <div class="opts" id="typeOpts"></div>
+      <div style="margin-top:6px;">
+        <div class="micro" style="margin-bottom:9px;">Where it happened</div>
+        <div class="opts" id="sourceOpts"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="go(1)">Back</button>
+        <button class="btn btn-gilt" id="btn2" onclick="go(3)" disabled>Continue</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3 · RECORD ── -->
+    <div class="step" id="step3">
+      <div>
+        <div class="eyebrow">Step three</div>
+        <div class="headline">Talk it through.</div>
+        <div class="sub" style="margin-top:8px;">Speak as if briefing a colleague. Situation, what was discussed, any objections, and what happens next. Everything else is handled for you.</div>
+      </div>
+
+      <div class="row" id="ctxRow" style="cursor:default;"></div>
+
+      <div class="rec-stage">
+        <div class="rec-timer" id="recTimer">00:00</div>
+        <div class="rec-ring" id="recRing" onclick="toggleRecording()">
+          <svg id="icMic" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#EBCE86" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v1a7 7 0 0 1-14 0v-1"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+          <svg id="icStop" width="34" height="34" viewBox="0 0 24 24" fill="#F0685F" stroke="none" style="display:none;">
+            <rect x="4" y="4" width="16" height="16" rx="3"/>
+          </svg>
+        </div>
+        <div class="meter" id="meter"></div>
+        <div class="rec-hint" id="recHint">Tap to start recording.<br>Up to 25 minutes.</div>
+      </div>
+
+      <div id="recNotice"></div>
+      <button class="btn btn-ghost" id="btnBack3" onclick="go(2)">Back</button>
+    </div>
+
+    <!-- ── STEP 4 · PROCESSING / DONE ── -->
+    <div class="step" id="step4">
+      <div id="processingBlock">
+        <div class="eyebrow">Step four</div>
+        <div class="headline" style="margin-bottom:22px;">Working on it.</div>
+        <div class="card">
+          <div class="prog" id="prog">
+            <div class="prog-item" data-k="send"><div class="pdot"></div><div>Sending the recording securely</div></div>
+            <div class="prog-item" data-k="tx"><div class="pdot"></div><div>Transcribing the meeting</div></div>
+            <div class="prog-item" data-k="ai"><div class="pdot"></div><div>Writing the structured debrief</div></div>
+            <div class="prog-item" data-k="crm"><div class="pdot"></div><div>Filing it to the client record</div></div>
+          </div>
+        </div>
+        <div class="sub" style="margin-top:16px;">This usually takes under a minute. Keep this page open.</div>
+      </div>
+
+      <div id="doneBlock" style="display:none;">
+        <div class="seal">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#EBCE86" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div class="headline" style="text-align:center;margin:18px 0 8px;">Debrief filed.</div>
+        <div class="sub" id="doneSub" style="text-align:center;margin-bottom:22px;"></div>
+
+        <div class="card" id="summaryCard" style="display:none;margin-bottom:16px;">
+          <div class="summary-h">What was captured</div>
+          <div class="summary" id="summaryText"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="recordAnother()">Record another</button>
+          <button class="btn btn-gilt" onclick="openStudio()">Open Studio</button>
+        </div>
+      </div>
+
+      <div id="failBlock" style="display:none;">
+        <div class="eyebrow">Step four</div>
+        <div class="headline" style="margin-bottom:14px;">That did not go through.</div>
+        <div class="notice bad" id="failMsg"></div>
+        <div class="sub" style="margin:16px 0;">Your recording is still held in this page. Retry sends the same audio again — do not reload, or it is lost.</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="discardRecording()">Discard</button>
+          <button class="btn btn-gilt" onclick="sendRecording()">Retry send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   BACKEND WIRING — READ BEFORE CHANGING ANYTHING BELOW
+
+   Target scenario: "Paddy Local Recording Processor" (5806897).
+   That scenario reads {{1.file.data}}, {{1.file.name}} and
+   {{1.mimeType}}, which means it expects a MULTIPART FORM upload
+   with the audio in a part named `file` — NOT a JSON body.
+
+   The previous version of this page posted JSON carrying a Gemini
+   file reference instead, so the scenario had nothing to transcribe
+   and the debrief button could never have worked. It also uploaded
+   the recording to Gemini from the browser using an API key typed
+   into Settings. That whole step is gone: the scenario holds its own
+   key server side and does its own upload, so no key is handled
+   here at all.
+
+   Field names below are the scenario's real expected input:
+     file, mimeType, meetingType, meetingSource,
+     recordId, leadName, duration, timestamp
+   Renaming any of them silently breaks the pipeline.
+
+   NO PASSCODE AND NO API KEY LIVES IN THIS FILE. The gate calls the
+   Netlify function, same as the main site login, so nothing secret
+   is ever served to a browser.
+   ============================================================ */
+
+const LEADS_READ_WEBHOOK = 'https://hook.us2.make.com/zvr132eqmx4gdy9knpwfmv2c5i1089rv';
+const RECORDING_WEBHOOK  = 'https://hook.us2.make.com/a5f43jei8hvspndi8h16pwt0111y7zte';
+const AUTH_FN            = '/.netlify/functions/member-auth';
+
+/* Airtable singleSelect choices, verified against PADDY_CRM's Client
+   Timeline table (tblHmDcQDlvmsWG6H). Adding an option here that does
+   not exist there creates a junk choice in the base, because the Make
+   module writes with typecast on. */
+const MEETING_TYPES = [
+  { v:'Discovery Call',     note:'First proper sit down, fact find, goals' },
+  { v:'Follow Up',          note:'Checking in, chasing documents, answering questions' },
+  { v:'Application Review', note:'Structure, lender feedback, approval and settlement' }
+];
+const MEETING_SOURCES = [ { v:'In Person' }, { v:'Zoom' }, { v:'Phone' } ];
+
+const MAX_SECONDS   = 25 * 60;   /* Make's webhook payload ceiling, with room to spare */
+const WARN_SECONDS  = 20 * 60;
+
+/* ---------- SETTINGS (same paddy_ prefix as the studio) ---------- */
+function getSetting(k, fb='') { return localStorage.getItem('paddy_' + k) || fb; }
+
+/* ---------- AUTH ----------
+   Server side, fail closed. A wrong code, a network failure or a
+   broken deploy all land in the same place: locked. */
+async function checkAuth() {
+  const inp = document.getElementById('passcodeInput');
+  const btn = document.getElementById('authBtn');
+  const err = document.getElementById('authError');
+  const code = (inp.value || '').trim();
+  if (!code) return;
+
+  btn.disabled = true; err.textContent = '';
+  try {
+    const res  = await fetch(AUTH_FN, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ passcode: code })
+    });
+    const data = res.ok ? await res.json() : null;
+    /* Only Paddy's own code opens Paddy's recorder. Another client's
+       valid code must not walk in through this door. */
+    if (data && data.ok && String(data.path || '').indexOf('paddy-studio') === 0) {
+      unlock();
+      return;
+    }
+    fail('That passcode did not match. Try again.');
+  } catch (e) {
+    fail('Could not reach the door. Check your connection and try again.');
+  } finally {
+    btn.disabled = false;
+  }
+
+  function fail(msg) {
+    err.textContent = msg; inp.value = '';
+    setTimeout(() => { if (err.textContent === msg) err.textContent = ''; }, 2600);
+  }
+}
+document.getElementById('passcodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkAuth(); });
+
+function unlock() {
+  sessionStorage.setItem('paddy_authed', '1');
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('shell').classList.add('visible');
+  initApp();
+}
+/* Arriving from the studio in the same tab session should not ask twice. */
+if (sessionStorage.getItem('paddy_authed') === '1') unlock();
+
+/* ---------- STATE ---------- */
+let leads = [], selected = null, meetingType = '', meetingSource = 'In Person';
+let step = 1;
+
+function initApp() {
+  buildOptions();
+  loadLeadsLocal();
+  renderLeads();
+  loadLeadsRemote();
+  go(1);
+}
+
+/* ---------- LEADS ----------
+   Local cache first so the page is usable instantly, then the live
+   read replaces it. Mirrors index.html's own read path, including the
+   archive blocklist, so an archived client cannot reappear here. */
+function loadLeadsLocal() {
+  try {
+    const s = JSON.parse(localStorage.getItem('paddy_state_v2') || '{}');
+    const blocked = Array.isArray(s.deletedIds) ? s.deletedIds : [];
+    leads = (s.leads || []).filter(l => l && !blocked.includes(l.airtableId));
+  } catch (e) { leads = []; }
+}
+
+async function loadLeadsRemote() {
+  const box = document.getElementById('leadNotice');
+  try {
+    const res = await fetch(LEADS_READ_WEBHOOK, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ source:'debrief' })
+    });
+    if (!res.ok) throw new Error('read ' + res.status);
+    const data = await res.json();
+    const records = (data && (data.records || (data.body && data.body.records))) || [];
+    if (!Array.isArray(records) || !records.length) return;
+
+    let blocked = [];
+    try { blocked = JSON.parse(localStorage.getItem('paddy_state_v2') || '{}').deletedIds || []; } catch (e) {}
+
+    leads = records.map(r => {
+      const f = r.fields || {};
+      const pick = v => (v && typeof v === 'object' && v.name) ? v.name : v;
+      return {
+        airtableId: r.id,
+        firstName: f.first_name || '', surname: f.surname || '',
+        email: f.email || '', stage: pick(f.pipeline_stage) || 'Enquiry',
+        area: f.area || ''
+      };
+    }).filter(l => !blocked.includes(l.airtableId));
+
+    box.innerHTML = '';
+    renderLeads();
+  } catch (e) {
+    /* Cached names still work; only the freshness is lost. */
+    box.innerHTML = leads.length
+      ? `<div class="notice">Showing your saved client list. The live CRM did not answer, so anyone added in the last few minutes may be missing.</div>`
+      : `<div class="notice bad">Could not reach the CRM and there is no saved client list on this device. Open the Studio once to load your clients, then come back.</div>`;
+  }
+}
+
+function fullName(l) { return [l.firstName, l.surname].filter(Boolean).join(' ') || l.name || 'Unnamed'; }
+function initials(l) {
+  return fullName(l).split(/[\s&]+/).filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderLeads() {
+  const q = (document.getElementById('leadSearch').value || '').toLowerCase().trim();
+  const list = document.getElementById('leadList');
+  const shown = leads
+    .filter(l => !q || fullName(l).toLowerCase().includes(q) || (l.email || '').toLowerCase().includes(q))
+    .sort((a,b) => fullName(a).localeCompare(fullName(b)));
+
+  if (!shown.length) {
+    list.innerHTML = `<div class="sub" style="padding:14px 2px;">${leads.length ? 'No client matches that search.' : 'No clients loaded yet.'}</div>`;
+    return;
+  }
+
+  list.innerHTML = shown.map(l => {
+    /* A client with no CRM record cannot be filed against — the Make
+       scenario looks the record up by id and would fail silently. */
+    const ok  = !!l.airtableId;
+    const sel = selected && selected.airtableId === l.airtableId;
+    return `
+      <div class="row ${sel ? 'sel' : ''} ${ok ? '' : 'disabled'}" ${ok ? `onclick="pickLead('${esc(l.airtableId)}')"` : ''}>
+        <div class="avatar">${esc(initials(l))}</div>
+        <div class="row-main">
+          <div class="row-name">${esc(fullName(l))}</div>
+          <div class="row-meta">${esc(l.email || l.area || (ok ? '' : 'Not saved to the CRM yet'))}</div>
+        </div>
+        <div class="chip ${sel ? 'gilt' : ''}">${esc(l.stage || 'Enquiry')}</div>
+      </div>`;
+  }).join('');
+}
+
+function pickLead(id) {
+  selected = leads.find(l => l.airtableId === id) || null;
+  document.getElementById('btn1').disabled = !selected;
+  renderLeads();
+}
+
+/* ---------- OPTIONS ---------- */
+function buildOptions() {
+  document.getElementById('typeOpts').innerHTML = MEETING_TYPES.map(t => `
+    <div class="opt" data-v="${esc(t.v)}" onclick="pickType('${esc(t.v)}')">
+      <div class="opt-tick"></div>
+      <div><div class="opt-label">${esc(t.v)}</div><div class="opt-note">${esc(t.note)}</div></div>
+    </div>`).join('');
+  document.getElementById('sourceOpts').innerHTML = MEETING_SOURCES.map(s => `
+    <div class="opt ${s.v === meetingSource ? 'sel' : ''}" data-v="${esc(s.v)}" onclick="pickSource('${esc(s.v)}')">
+      <div class="opt-tick"></div><div class="opt-label">${esc(s.v)}</div>
+    </div>`).join('');
+}
+function pickType(v) {
+  meetingType = v;
+  document.querySelectorAll('#typeOpts .opt').forEach(o => o.classList.toggle('sel', o.dataset.v === v));
+  document.getElementById('btn2').disabled = !meetingType;
+}
+function pickSource(v) {
+  meetingSource = v;
+  document.querySelectorAll('#sourceOpts .opt').forEach(o => o.classList.toggle('sel', o.dataset.v === v));
+}
+
+/* ---------- NAVIGATION ---------- */
+function go(n) {
+  if (isRecording) return;
+  step = n;
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  document.querySelectorAll('.rail-step').forEach(r => {
+    const i = Number(r.dataset.i);
+    r.classList.toggle('now', i === n);
+    r.classList.toggle('done', i < n);
+  });
+  if (n === 3 && selected) {
+    document.getElementById('ctxRow').innerHTML = `
+      <div class="avatar">${esc(initials(selected))}</div>
+      <div class="row-main">
+        <div class="row-name">${esc(fullName(selected))}</div>
+        <div class="row-meta">${esc(meetingType)} · ${esc(meetingSource)}</div>
+      </div>`;
+  }
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* ---------- RECORDING ---------- */
+let mediaRecorder = null, chunks = [], isRecording = false;
+let timer = null, startedAt = 0, recordedBlob = null, recordedSeconds = 0;
+let audioCtx = null, analyser = null, meterRaf = null;
+
+const BARS = 24;
+document.getElementById('meter').innerHTML = Array.from({length:BARS}, () => '<i></i>').join('');
+
+function fmt(s) {
+  return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+}
+
+async function toggleRecording() {
+  if (!isRecording) { await startRecording(); }
+  else { stopRecording(); }
+}
+
+async function startRecording() {
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation:true, noiseSuppression:true, autoGainControl:true }
+    });
+  } catch (e) {
+    document.getElementById('recNotice').innerHTML =
+      `<div class="notice bad">The microphone is blocked. Allow microphone access for this site in your browser settings, then reload.</div>`;
+    return;
+  }
+  document.getElementById('recNotice').innerHTML = '';
+
+  const mime = ['audio/webm;codecs=opus','audio/webm','audio/mp4']
+    .find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+  try {
+    mediaRecorder = new MediaRecorder(stream, mime ? { mimeType:mime, audioBitsPerSecond:24000 } : undefined);
+  } catch (e) {
+    mediaRecorder = new MediaRecorder(stream);
+  }
+
+  chunks = [];
+  mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    teardownMeter();
+    recordedBlob = new Blob(chunks, { type: (chunks[0] && chunks[0].type) || 'audio/webm' });
+    go(4);
+    sendRecording();
+  };
+  mediaRecorder.start(1000);
+  isRecording = true;
+  startedAt = Date.now();
+
+  document.getElementById('recRing').classList.add('live');
+  document.getElementById('recTimer').classList.add('live');
+  document.getElementById('icMic').style.display  = 'none';
+  document.getElementById('icStop').style.display = 'block';
+  document.getElementById('recHint').textContent  = 'Recording. Tap again when you are done.';
+  document.getElementById('btnBack3').style.visibility = 'hidden';
+
+  setupMeter(stream);
+  timer = setInterval(tick, 250);
+}
+
+function tick() {
+  const s = Math.floor((Date.now() - startedAt) / 1000);
+  document.getElementById('recTimer').textContent = fmt(s);
+  if (s >= WARN_SECONDS && s < MAX_SECONDS) {
+    document.getElementById('recHint').textContent =
+      'Recording. ' + fmt(MAX_SECONDS - s) + ' left before this stops automatically.';
+  }
+  if (s >= MAX_SECONDS) stopRecording();
+}
+
+function stopRecording() {
+  if (!isRecording || !mediaRecorder) return;
+  recordedSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+  isRecording = false;
+  clearInterval(timer);
+  try { mediaRecorder.stop(); } catch (e) {}
+
+  document.getElementById('recRing').classList.remove('live');
+  document.getElementById('recRing').classList.add('busy');
+  document.getElementById('recTimer').classList.remove('live');
+  document.getElementById('icMic').style.display  = 'block';
+  document.getElementById('icStop').style.display = 'none';
+  document.getElementById('recHint').textContent  = 'Processing.';
+}
+
+/* Level meter. Purely feedback, but it is the difference between
+   trusting the recorder and wondering whether it heard you. */
+function setupMeter(stream) {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    src.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const bars = document.querySelectorAll('#meter i');
+    const draw = () => {
+      analyser.getByteFrequencyData(data);
+      for (let i = 0; i < bars.length; i++) {
+        const v = data[Math.floor(i * data.length / bars.length)] / 255;
+        const h = Math.max(3, Math.round(v * 26));
+        bars[i].style.height = h + 'px';
+        bars[i].style.background = v > 0.06 ? 'var(--gilt)' : 'var(--hairline-2)';
+      }
+      meterRaf = requestAnimationFrame(draw);
+    };
+    draw();
+  } catch (e) {}
+}
+function teardownMeter() {
+  if (meterRaf) cancelAnimationFrame(meterRaf);
+  meterRaf = null;
+  document.querySelectorAll('#meter i').forEach(b => { b.style.height = '3px'; b.style.background = 'var(--hairline-2)'; });
+  if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
+}
+
+/* ---------- SEND ---------- */
+function setProg(key, state) {
+  const el = document.querySelector(`.prog-item[data-k="${key}"]`);
+  if (!el) return;
+  el.classList.remove('now','done');
+  if (state) el.classList.add(state);
+  if (state === 'done') el.querySelector('.pdot').innerHTML = '✓';
+}
+
+let stageTimers = [];
+function runStageTheatre() {
+  /* The scenario responds only once transcription is finished, so
+     there is no per stage callback to hang this off. These timings
+     track the scenario's real shape: upload, a 15 second wait for the
+     file to become active, then generation. Nothing here is claimed
+     as complete that the response has not confirmed. */
+  stageTimers.forEach(clearTimeout); stageTimers = [];
+  ['send','tx','ai','crm'].forEach(k => setProg(k, null));
+  document.querySelectorAll('.prog-item .pdot').forEach(d => d.innerHTML = '');
+  setProg('send','now');
+  stageTimers.push(setTimeout(() => { setProg('send','done'); setProg('tx','now'); }, 4000));
+  stageTimers.push(setTimeout(() => { setProg('tx','done');   setProg('ai','now'); }, 26000));
+}
+
+async function sendRecording() {
+  if (!recordedBlob || !selected) return;
+
+  document.getElementById('processingBlock').style.display = '';
+  document.getElementById('doneBlock').style.display = 'none';
+  document.getElementById('failBlock').style.display = 'none';
+  runStageTheatre();
+
+  const mime = recordedBlob.type || 'audio/webm';
+  const ext  = mime.indexOf('mp4') > -1 ? 'm4a' : 'webm';
+  const safe = fullName(selected).replace(/[^A-Za-z0-9]+/g, '_');
+
+  /* Multipart, not JSON. `file` is the part name the scenario reads. */
+  const form = new FormData();
+  form.append('file', recordedBlob, `${safe}_debrief.${ext}`);
+  form.append('mimeType',      mime);
+  form.append('meetingType',   meetingType);
+  form.append('meetingSource', meetingSource);
+  form.append('recordId',      selected.airtableId);
+  form.append('leadName',      fullName(selected));
+  form.append('duration',      String(recordedSeconds));
+  form.append('timestamp',     new Date().toISOString());
+
+  try {
+    const res = await fetch(RECORDING_WEBHOOK, { method:'POST', body: form });
+    stageTimers.forEach(clearTimeout);
+    if (!res.ok) throw new Error('The pipeline returned ' + res.status + '.');
+
+    let payload = null;
+    try { payload = JSON.parse(await res.text()); } catch (e) {}
+
+    setProg('send','done'); setProg('tx','done'); setProg('ai','done'); setProg('crm','done');
+    showDone(payload);
+  } catch (err) {
+    stageTimers.forEach(clearTimeout);
+    showFail(err.message || 'The recording could not be sent.');
+  }
+}
+
+function showDone(payload) {
+  document.getElementById('processingBlock').style.display = 'none';
+  document.getElementById('failBlock').style.display = 'none';
+  document.getElementById('doneBlock').style.display = '';
+
+  document.getElementById('doneSub').textContent =
+    `${fmt(recordedSeconds)} of ${meetingType.toLowerCase()} with ${fullName(selected)}, transcribed and written to their record. It appears in the Studio timeline within a minute.`;
+
+  const raw = payload && payload.rawText ? String(payload.rawText) : '';
+  if (raw) {
+    /* Show the summary and actions, hold back the verbatim transcript —
+       that lives in the client record where it belongs. */
+    const cut = raw.search(/TRANSCRIPT\s*:/i);
+    document.getElementById('summaryText').textContent = (cut > -1 ? raw.slice(0, cut) : raw).trim();
+    document.getElementById('summaryCard').style.display = '';
+  }
+}
+
+function showFail(msg) {
+  document.getElementById('processingBlock').style.display = 'none';
+  document.getElementById('doneBlock').style.display = 'none';
+  document.getElementById('failBlock').style.display = '';
+  document.getElementById('failMsg').textContent = msg;
+}
+
+function discardRecording() {
+  if (!confirm('Discard this recording? It cannot be recovered.')) return;
+  recordedBlob = null; chunks = [];
+  resetRecorder();
+  go(3);
+}
+
+function resetRecorder() {
+  document.getElementById('recRing').classList.remove('busy','live');
+  document.getElementById('recTimer').textContent = '00:00';
+  document.getElementById('recHint').innerHTML = 'Tap to start recording.<br>Up to 25 minutes.';
+  document.getElementById('btnBack3').style.visibility = '';
+  document.getElementById('recNotice').innerHTML = '';
+}
+
+function recordAnother() {
+  recordedBlob = null; chunks = []; recordedSeconds = 0;
+  selected = null; meetingType = '';
+  document.getElementById('btn1').disabled = true;
+  document.getElementById('btn2').disabled = true;
+  document.getElementById('leadSearch').value = '';
+  buildOptions();
+  resetRecorder();
+  renderLeads();
+  loadLeadsRemote();
+  go(1);
+}
+
+function openStudio() { window.location.href = 'index.html'; }
+
+/* Losing a recording to a stray back swipe is unforgivable. */
+window.addEventListener('beforeunload', e => {
+  if (isRecording || (recordedBlob && document.getElementById('failBlock').style.display !== 'none')) {
+    e.preventDefault(); e.returnValue = '';
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
