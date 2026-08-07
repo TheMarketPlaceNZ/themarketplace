@@ -80,26 +80,27 @@
 
   <!-- HERO — full viewport, splits Jarvis core canvas on left and copy on right -->
   <section class="heroSection" aria-label="Hero">
-    <!-- Hero Video Background -->
-    <div class="heroVideoBg">
-      <video src="Initial_Scene.mp4" autoplay loop muted playsinline></video>
-    </div>
 
     <h1 class="screenReaderText">
       The MarketPlace NZ, Business Operating Systems Hamilton. Automated lead intelligence, content production, SOPs, and bespoke dashboards for Hamilton owner-operators.
     </h1>
 
     <div class="heroContainer">
-      <!-- Agency copy and call to actions centered -->
+      <!-- Jarvis Core Matrix: pulsating neural grid canvas on the left -->
+      <div class="heroVisualBlock" aria-hidden="true">
+        <canvas id="laptopCanvas" class="laptopCanvas"></canvas>
+      </div>
+
+      <!-- Agency copy and call to actions on the right -->
       <div class="heroContent">
         <span class="heroEyebrow">Hamilton, New Zealand</span>
 
         <h2 class="heroTagline splitText">
-          Marketing that <span class="gold">saves you time</span> and makes you money.
+          <span class="gold">Most agencies are chasing the 95%</span> who will never buy from you.
         </h2>
 
         <p class="heroSubtext">
-          Likes and views don't pay the bills. We focus on the only thing that matters. . .Your bottomline.
+          At any point, roughly 5% of your market is ready to act. We build the system that puts your business in front of them at the exact moment they decide. Not followers. Not impressions. Clients.
         </p>
 
         <div class="heroActions">
@@ -144,21 +145,18 @@
         <p class="proofEyebrow" id="proofHeading">Real client. Real numbers. Hamilton, NZ.</p>
         <div class="proofCard staggerItem">
           <div class="proofStat">
-            <span class="proofNumber" data-target="11" data-suffix=".5%">0</span>
-            <span class="proofLabel">lead to booking rate</span>
+            <span class="proofNumber" data-target="311" data-suffix="K+">0</span>
+            <span class="proofLabel">Organic views in 28 days<br><em>Up 207.6% on the month before.</em></span>
           </div>
           <div class="proofDivider" aria-hidden="true"></div>
           <div class="proofStat">
-            <span class="proofNumber" data-target="54" data-suffix="%">0</span>
-            <span class="proofLabel">faster response time</span>
+            <span class="proofNumber" data-target="83" data-suffix="%">0</span>
+            <span class="proofLabel">Views from people who weren't following her yet<br><em>The algorithm found her buyers. Not the other way around.</em></span>
           </div>
           <div class="proofDivider" aria-hidden="true"></div>
-          <div class="proofStat">
-            <span class="proofNumber" data-target="31" data-suffix="%">0</span>
-            <span class="proofLabel">reduction in acquisition costs</span>
-          </div>
-          <div class="proofBottomNote">
-            This is what a system built around the right audience looks like.
+          <div class="proofContext">
+            <p>Sopo Fuifui, Harcourts Hamilton. First home buyer specialist. 115,840 unique viewers last month. Facebook-only presence. No website. No ad spend. Ranked top 10 nationally twice in 18 months.</p>
+            <span class="proofNote">This is what a system built around the right audience looks like.</span>
           </div>
         </div>
       </div>
@@ -220,100 +218,60 @@
       </div>
     </section>
 
-    <!-- HOW IT WORKS — interactive click carousel -->
-    <section class="howSection tileSection" id="howSection" data-dim-target="pillarsSection" aria-labelledby="howHeading">
-      <div class="howCarouselWrap">
-        <div class="sectionHeader" style="margin-bottom:48px; text-align: center;">
+    <!-- HOW IT WORKS — sticky scroll slider -->
+    <section class="howSection tileSection" id="howSection" data-dim-target="pillarsSection" aria-labelledby="howHeading"
+      style="height:400vh;">
+      <div class="howStickyWrap">
+        <div class="sectionHeader" style="margin-bottom:48px;">
           <h2 id="howHeading">How it <span class="gold">works</span></h2>
           <p class="sectionSub">From the moment you click Get Started, the machine is already running.</p>
         </div>
 
-        <div class="howSliderOuter">
-          <!-- Left/Right navigation arrows -->
-          <button class="howNavBtn prev" onclick="prevHowSlide()" aria-label="Previous step">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          </button>
-          <button class="howNavBtn next" onclick="nextHowSlide()" aria-label="Next step">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-          </button>
-
-          <div class="howSliderContainer">
-            <!-- Slide 1 -->
-            <div class="howSlide active" data-step="0">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">1</div>
-                  <div class="howStepContent">
-                    <h4>You click Get Started</h4>
-                    <p>Fill in your details. From that moment, our automated system begins deep research into your business, your competitors, and your current public presence. Before we meet, we already know your landscape.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step1.png" alt="You click Get Started">
-                </div>
-              </div>
+        <div class="howSliderContainer">
+          <div class="howSlide" data-step="0">
+            <div class="howStepNum" aria-hidden="true">1</div>
+            <div class="howStepContent">
+              <h4>You click Get Started</h4>
+              <p>Fill in your details. From that moment, our automated system begins deep research into your business, your competitors, and your current public presence. Before we meet, we already know your landscape.</p>
             </div>
+          </div>
 
-            <!-- Slide 2 -->
-            <div class="howSlide" data-step="1">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">2</div>
-                  <div class="howStepContent">
-                    <h4>We meet. Zoom or coffee, your choice.</h4>
-                    <p>Every call is recorded and transcribed automatically. An AI summary with actionables is generated and stored in your profile the moment we hang up. Nothing lives in a notebook that gets lost.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step2.png" alt="Zoom or coffee meeting">
-                </div>
-              </div>
+          <div class="howSlide" data-step="1">
+            <div class="howStepNum" aria-hidden="true">2</div>
+            <div class="howStepContent">
+              <h4>We meet. Zoom or coffee, your choice.</h4>
+              <p>Every call is recorded and transcribed automatically. An AI summary with actionables is generated and stored in your profile the moment we hang up. Nothing lives in a notebook that gets lost.</p>
             </div>
+          </div>
 
-            <!-- Slide 3 -->
-            <div class="howSlide" data-step="2">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">3</div>
-                  <div class="howStepContent">
-                    <h4>We build your machine</h4>
-                    <p>Website rebuilt as a funnel. Content pipeline researched, scripted, filmed, edited, and posted. Operating system built and handed to you. Your dashboard goes live. Your social media becomes a lead engine, not a chore.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step3.png" alt="Building your marketing machine">
-                </div>
-              </div>
+          <div class="howSlide" data-step="2">
+            <div class="howStepNum" aria-hidden="true">3</div>
+            <div class="howStepContent">
+              <h4>We build your machine</h4>
+              <p>Website rebuilt as a funnel. Content pipeline researched, scripted, filmed, edited, and posted. Operating system built and handed to you. Your dashboard goes live. Your social media becomes a lead engine, not a chore.</p>
             </div>
+          </div>
 
-            <!-- Slide 4 -->
-            <div class="howSlide" data-step="3">
-              <div class="howSlideInner">
-                <div class="howSlideText">
-                  <div class="howStepNum" aria-hidden="true">4</div>
-                  <div class="howStepContent">
-                    <h4>We track, iterate, and grow</h4>
-                    <p>We analyse everything. What gets traction, we double down on. What does not work, we cut and replace. We are honest about both. Once organic traffic is producing real results, we layer in Meta ads to amplify what is already working.</p>
-                  </div>
-                </div>
-                <div class="howSlideVisual">
-                  <img src="how_step4.png" alt="Analytics and growth tracking">
-                </div>
-              </div>
+          <div class="howSlide" data-step="3">
+            <div class="howStepNum" aria-hidden="true">4</div>
+            <div class="howStepContent">
+              <h4>We track, iterate, and grow</h4>
+              <p>We analyse everything. What gets traction, we double down on. What does not work, we cut and replace. We are honest about both. Once organic traffic is producing real results, we layer in Meta ads to amplify what is already working.</p>
             </div>
           </div>
         </div>
 
         <div class="howProgress">
           <div class="howDots" aria-hidden="true">
-            <span class="hwDot active" onclick="goToHowStep(0)"></span>
-            <span class="hwDot" onclick="goToHowStep(1)"></span>
-            <span class="hwDot" onclick="goToHowStep(2)"></span>
-            <span class="hwDot" onclick="goToHowStep(3)"></span>
+            <span class="hwDot active"></span>
+            <span class="hwDot"></span>
+            <span class="hwDot"></span>
+            <span class="hwDot"></span>
           </div>
           <div class="howProgressBar">
-            <div class="howProgressFill" id="howProgressFill" style="width: 25%;"></div>
+            <div class="howProgressFill" id="howProgressFill"></div>
           </div>
+          <span class="howScrollHint">Keep scrolling</span>
         </div>
       </div>
     </section>
@@ -425,9 +383,6 @@
 
   <!-- BOOKING MODAL -->
   <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Book a strategy call">
-    <!-- Modal Transition Video Overlay -->
-    <video id="modalTransitionVideo" src="Get_Started_animation.mp4" playsinline></video>
-    
     <div class="bookingModal">
       <button onclick="closeBooking()" class="closeModalButton" aria-label="Close">&times;</button>
       <div class="bookingModalContent">
@@ -491,7 +446,7 @@
         <label for="memberPasscode">Passcode</label>
         <input type="password" id="memberPasscode" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" class="formInput" onkeydown="handleLoginKey(event)">
       </div>
-      <button onclick="submitMemberLogin()" class="loginVerifyButton">Verify</button>
+      <button onclick="submitMemberLogin()" id="memberVerifyBtn" class="loginVerifyButton">Verify</button>
       <div class="loginError" id="loginError">Invalid passcode. Please try again.</div>
     </div>
   </div>

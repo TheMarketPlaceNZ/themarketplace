@@ -1027,24 +1027,45 @@ function closeLoginModal() {
 function handleLoginKey(e) { if (e.key === 'Enter') submitMemberLogin(); }
 
 function submitMemberLogin() {
-  const passcode = (document.getElementById('memberPasscode') || {}).value?.trim();
+  const inp = document.getElementById('memberPasscode');
+  const passcode = (inp && inp.value ? inp.value : '').trim();
   const err      = document.getElementById('loginError');
+  const btn      = document.getElementById('memberVerifyBtn');
   if (!passcode) return;
 
-  if (passcode === 'sopo2026') {
-    if (err) err.style.display = 'none';
-    closeLoginModal();
-    window.open('sopo-studio/index.html', '_blank');
-  } else if (passcode === 'paddy2026') {
-    if (err) err.style.display = 'none';
-    closeLoginModal();
-    window.open('paddy-studio/index.html', '_blank');
-  } else if (passcode === 'Pass#321Word') {
-    if (err) err.style.display = 'none';
-    closeLoginModal();
-    localStorage.setItem('jarvisGateUnlocked', 'true');
-    window.open('command_station.html', '_blank');
-  } else {
-    if (err) err.style.display = 'block';
-  }
+  /* The passcodes used to live in this file, which is public. They now live
+     only in Netlify's encrypted environment variables and are checked by
+     /.netlify/functions/member-auth. Nothing secret is served to the browser
+     any more: we send a guess and get back a destination or a refusal. */
+  if (err) err.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.dataset.label = btn.textContent; btn.textContent = 'Checking...'; }
+
+  const restore = () => {
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label || 'Verify'; }
+  };
+
+  fetch('/.netlify/functions/member-auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ passcode: passcode })
+  })
+    .then(function (res) {
+      if (!res.ok) return null;
+      return res.json();
+    })
+    .then(function (data) {
+      restore();
+      if (!data || !data.ok || !data.path) {
+        if (err) err.style.display = 'block';
+        if (inp) { inp.value = ''; inp.focus(); }
+        return;
+      }
+      if (data.unlockGate) localStorage.setItem('jarvisGateUnlocked', 'true');
+      closeLoginModal();
+      window.open(data.path, '_blank');
+    })
+    .catch(function () {
+      restore();
+      if (err) err.style.display = 'block';
+    });
 }
