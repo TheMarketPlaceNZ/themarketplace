@@ -1158,11 +1158,6 @@ function proxyCall(action, payload = {}) {
 async function attemptProxy(action, payload, attempt = 0) {
   const url  = getSetting('proxyUrl', PROXY_WEBHOOK);
   const body = { action, ...payload };
-  /* airtableBody must be a real object, not a JSON string. Make maps it
-     straight into the HTTP body, and a string arrives at Airtable quoted,
-     which returns [422] Could not find field "fields" in the request body. */
-  if (payload.fields) body.airtableBody = { fields: payload.fields };
-  delete body.fields;
 
   let res;
   try {
@@ -1431,13 +1426,45 @@ function setStage(l, stage) {
   l.stage = stage;
   logActivity(l, 'Stage moved to ' + stage, '');
   saveState(); renderAll();
-  pushToAirtable(l, { [F.stage]: stage, [F.lifecycle]: serialiseLog(l.lifecycleLog) });
+  pushToAirtable(l);
 }
 
-/* ---------- WRITE PATH (bug fix: action 'patch', key 'recordId') ---------- */
-function pushToAirtable(l, fields) {
+/* ---------- WRITE PATH ----------
+   The proxy's create and patch routes use Airtable's NATIVE modules with
+   explicit field mapping, not the generic API call module. The generic one
+   will not accept a dynamic record body from a webhook: it returns
+   [422] Could not find field "fields" in the request body whether the body
+   is sent as a JSON string or as an object. Native modules take a mapped
+   record and work first time.
+
+   Consequence for this file: writes send a flat `f` object with friendly
+   keys, which the scenario maps onto real Airtable field IDs.
+
+   Every patch sends the COMPLETE record, never a partial. A native update
+   module clears any field it is given as empty, so sending only the changed
+   keys would silently wipe everything else on that client. */
+function leadToFields(l) {
+  return {
+    first_name: l.firstName || '',
+    surname:    l.surname || '',
+    phone:      l.phone || '',
+    email:      l.email || '',
+    area:       l.area || '',
+    timeframe:  l.timeframe || '',
+    segment:    l.segment || '',
+    lender:     l.lender || '',
+    amount:     l.amount || '',
+    source:     l.source || '',
+    notes:      l.notes || '',
+    stage:      l.stage || 'Enquiry',
+    insurance:  l.insurance ? true : false,
+    lifecycle:  serialiseLog(l.lifecycleLog)
+  };
+}
+
+function pushToAirtable(l) {
   if (!l.airtableId) return Promise.resolve();
-  return proxyCall('patch', { recordId: l.airtableId, fields })
+  return proxyCall('patch', { recordId: l.airtableId, f: leadToFields(l) })
     .then(() => { appState.unsavedIds = appState.unsavedIds.filter(id => id !== l.airtableId); saveState(); })
     .catch(() => {
       if (!appState.unsavedIds.includes(l.airtableId)) appState.unsavedIds.push(l.airtableId);
@@ -1581,7 +1608,7 @@ function submitActivity(idx) {
   document.getElementById('quickNote').value = '';
   selectedQuickLabel = '';
   document.querySelectorAll('#paneTabtimeline .quick-btn').forEach(b => b.classList.remove('sel'));
-  pushToAirtable(l, { [F.lifecycle]: serialiseLog(l.lifecycleLog) });
+  pushToAirtable(l);
 }
 
 function saveLeadDetails(idx) {
@@ -1596,11 +1623,7 @@ function saveLeadDetails(idx) {
   l.notes     = document.getElementById('edNotes').value.trim();
   delete l.name;
   saveState(); renderAll(); closeModal('leadModal');
-  pushToAirtable(l, {
-    [F.first_name]: l.firstName, [F.surname]: l.surname, [F.phone]: l.phone,
-    [F.email]: l.email, [F.area]: l.area, [F.timeframe]: l.timeframe || null,
-    [F.source]: l.source, [F.notes]: l.notes
-  });
+  pushToAirtable(l);
 }
 function saveDealDetails(idx) {
   const l = appState.leads[idx]; if (!l) return;
@@ -1613,11 +1636,7 @@ function saveDealDetails(idx) {
   pendingCover = null;
   if (prevStage !== l.stage) logActivity(l, 'Stage moved to ' + l.stage, '');
   saveState(); renderAll(); closeModal('leadModal');
-  pushToAirtable(l, {
-    [F.stage]: l.stage, [F.segment]: l.segment || null, [F.lender]: l.lender || null,
-    [F.amount]: l.amount || null, [F.insurance]: l.insurance,
-    [F.lifecycle]: serialiseLog(l.lifecycleLog)
-  });
+  pushToAirtable(l);
 }
 
 function callLead(p)  { if (p) window.location.href = 'tel:' + p; }
@@ -1667,13 +1686,7 @@ async function createLead() {
      create route yet the client still exists locally and picks up its
      Airtable id on the next successful create. Nothing is lost either way. */
   try {
-    const res = await proxyCall('create', { fields: {
-      [F.first_name]: l.firstName, [F.surname]: l.surname, [F.phone]: l.phone,
-      [F.email]: l.email, [F.area]: l.area, [F.timeframe]: l.timeframe || null,
-      [F.segment]: l.segment || null, [F.lender]: l.lender || null,
-      [F.amount]: l.amount || null, [F.source]: l.source, [F.notes]: l.notes,
-      [F.stage]: 'Enquiry', [F.lifecycle]: serialiseLog(l.lifecycleLog)
-    }});
+    const res = await proxyCall('create', { f: leadToFields(l) });
     const id = res && (res.id || (res.body && res.body.id));
     if (id) { l.airtableId = id; saveState(); }
   } catch(e) {
