@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080A">
+<title>Book a time · Paddy Lubana, Omega Financial Services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:#07080A; --surface:#0D0F13; --surface-2:#12151A; --surface-3:#191D24;
+  --gilt:#C9A54B; --gilt-bright:#EBCE86; --gilt-deep:#8A6F2A; --gilt-wash:rgba(201,165,75,0.10);
+  --ink:#F4F5F7; --ink-2:#C3C8D1; --dim:#8B929E; --muted:#5C636F;
+  --hairline:rgba(255,255,255,0.07); --hairline-g:rgba(201,165,75,0.28);
+  --green:#4ADE80; --red:#F0685F; --serif:'Instrument Serif', Georgia, serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--void); color:var(--ink); min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:40px 20px 28px; -webkit-font-smoothing:antialiased;
+}
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none;
+  background:radial-gradient(760px 560px at 50% -10%, rgba(201,165,75,0.085), transparent 62%);
+}
+.shell { position:relative; width:100%; max-width:520px; }
+header { text-align:center; margin-bottom:32px; }
+.mark {
+  width:56px; height:56px; border-radius:14px; margin:0 auto 20px;
+  background:linear-gradient(150deg,var(--gilt-bright),var(--gilt-deep));
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-size:26px; color:#14100A;
+}
+.firm { font-size:9.5px; font-weight:600; letter-spacing:0.3em; text-transform:uppercase; color:var(--gilt); margin-bottom:16px; }
+h1 { font-family:var(--serif); font-size:36px; font-weight:400; line-height:1.12; margin-bottom:12px; }
+.intro { font-size:14px; color:var(--dim); line-height:1.65; max-width:400px; margin:0 auto; }
+
+.card {
+  background:linear-gradient(180deg,var(--surface-2),var(--surface));
+  border:1px solid var(--hairline); border-radius:20px; padding:28px;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,0.95);
+}
+.grp { margin-bottom:20px; }
+.grp.pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+label { display:block; font-size:9.5px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+input, select {
+  width:100%; padding:13px 15px; background:var(--void); border:1px solid var(--hairline);
+  border-radius:10px; color:var(--ink); font-size:14px; font-family:'Inter',sans-serif; outline:none; transition:.22s;
+}
+input:focus, select:focus { border-color:var(--hairline-g); box-shadow:0 0 0 3px var(--gilt-wash); }
+input::placeholder { color:var(--muted); }
+select {
+  appearance:none; cursor:pointer; padding-right:38px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C636F' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 13px center; background-size:15px;
+}
+
+.cal { background:var(--void); border:1px solid var(--hairline); border-radius:14px; padding:16px; }
+.cal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.cal-month { font-family:var(--serif); font-size:17px; }
+.cal-nav {
+  width:28px; height:28px; border-radius:8px; border:1px solid var(--hairline);
+  background:transparent; color:var(--dim); cursor:pointer; font-size:13px; transition:.16s;
+}
+.cal-nav:hover:not(:disabled) { color:var(--gilt-bright); border-color:var(--hairline-g); }
+.cal-nav:disabled { opacity:.25; cursor:default; }
+.cal-dow, .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-dow span { text-align:center; font-size:9px; font-weight:600; letter-spacing:0.09em; text-transform:uppercase; color:var(--muted); padding-bottom:8px; }
+.cal-day {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:12.5px; color:var(--muted); border-radius:9px; border:1px solid transparent; transition:.15s;
+}
+.cal-day.empty { visibility:hidden; }
+.cal-day.has {
+  color:var(--ink); cursor:pointer; background:rgba(255,255,255,0.035); border-color:var(--hairline);
+}
+.cal-day.has:hover { border-color:var(--hairline-g); color:var(--gilt-bright); }
+.cal-day.sel { background:var(--gilt); color:#14100A; font-weight:600; border-color:transparent; }
+.cal-loading { grid-column:1/-1; text-align:center; padding:26px 10px; font-size:12px; color:var(--muted); line-height:1.6; }
+
+.slots { margin-top:18px; display:none; }
+.slots.on { display:block; }
+.slots-label { font-size:9.5px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--gilt); margin-bottom:10px; }
+.slots-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; }
+.slot {
+  padding:11px 8px; border-radius:9px; border:1px solid var(--hairline);
+  background:var(--void); color:var(--ink-2); font-size:13px; cursor:pointer;
+  transition:.16s; font-family:'Inter',sans-serif;
+}
+.slot:hover { border-color:var(--hairline-g); color:var(--gilt-bright); }
+.slot.sel { background:var(--gilt); color:#14100A; border-color:transparent; font-weight:600; }
+
+.btn {
+  width:100%; padding:16px; border:none; border-radius:11px; cursor:pointer;
+  font-family:'Inter',sans-serif; font-size:12px; font-weight:700;
+  letter-spacing:0.16em; text-transform:uppercase; transition:.2s;
+  background:linear-gradient(180deg,var(--gilt-bright),var(--gilt)); color:#14100A;
+}
+.btn:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
+.btn:disabled { opacity:.32; cursor:default; }
+
+.summary { background:var(--void); border:1px solid var(--hairline-g); border-radius:12px; padding:4px 18px; margin-bottom:22px; }
+.srow { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:15px 0; border-bottom:1px solid var(--hairline); }
+.srow:last-child { border-bottom:none; }
+.srow .k { font-size:9.5px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--gilt); }
+.srow .v { font-size:14px; font-weight:500; text-align:right; }
+
+.done { text-align:center; padding:14px 0; }
+.done .tick {
+  width:58px; height:58px; border-radius:50%; margin:0 auto 20px;
+  border:1px solid rgba(74,222,128,0.35); background:rgba(74,222,128,0.1);
+  display:flex; align-items:center; justify-content:center;
+}
+.done h2 { font-family:var(--serif); font-size:30px; font-weight:400; margin-bottom:12px; }
+.done p { font-size:14px; color:var(--dim); line-height:1.7; margin-bottom:20px; }
+.done strong { color:var(--gilt-bright); font-weight:500; }
+
+footer { position:relative; margin-top:32px; text-align:center; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); }
+
+@media (max-width:520px) {
+  body { padding:28px 16px 22px; }
+  h1 { font-size:30px; }
+  .card { padding:22px; border-radius:16px; }
+  .grp.pair { grid-template-columns:1fr; gap:20px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div class="mark">P</div>
+    <div class="firm">Paddy Lubana · Omega Financial Services</div>
+    <h1 id="pageTitle">Pick a time that suits</h1>
+    <p class="intro">Thirty minutes, no cost, no obligation. I will have looked at your situation before we start.</p>
+  </header>
+
+  <div class="card">
+    <form id="bookingForm" onsubmit="submitBooking(event)">
+      <div class="grp pair">
+        <div>
+          <label for="clientName">Your name</label>
+          <input type="text" id="clientName" required placeholder="Priya Sharma" autocomplete="name">
+        </div>
+        <div>
+          <label for="clientPhone">Mobile</label>
+          <input type="tel" id="clientPhone" placeholder="021 234 5678" autocomplete="tel">
+        </div>
+      </div>
+
+      <div class="grp">
+        <label for="clientEmail">Email</label>
+        <input type="email" id="clientEmail" required placeholder="you@email.co.nz" autocomplete="email">
+      </div>
+
+      <div class="grp">
+        <label>Choose a day</label>
+        <div class="cal">
+          <div class="cal-head">
+            <button type="button" class="cal-nav" id="calPrev" onclick="changeMonth(-1)">&#8249;</button>
+            <span class="cal-month" id="calMonthLabel">&nbsp;</span>
+            <button type="button" class="cal-nav" id="calNext" onclick="changeMonth(1)">&#8250;</button>
+          </div>
+          <div class="cal-dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+          <div class="cal-grid" id="calGrid"><div class="cal-loading">Loading available times</div></div>
+        </div>
+
+        <div class="slots" id="slotsWrap">
+          <div class="slots-label" id="slotsDateLabel"></div>
+          <div class="slots-grid" id="slotsGrid"></div>
+        </div>
+      </div>
+
+      <div class="grp">
+        <label for="meetingPreference">How would you like to meet</label>
+        <select id="meetingPreference" required>
+          <option value="" disabled selected>Choose one</option>
+          <option value="zoom">Zoom video call</option>
+          <option value="coffee">In person, over a coffee</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn" disabled>Confirm my time</button>
+    </form>
+
+    <div id="doneView" class="done" style="display:none;">
+      <div class="tick">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#4ADE80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>You're booked</h2>
+      <p>Paddy has it in his diary. A <strong>confirmation email and text</strong> are on their way, with the joining link if you chose Zoom.</p>
+      <div class="summary">
+        <div class="srow"><span class="k">Name</span><span class="v" id="sumName">-</span></div>
+        <div class="srow"><span class="k">When</span><span class="v" id="sumWhen">-</span></div>
+        <div class="srow"><span class="k">Format</span><span class="v" id="sumType">-</span></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:0;">You can close this tab now.</p>
+    </div>
+  </div>
+
+  <footer>The MarketPlace NZ</footer>
+</div>
+
+<script>
+/* ================================================================
+   BACKEND WIRING
+
+   Two different Make scenarios are involved, and they were crossed
+   over in the previous build:
+
+     Slot LOADING  -> Paddy Airtable Proxy (5787036), action get_slots.
+                      The old build asked the BOOKING webhook for
+                      "listAvailableSlots", a route that has never
+                      existed on any scenario, so the calendar was
+                      permanently empty and every client saw
+                      "no slots available". Fixed here.
+
+     Slot BOOKING  -> Paddy Booking (5787041). Reverts any previous
+                      slot, books the chosen one, writes booking_time,
+                      creates the Zoom meeting, writes the Zoom links
+                      back, logs the timeline, sends the client an SMS
+                      and an email, and creates the calendar event.
+
+   It also read f.slot_time_24, a field that does not exist on the
+   Availability Slots table. The real field is slot_time, stored as
+   display text like "9:00am", parsed below.
+
+   The booking scenario matches the client to an existing Lead by
+   email. Someone who books without checking in first will not match,
+   so the check in page stays the front door.
+   ================================================================ */
+const PROXY_WEBHOOK   = 'https://hook.us2.make.com/buarw6qr4ys15ohc4q31ox8iugup71k7';
+const BOOKING_WEBHOOK = 'https://hook.us2.make.com/5kx9t419278yplcgeqhxi52ys3xjrqzd';
+
+let slotsByDate = {}, calYear = 0, calMonth = 0;
+let selectedDate = null, selectedSlot = null;
+
+const now = new Date();
+const cutoff = new Date(now.getTime() + 24*60*60*1000); // nothing inside 24 hours
+
+/* Slot times are defined in New Zealand time regardless of where the
+   client's browser is. NZDT (+13) runs from the last Sunday in September
+   to the first Sunday in April; NZST (+12) otherwise. */
+function nzOffset(y, m, d) {
+  const lastSunSep = (() => { const x = new Date(Date.UTC(y, 8, 30)); while (x.getUTCDay() !== 0) x.setUTCDate(x.getUTCDate()-1); return x; })();
+  const firstSunApr = (() => { const x = new Date(Date.UTC(y, 3, 1)); while (x.getUTCDay() !== 0) x.setUTCDate(x.getUTCDate()+1); return x; })();
+  const t = Date.UTC(y, m, d);
+  return (t >= lastSunSep.getTime() || t < firstSunApr.getTime()) ? '+13:00' : '+12:00';
+}
+function to24(label) {
+  const m = String(label || '').trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const mins = m[2] || '00';
+  if (m[3] === 'pm' && h < 12) h += 12;
+  if (m[3] === 'am' && h === 12) h = 0;
+  return String(h).padStart(2,'0') + ':' + mins;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+
+async function loadSlots() {
+  try {
+    const res = await fetch(PROXY_WEBHOOK, {
+      method: 'POST', headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ action: 'get_slots' })
+    });
+    const data = await res.json();
+    const records = (data && (data.records || (data.body && data.body.records))) || [];
+    slotsByDate = {};
+    records.forEach(r => {
+      const f = r.fields || {};
+      const dateStr = f.slot_date;
+      const t24 = to24(f.slot_time);
+      if (!dateStr || !t24) return;
+      const [Y,M,D] = dateStr.split('-').map(Number);
+      const when = new Date(dateStr + 'T' + t24 + ':00' + nzOffset(Y, M-1, D));
+      if (when <= cutoff) return;
+      (slotsByDate[dateStr] = slotsByDate[dateStr] || []).push({
+        id: r.id, time24: t24, label: f.slot_time, sortKey: t24
+      });
+    });
+    Object.values(slotsByDate).forEach(a => a.sort((x,y) => x.sortKey.localeCompare(y.sortKey)));
+  } catch (e) {
+    slotsByDate = {};
+  }
+
+  const first = Object.keys(slotsByDate).sort()[0];
+  const anchor = first ? new Date(first + 'T12:00:00') : now;
+  calYear = anchor.getFullYear(); calMonth = anchor.getMonth();
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthLabel').textContent = months[calMonth] + ' ' + calYear;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const dates = Object.keys(slotsByDate).sort();
+  if (!dates.length) {
+    grid.innerHTML = '<div class="cal-loading">No times are open at the moment. Reply to Paddy\'s message and he will make one.</div>';
+    document.getElementById('calPrev').disabled = true;
+    document.getElementById('calNext').disabled = true;
+    return;
+  }
+  const firstD = new Date(dates[0] + 'T12:00:00'), lastD = new Date(dates[dates.length-1] + 'T12:00:00');
+  document.getElementById('calPrev').disabled = (calYear === firstD.getFullYear() && calMonth === firstD.getMonth());
+  document.getElementById('calNext').disabled = (calYear === lastD.getFullYear()  && calMonth === lastD.getMonth());
+
+  const lead = new Date(calYear, calMonth, 1).getDay();
+  const total = new Date(calYear, calMonth + 1, 0).getDate();
+  for (let i = 0; i < lead; i++) {
+    const e = document.createElement('div'); e.className = 'cal-day empty'; grid.appendChild(e);
+  }
+  for (let d = 1; d <= total; d++) {
+    const key = calYear + '-' + pad(calMonth+1) + '-' + pad(d);
+    const e = document.createElement('div');
+    e.className = 'cal-day'; e.textContent = d;
+    if (slotsByDate[key]) {
+      e.classList.add('has');
+      if (key === selectedDate) e.classList.add('sel');
+      e.onclick = () => selectDay(key);
+    }
+    grid.appendChild(e);
+  }
+}
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  renderCalendar();
+}
+
+function selectDay(key) {
+  selectedDate = key; selectedSlot = null;
+  document.getElementById('submitBtn').disabled = true;
+  renderCalendar();
+
+  const d = new Date(key + 'T12:00:00');
+  document.getElementById('slotsDateLabel').textContent =
+    d.toLocaleDateString('en-NZ', { weekday:'long', day:'numeric', month:'long' });
+
+  const grid = document.getElementById('slotsGrid');
+  grid.innerHTML = '';
+  (slotsByDate[key] || []).forEach(s => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'slot'; b.textContent = s.label;
+    b.onclick = () => {
+      selectedSlot = s;
+      document.querySelectorAll('.slot').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+      checkReady();
+    };
+    grid.appendChild(b);
+  });
+  document.getElementById('slotsWrap').classList.add('on');
+}
+
+function checkReady() {
+  const ok = selectedSlot && document.getElementById('clientName').value.trim()
+    && document.getElementById('clientEmail').value.trim()
+    && document.getElementById('meetingPreference').value;
+  document.getElementById('submitBtn').disabled = !ok;
+}
+['clientName','clientEmail','meetingPreference'].forEach(id =>
+  document.getElementById(id).addEventListener('input', checkReady));
+document.getElementById('meetingPreference').addEventListener('change', checkReady);
+
+function submitBooking(e) {
+  e.preventDefault();
+  if (!selectedSlot || !selectedDate) return;
+
+  const [Y,M,D] = selectedDate.split('-').map(Number);
+  const local = selectedDate + 'T' + selectedSlot.time24 + ':00';
+  const iso   = local + nzOffset(Y, M-1, D);
+  const name  = document.getElementById('clientName').value.trim();
+  const type  = document.getElementById('meetingPreference').value;
+
+  const payload = {
+    name, email: document.getElementById('clientEmail').value.trim(),
+    phone: document.getElementById('clientPhone').value.trim(),
+    slotId: selectedSlot.id,
+    bookingLocal: local,   // scenario parses this as Pacific/Auckland
+    bookingTime: iso,      // full offset form, safe for Airtable and Zoom
+    meetingType: type
+  };
+
+  const when = new Date(iso).toLocaleString('en-NZ',
+    { weekday:'long', day:'numeric', month:'long', hour:'numeric', minute:'2-digit' });
+  document.getElementById('sumName').textContent = name;
+  document.getElementById('sumWhen').textContent = when;
+  document.getElementById('sumType').textContent = type === 'zoom' ? 'Zoom video call' : 'In person';
+
+  document.getElementById('bookingForm').style.display = 'none';
+  document.getElementById('doneView').style.display = 'block';
+  document.getElementById('pageTitle').textContent = 'Thank you';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  fetch(BOOKING_WEBHOOK, {
+    method: 'POST', headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => console.warn('Booking send failed:', err.message));
+}
+
+/* Prefill from the check in confirmation email's link. */
+(function prefill() {
+  const q = new URLSearchParams(window.location.search);
+  if (q.get('name'))  document.getElementById('clientName').value  = q.get('name');
+  if (q.get('email')) document.getElementById('clientEmail').value = q.get('email');
+  if (q.get('name')) document.getElementById('pageTitle').textContent = 'Pick a time, ' + q.get('name').split(' ')[0];
+})();
+
+loadSlots();
+</script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080A">
+<title>Check In · Paddy Lubana, Omega Financial Services</title>
+<meta name="description" content="Two minutes, and Paddy Lubana can see exactly how to get your lending sorted.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+/* Same Obsidian and Gilt system as the adviser studio. This is the page a
+   prospective client actually sees first, so it carries the brand harder
+   than anything on the internal dashboard does. */
+:root {
+  --void:#07080A; --surface:#0D0F13; --surface-2:#12151A; --surface-3:#191D24;
+  --gilt:#C9A54B; --gilt-bright:#EBCE86; --gilt-deep:#8A6F2A;
+  --gilt-wash:rgba(201,165,75,0.10);
+  --ink:#F4F5F7; --ink-2:#C3C8D1; --dim:#8B929E; --muted:#5C636F;
+  --hairline:rgba(255,255,255,0.07); --hairline-g:rgba(201,165,75,0.28);
+  --green:#4ADE80; --red:#F0685F;
+  --serif:'Instrument Serif', Georgia, serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--void); color:var(--ink); min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:40px 20px 28px; -webkit-font-smoothing:antialiased;
+}
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none;
+  background:
+    radial-gradient(760px 560px at 50% -10%, rgba(201,165,75,0.085), transparent 62%),
+    radial-gradient(620px 460px at 90% 100%, rgba(127,169,217,0.03), transparent 62%);
+}
+.shell { position:relative; width:100%; max-width:520px; }
+
+header { text-align:center; margin-bottom:34px; }
+.mark {
+  width:56px; height:56px; border-radius:14px; margin:0 auto 20px;
+  background:linear-gradient(150deg, var(--gilt-bright), var(--gilt-deep));
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-size:26px; color:#14100A;
+}
+.firm { font-size:9.5px; font-weight:600; letter-spacing:0.3em; text-transform:uppercase; color:var(--gilt); margin-bottom:16px; }
+h1 { font-family:var(--serif); font-size:38px; font-weight:400; line-height:1.1; margin-bottom:12px; }
+.intro { font-size:14px; color:var(--dim); line-height:1.65; max-width:400px; margin:0 auto; }
+
+.card {
+  background:linear-gradient(180deg, var(--surface-2), var(--surface));
+  border:1px solid var(--hairline); border-radius:20px; padding:28px;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,0.95);
+}
+.grp { margin-bottom:18px; }
+.grp.pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+label {
+  display:block; font-size:9.5px; font-weight:600; letter-spacing:0.16em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:7px;
+}
+input, select, textarea {
+  width:100%; padding:13px 15px; background:var(--void);
+  border:1px solid var(--hairline); border-radius:10px;
+  color:var(--ink); font-size:14px; font-family:'Inter',sans-serif;
+  outline:none; transition:.22s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color:var(--hairline-g); box-shadow:0 0 0 3px var(--gilt-wash);
+}
+input::placeholder, textarea::placeholder { color:var(--muted); }
+textarea { resize:vertical; min-height:88px; }
+select {
+  appearance:none; cursor:pointer; padding-right:38px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C636F' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 13px center; background-size:15px;
+}
+select:invalid { color:var(--muted); }
+
+.btn {
+  width:100%; padding:16px; border:none; border-radius:11px; cursor:pointer;
+  font-family:'Inter',sans-serif; font-size:12px; font-weight:700;
+  letter-spacing:0.16em; text-transform:uppercase; transition:.2s;
+  background:linear-gradient(180deg, var(--gilt-bright), var(--gilt)); color:#14100A;
+}
+.btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.btn.ghost {
+  background:transparent; border:1px solid var(--hairline);
+  color:var(--dim); margin-top:10px; letter-spacing:0.08em; text-transform:none;
+  font-weight:500; font-size:13px;
+}
+.btn.ghost:hover { color:var(--ink); border-color:var(--hairline-g); transform:none; filter:none; }
+
+.hint { font-size:12px; color:var(--red); margin-top:6px; }
+
+/* Confirm step */
+.confirm-head { text-align:center; margin-bottom:24px; }
+.confirm-head .tick {
+  width:52px; height:52px; border-radius:50%; margin:0 auto 16px;
+  border:1px solid var(--hairline-g); background:var(--gilt-wash);
+  display:flex; align-items:center; justify-content:center; color:var(--gilt-bright); font-size:22px;
+}
+.confirm-head h2 { font-family:var(--serif); font-size:26px; font-weight:400; margin-bottom:8px; }
+.confirm-head p { font-size:13.5px; color:var(--dim); line-height:1.6; }
+.confirm-box { background:var(--void); border:1px solid var(--hairline-g); border-radius:12px; padding:4px 18px; margin-bottom:20px; }
+.confirm-row { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:15px 0; border-bottom:1px solid var(--hairline); }
+.confirm-row:last-child { border-bottom:none; }
+.confirm-row .k { font-size:9.5px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--gilt); }
+.confirm-row .v { font-size:14px; font-weight:500; word-break:break-all; text-align:right; }
+.confirm-note { font-size:12.5px; color:var(--muted); text-align:center; line-height:1.6; margin-bottom:20px; }
+
+/* Success */
+.success { text-align:center; padding:14px 0; }
+.success .tick {
+  width:58px; height:58px; border-radius:50%; margin:0 auto 20px;
+  border:1px solid rgba(74,222,128,0.35); background:rgba(74,222,128,0.1);
+  display:flex; align-items:center; justify-content:center;
+}
+.success h2 { font-family:var(--serif); font-size:30px; font-weight:400; margin-bottom:12px; }
+.success p { font-size:14px; color:var(--dim); line-height:1.7; }
+.success strong { color:var(--gilt-bright); font-weight:500; }
+
+.trust { display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-top:26px; }
+.trust span { font-size:10.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+.trust span::before { content:''; width:3px; height:3px; border-radius:50%; background:var(--gilt); }
+
+footer { position:relative; margin-top:34px; text-align:center; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--muted); }
+
+@media (max-width:520px) {
+  body { padding:28px 16px 22px; }
+  h1 { font-size:31px; }
+  .card { padding:22px; border-radius:16px; }
+  .grp.pair { grid-template-columns:1fr; gap:18px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div id="mainContainer">
+    <header>
+      <div class="mark">P</div>
+      <div class="firm">Paddy Lubana · Omega Financial Services</div>
+      <h1>Let's get your lending sorted</h1>
+      <p class="intro">Two minutes here saves an hour later. Answer these and I will already know how to help before we ever speak.</p>
+    </header>
+
+    <div class="card">
+      <!-- Deliberately minimal: no income, deposit or employment questions.
+           Those belong in the conversation, not a cold form, and Paddy's CRM
+           carries no lead scoring by design. -->
+      <div id="formSection">
+        <form id="checkinForm" onsubmit="handleCheckin(event)">
+          <div class="grp pair">
+            <div>
+              <label for="firstName">First name</label>
+              <input type="text" id="firstName" required placeholder="Priya" autocomplete="given-name">
+            </div>
+            <div>
+              <label for="surname">Surname</label>
+              <input type="text" id="surname" required placeholder="Sharma" autocomplete="family-name">
+            </div>
+          </div>
+
+          <div class="grp">
+            <label for="emailAddress">Email</label>
+            <input type="email" id="emailAddress" required placeholder="you@email.co.nz" autocomplete="email">
+          </div>
+
+          <div class="grp">
+            <label for="phoneNumber">Mobile</label>
+            <input type="tel" id="phoneNumber" required placeholder="021 234 5678" autocomplete="tel">
+          </div>
+
+          <div class="grp">
+            <label for="targetArea">Which area</label>
+            <input type="text" id="targetArea" required placeholder="Rototuna, Dinsdale, Hamilton East">
+          </div>
+
+          <div class="grp">
+            <label for="enquiryType">What do you need</label>
+            <select id="enquiryType" required>
+              <option value="" disabled selected>Choose one</option>
+              <option value="First Home">Buying my first home</option>
+              <option value="Investor">An investment property</option>
+              <option value="Refinance">Refinancing what I have</option>
+              <option value="Self-Employed">Lending while self employed</option>
+              <option value="Business">Business or commercial lending</option>
+              <option value="Other">Something else</option>
+            </select>
+          </div>
+
+          <div class="grp">
+            <label for="purchaseTime">Your timeframe</label>
+            <select id="purchaseTime" required>
+              <option value="" disabled selected>Choose one</option>
+              <option value="Immediately">Ready right now</option>
+              <option value="Within 3 Months">Within three months</option>
+              <option value="3 to 6 Months">Three to six months</option>
+              <option value="6 to 12 Months">Six to twelve months</option>
+              <option value="Just Looking">Just looking for now</option>
+            </select>
+          </div>
+
+          <div class="grp">
+            <label for="extraNotes">Anything else worth knowing</label>
+            <textarea id="extraNotes" placeholder="Optional. Anything that might affect your situation."></textarea>
+          </div>
+
+          <button type="submit" class="btn">Send my details</button>
+        </form>
+      </div>
+
+      <div id="confirmSection" style="display:none;">
+        <div class="confirm-head">
+          <div class="tick">&#10003;</div>
+          <h2>One quick check</h2>
+          <p>These are how I will reach you. Worth a second look.</p>
+        </div>
+        <div class="confirm-box">
+          <div class="confirm-row"><span class="k">Email</span><span class="v" id="confirmEmail"></span></div>
+          <div class="confirm-row"><span class="k">Mobile</span><span class="v" id="confirmPhone"></span></div>
+        </div>
+        <div class="confirm-note">If either looks wrong, go back and fix it. I cannot reach you otherwise.</div>
+        <button class="btn" onclick="submitCheckin()">That's correct, send it</button>
+        <button class="btn ghost" onclick="showForm()">Let me edit that</button>
+      </div>
+
+      <div id="successSection" class="success" style="display:none;">
+        <div class="tick">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#4ADE80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>You're in</h2>
+        <p>I have your details. Check your <strong>email</strong> in the next minute or two, there is a link in there to pick a time that suits you.</p>
+      </div>
+    </div>
+
+    <div class="trust">
+      <span>20 plus lenders on panel</span>
+      <span>Hamilton based</span>
+      <span>No cost to you</span>
+    </div>
+  </div>
+
+  <footer>The MarketPlace NZ</footer>
+</div>
+
+<script>
+/* The status.json kill switch stays exactly as it was. It lets the page be
+   taken offline without a redeploy. */
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('status.json')
+    .then(r => r.json())
+    .then(d => {
+      if (d.status !== 'active') {
+        document.getElementById('mainContainer').innerHTML =
+          '<div style="text-align:center;padding:60px 20px;">' +
+          '<h2 style="font-family:var(--serif);font-size:28px;font-weight:400;margin-bottom:12px;">Temporarily closed</h2>' +
+          '<p style="font-size:14px;color:var(--dim);line-height:1.7;">This form is not accepting enquiries right now. Please try again shortly.</p></div>';
+      }
+    })
+    .catch(() => {});
+});
+
+let pendingPayload = null;
+
+function isValidNZMobile(raw) {
+  return /^02[0-9]{7,9}$/.test(raw.replace(/[\s\-()]/g, ''));
+}
+
+function handleCheckin(event) {
+  event.preventDefault();
+  const phoneEl = document.getElementById('phoneNumber');
+  const phone = phoneEl.value.trim();
+
+  if (!isValidNZMobile(phone)) {
+    phoneEl.style.borderColor = 'var(--red)';
+    phoneEl.focus();
+    let hint = document.getElementById('phoneHint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'phoneHint'; hint.className = 'hint';
+      phoneEl.parentNode.insertBefore(hint, phoneEl.nextSibling);
+    }
+    hint.textContent = 'That does not look like a NZ mobile. They start 021, 022 or 027.';
+    return;
+  }
+  phoneEl.style.borderColor = '';
+  const oldHint = document.getElementById('phoneHint');
+  if (oldHint) oldHint.remove();
+
+  const first = document.getElementById('firstName').value.trim();
+  const last  = document.getElementById('surname').value.trim();
+
+  /* firstName + surname are sent as separate keys so they land in the CRM's
+     real first_name / surname fields. `name` is kept as a combined fallback
+     so an older cached copy of the intake scenario still resolves something. */
+  pendingPayload = {
+    firstName: first,
+    surname:   last,
+    name:      (first + ' ' + last).trim(),
+    email:     document.getElementById('emailAddress').value.trim(),
+    phone:     phone,
+    area:      document.getElementById('targetArea').value.trim(),
+    enquiryType: document.getElementById('enquiryType').value,
+    timeFrame:   document.getElementById('purchaseTime').value,
+    notes:     document.getElementById('extraNotes').value.trim(),
+    timestamp: new Date().toISOString(),
+    source:    new URLSearchParams(window.location.search).get('source') || 'Website'
+  };
+
+  document.getElementById('confirmEmail').textContent = pendingPayload.email;
+  document.getElementById('confirmPhone').textContent = pendingPayload.phone;
+  document.getElementById('formSection').style.display = 'none';
+  document.getElementById('confirmSection').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showForm() {
+  document.getElementById('confirmSection').style.display = 'none';
+  document.getElementById('formSection').style.display = 'block';
+}
+
+function submitCheckin() {
+  if (!pendingPayload) return;
+  document.getElementById('confirmSection').style.display = 'none';
+  document.getElementById('successSection').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  /* Live: "Paddy Check In Automation" (scenario 5806893). Writes the lead to
+     PADDY_CRM, emails Kurt, and sends the client a branded booking link. */
+  fetch('https://hook.us2.make.com/kcm9sp5fmg758ixdkjoe0so0v1hvqmew', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(pendingPayload)
+  }).catch(e => console.warn('Check in send failed:', e.message));
+}
+</script>
+</body>
+</html>
