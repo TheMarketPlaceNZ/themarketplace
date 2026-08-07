@@ -711,7 +711,8 @@
         .then(function (res) { return res.json(); })
         .then(function (data) {
           typingEl.remove();
-          addMessage((data && data.reply) ? data.reply : "Thanks, got it, I'll follow up shortly.", "bot");
+          var item = Array.isArray(data) ? data[0] : data;
+          addMessage((item && item.reply) ? item.reply : "Thanks, got it, I'll follow up shortly.", "bot");
         })
         .catch(function () {
           typingEl.remove();
