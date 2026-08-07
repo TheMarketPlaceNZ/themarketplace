@@ -185,56 +185,43 @@ function initCustomCursor() {
     cursorRing.style.transform = 'translate(-50%,-50%) scale(0)';
   });
 
-  /* Hover state — enlarge ring on interactive elements and show label via event delegation */
-  document.addEventListener('mouseover', e => {
-    const el = e.target.closest('button, a, .accCard, .calendarDayCard, .calendarTimeSlot, .pillarCard, .painCard, .formInput');
-    if (!el) return;
+  /* Hover state — enlarge ring on interactive elements and show label */
+  const hoverTargets = 'button, a, .accCard, .calendarDayCard, .calendarTimeSlot, .pillarCard, .painCard';
+  document.querySelectorAll(hoverTargets).forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursorHovered = true;
+      cursorRing.style.width  = '72px';
+      cursorRing.style.height = '72px';
+      cursorRing.style.borderColor = 'rgba(197,160,89,0.75)';
+      cursorDot.style.background = '#D4B068';
 
-    cursorHovered = true;
-    cursorRing.style.width  = '72px';
-    cursorRing.style.height = '72px';
-    cursorRing.style.borderColor = 'rgba(197,160,89,0.75)';
-    cursorDot.style.background = '#D4B068';
+      let text = '';
+      if (el.tagName === 'BUTTON' || el.classList.contains('loginLink')) {
+        text = 'BOOK';
+      } else if (el.classList.contains('accCard')) {
+        text = 'OPEN';
+      } else if (el.classList.contains('painCard') || el.classList.contains('pillarCard')) {
+        text = 'TILT';
+      }
+      
+      const labelEl = document.getElementById('cursorLabel');
+      if (labelEl) {
+        labelEl.textContent = text;
+        labelEl.style.opacity = text ? '1' : '0';
+      }
+    });
+    el.addEventListener('mouseleave', () => {
+      cursorHovered = false;
+      cursorRing.style.width  = '38px';
+      cursorRing.style.height = '38px';
+      cursorRing.style.borderColor = 'rgba(197,160,89,0.45)';
+      cursorDot.style.background = '#C5A059';
 
-    let text = '';
-    if (el.classList.contains('closeModalButton')) {
-      text = 'CLOSE';
-    } else if (el.classList.contains('formInput')) {
-      text = 'TYPE';
-      cursorRing.style.borderColor = 'rgba(16,185,129,0.6)'; // emerald tint for inputs
-    } else if (el.classList.contains('modalNextButton') || el.classList.contains('modalSubmitButton')) {
-      text = 'NEXT';
-    } else if (el.classList.contains('calendarDayCard') || el.classList.contains('calendarTimeSlot')) {
-      text = 'SELECT';
-    } else if (el.tagName === 'BUTTON' || el.classList.contains('loginLink')) {
-      text = 'BOOK';
-    } else if (el.classList.contains('accCard')) {
-      text = 'OPEN';
-    } else if (el.classList.contains('painCard') || el.classList.contains('pillarCard')) {
-      text = 'TILT';
-    }
-    
-    const labelEl = document.getElementById('cursorLabel');
-    if (labelEl) {
-      labelEl.textContent = text;
-      labelEl.style.opacity = text ? '1' : '0';
-    }
-  });
-
-  document.addEventListener('mouseout', e => {
-    const el = e.target.closest('button, a, .accCard, .calendarDayCard, .calendarTimeSlot, .pillarCard, .painCard, .formInput');
-    if (!el) return;
-
-    cursorHovered = false;
-    cursorRing.style.width  = '38px';
-    cursorRing.style.height = '38px';
-    cursorRing.style.borderColor = 'rgba(197,160,89,0.45)';
-    cursorDot.style.background = '#C5A059';
-
-    const labelEl = document.getElementById('cursorLabel');
-    if (labelEl) {
-      labelEl.style.opacity = '0';
-    }
+      const labelEl = document.getElementById('cursorLabel');
+      if (labelEl) {
+        labelEl.style.opacity = '0';
+      }
+    });
   });
 }
 
@@ -281,6 +268,7 @@ function initMagneticButtons() {
    ============================================================ */
 function initMouseSpotlight() {
   const spotlightSections = [
+    document.querySelector('.heroSection'),
     document.querySelector('.finalCTASection')
   ].filter(Boolean);
 
@@ -716,80 +704,80 @@ function initProofCounters() {
    HOW IT WORKS — STICKY SCROLL SLIDER
    ============================================================ */
 let howCurrentSlide   = 0;
+let howExiting        = false;
 
 function initHowItWorksSlider() {
-  goToHowStep(0);
-}
-
-function goToHowStep(idx) {
   const section = document.getElementById('howSection');
   if (!section) return;
 
-  const slides = section.querySelectorAll('.howSlide');
-  const dots = section.querySelectorAll('.hwDot');
-  const fill = document.getElementById('howProgressFill');
-  const total = slides.length;
+  const slides  = section.querySelectorAll('.howSlide');
+  const dots    = section.querySelectorAll('.hwDot');
+  const fill    = document.getElementById('howProgressFill');
+  const total   = slides.length;
 
-  if (idx < 0 || idx >= total) return;
+  if (!slides.length) return;
 
-  slides.forEach((slide, i) => {
-    slide.classList.toggle('active', i === idx);
-  });
-
-  dots.forEach((dot, i) => {
-    dot.classList.toggle('active', i === idx);
-  });
-
-  if (fill) {
-    fill.style.width = `${((idx + 1) / total) * 100}%`;
+  // On mobile/tablet, let CSS handle vertical list layout and do not run slider JS
+  if (window.innerWidth <= 900) {
+    slides.forEach(slide => {
+      slide.classList.remove('active', 'exiting');
+    });
+    return;
   }
 
-  howCurrentSlide = idx;
+  /* Show first slide */
+  slides[0].classList.add('active');
+  updateHowDots(dots, fill, 0, total);
+
+  window.addEventListener('scroll', () => {
+    if (window.innerWidth <= 900) return;
+
+    const rect   = section.getBoundingClientRect();
+    const height = section.offsetHeight - window.innerHeight;
+    if (height <= 0) return;
+
+    const scrolled = clamp(-rect.top, 0, height);
+    const progress = scrolled / height;
+    const target   = Math.min(total - 1, Math.floor(progress * total));
+
+    if (target !== howCurrentSlide && !howExiting) {
+      goToHowSlide(slides, dots, fill, target, total);
+    }
+  }, { passive: true });
 }
 
-function nextHowSlide() {
-  const section = document.getElementById('howSection');
-  if (!section) return;
-  const slides = section.querySelectorAll('.howSlide');
-  const nextIdx = (howCurrentSlide + 1) % slides.length;
-  goToHowStep(nextIdx);
+function goToHowSlide(slides, dots, fill, next, total) {
+  howExiting = true;
+  const prev = howCurrentSlide;
+
+  slides[prev].classList.add('exiting');
+  slides[prev].classList.remove('active');
+
+  setTimeout(() => {
+    slides[prev].classList.remove('exiting');
+    slides[next].classList.add('active');
+    howCurrentSlide = next;
+    howExiting = false;
+    updateHowDots(dots, fill, next, total);
+  }, 420);
 }
 
-function prevHowSlide() {
-  const section = document.getElementById('howSection');
-  if (!section) return;
-  const slides = section.querySelectorAll('.howSlide');
-  const prevIdx = (howCurrentSlide - 1 + slides.length) % slides.length;
-  goToHowStep(prevIdx);
+function updateHowDots(dots, fill, idx, total) {
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  if (fill) fill.style.width = `${((idx + 1) / total) * 100}%`;
 }
 
 /* ============================================================
    BOOKING MODAL — Open / Close / Steps
    ============================================================ */
 function openBooking() {
-  window.location.href = "https://n8n.themarketplace.co.nz/form/tmp-book-a-time";
+  const overlay = document.getElementById('modalOverlay');
+  if (overlay) { overlay.style.display = 'flex'; resetBookingSteps(); fetchBusySlots(); }
 }
 
 function closeBooking() {
   const overlay = document.getElementById('modalOverlay');
-  const video = document.getElementById('modalTransitionVideo');
-  const modal = document.querySelector('.bookingModal');
-
-  if (overlay) {
-    overlay.style.display = 'none';
-    overlay.classList.remove('active-blur');
-    resetBookingSteps();
-
-    if (video) {
-      video.pause();
-      video.style.opacity = '0';
-    }
-    if (modal) {
-      modal.style.opacity = '0';
-      modal.style.transform = 'scale(0.88)';
-      modal.style.pointerEvents = 'none';
-    }
-  }
+  if (overlay) { overlay.style.display = 'none'; resetBookingSteps(); }
 }
 
 function resetBookingSteps() {
@@ -1047,6 +1035,10 @@ function submitMemberLogin() {
     if (err) err.style.display = 'none';
     closeLoginModal();
     window.open('sopo-studio/index.html', '_blank');
+  } else if (passcode === 'paddy2026') {
+    if (err) err.style.display = 'none';
+    closeLoginModal();
+    window.open('paddy-studio/index.html', '_blank');
   } else if (passcode === 'Pass#321Word') {
     if (err) err.style.display = 'none';
     closeLoginModal();
