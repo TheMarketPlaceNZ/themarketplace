@@ -1096,13 +1096,44 @@ function initials(l) {
 function stageMeta(k) { return STAGES.find(s => s.key === k) || STAGES[0]; }
 function liveLeads()  { return appState.leads.filter(l => !appState.deletedIds.includes(l.airtableId)); }
 
-/* ---------- AIRTABLE PROXY ---------- */
-async function proxyCall(action, payload = {}) {
-  const url = getSetting('proxyUrl', PROXY_WEBHOOK);
+/* ---------- AIRTABLE PROXY ----------
+   Make runs one execution of this scenario at a time. Fire two requests at
+   once (say the 60 second auto sync overlapping a save) and the second comes
+   back 503 and the write is silently lost. That is exactly how the first
+   live save failed during testing.
+
+   Every call is therefore pushed through a single promise chain so only one
+   request is ever in flight, with a short backoff retry on 503 and on
+   network failure. Order is preserved, which also means a stage change
+   cannot overtake the field save that preceded it. */
+let proxyChain = Promise.resolve();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function proxyCall(action, payload = {}) {
+  const run = () => attemptProxy(action, payload);
+  const queued = proxyChain.then(run, run);
+  proxyChain = queued.catch(() => {});   // one failure must not poison the queue
+  return queued;
+}
+
+async function attemptProxy(action, payload, attempt = 0) {
+  const url  = getSetting('proxyUrl', PROXY_WEBHOOK);
   const body = { action, ...payload };
   if (payload.fields) body.airtableBody = JSON.stringify({ fields: payload.fields });
   delete body.fields;
-  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+
+  let res;
+  try {
+    res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  } catch (netErr) {
+    if (attempt < 3) { await sleep(900 * (attempt + 1)); return attemptProxy(action, payload, attempt + 1); }
+    throw netErr;
+  }
+  // 503 means the scenario was mid execution. 429 means rate limited. Both retry.
+  if ((res.status === 503 || res.status === 429) && attempt < 3) {
+    await sleep(1100 * (attempt + 1));
+    return attemptProxy(action, payload, attempt + 1);
+  }
   if (!res.ok) throw new Error('Proxy error ' + res.status);
   return res.json();
 }
