@@ -497,5 +497,239 @@
   </div>
 
   <script src="app.js"></script>
+
+  <!-- TMP Website Chat Widget — Kurt Voice Agent, added Session 53 -->
+  <style>
+    #tmp-chat-bubble {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #111111;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+      cursor: pointer;
+      z-index: 999998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease;
+    }
+    #tmp-chat-bubble:hover { transform: scale(1.06); }
+    #tmp-chat-bubble svg { width: 26px; height: 26px; fill: #ffffff; }
+
+    #tmp-chat-panel {
+      position: fixed;
+      bottom: 92px;
+      right: 24px;
+      width: 340px;
+      max-width: calc(100vw - 32px);
+      height: 440px;
+      max-height: calc(100vh - 140px);
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 999999;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #tmp-chat-panel.open { display: flex; }
+
+    #tmp-chat-header {
+      padding: 14px 16px;
+      background: #111111;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #tmp-chat-header span.sub {
+      display: block;
+      font-weight: 400;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+    }
+    #tmp-chat-close {
+      cursor: pointer;
+      color: rgba(255,255,255,0.5);
+      font-size: 18px;
+      line-height: 1;
+      background: none;
+      border: none;
+    }
+    #tmp-chat-close:hover { color: #ffffff; }
+
+    #tmp-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tmp-msg {
+      max-width: 85%;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .tmp-msg.visitor {
+      align-self: flex-end;
+      background: #ffffff;
+      color: #111111;
+    }
+    .tmp-msg.bot {
+      align-self: flex-start;
+      background: #1c1c1c;
+      color: #ececec;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .tmp-msg.typing {
+      align-self: flex-start;
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    #tmp-chat-inputrow {
+      display: flex;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 10px;
+      gap: 8px;
+    }
+    #tmp-chat-input {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 9px 11px;
+      color: #ffffff;
+      font-size: 13.5px;
+      outline: none;
+      resize: none;
+    }
+    #tmp-chat-send {
+      background: #ffffff;
+      color: #111111;
+      border: none;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #tmp-chat-send:disabled { opacity: 0.5; cursor: default; }
+  </style>
+
+  <div id="tmp-chat-bubble" aria-label="Open chat">
+    <svg viewBox="0 0 24 24"><path d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8l-5 5V4z"/></svg>
+  </div>
+
+  <div id="tmp-chat-panel">
+    <div id="tmp-chat-header">
+      <div>
+        The MarketPlace NZ
+        <span class="sub">Usually replies in a few minutes</span>
+      </div>
+      <button id="tmp-chat-close" aria-label="Close chat">&times;</button>
+    </div>
+    <div id="tmp-chat-messages"></div>
+    <div id="tmp-chat-inputrow">
+      <textarea id="tmp-chat-input" rows="1" placeholder="Ask a question..."></textarea>
+      <button id="tmp-chat-send">Send</button>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var WEBHOOK_URL = "https://n8n.themarketplace.co.nz/webhook/tmp-site-chat";
+
+    var bubble = document.getElementById("tmp-chat-bubble");
+    var panel = document.getElementById("tmp-chat-panel");
+    var closeBtn = document.getElementById("tmp-chat-close");
+    var messages = document.getElementById("tmp-chat-messages");
+    var input = document.getElementById("tmp-chat-input");
+    var sendBtn = document.getElementById("tmp-chat-send");
+
+    function getSessionId() {
+      var key = "tmp_chat_session_id";
+      var id = localStorage.getItem(key);
+      if (!id) {
+        id = "sess_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(key, id);
+      }
+      return id;
+    }
+
+    function addMessage(text, who) {
+      var el = document.createElement("div");
+      el.className = "tmp-msg " + who;
+      el.textContent = text;
+      messages.appendChild(el);
+      messages.scrollTop = messages.scrollHeight;
+      return el;
+    }
+
+    bubble.addEventListener("click", function () {
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open") && messages.children.length === 0) {
+        addMessage("Hey, what can I help with?", "bot");
+      }
+    });
+    closeBtn.addEventListener("click", function () {
+      panel.classList.remove("open");
+    });
+
+    function send() {
+      var text = input.value.trim();
+      if (!text) return;
+      addMessage(text, "visitor");
+      input.value = "";
+      sendBtn.disabled = true;
+      var typingEl = addMessage("Typing...", "typing");
+
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: getSessionId(),
+          message: text,
+          pageUrl: window.location.href
+        })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          typingEl.remove();
+          addMessage((data && data.reply) ? data.reply : "Thanks, got it, I'll follow up shortly.", "bot");
+        })
+        .catch(function () {
+          typingEl.remove();
+          addMessage("Something dropped on my end, sorry. Try again in a moment or use the Get Started button above.", "bot");
+        })
+        .finally(function () {
+          sendBtn.disabled = false;
+        });
+    }
+
+    sendBtn.addEventListener("click", send);
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+    });
+  })();
+  </script>
 </body>
 </html>
