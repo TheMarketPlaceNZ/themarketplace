@@ -95,15 +95,43 @@ select:invalid { color:#5C636F; }
   opacity:0; transition:.18s; pointer-events:none;
 }
 .grp.ok .tickmark { opacity:1; transform:translateY(-50%) scale(1); }
-.grp.ok input, .grp.ok textarea { border-color:rgba(74,222,128,0.3); padding-right:40px; }
+.grp.ok input, .grp.ok textarea { border-color:rgba(74,222,128,0.3); }
 .grp.ok select { border-color:rgba(74,222,128,0.3); }
-.grp.ok select ~ .tickmark { display:none; }   /* the chevron already lives there */
+input, textarea { padding-right:40px; }
+/* Selects keep the chevron on the right, so their marker sits inboard of it. */
+.ctl.sel select { padding-right:62px; }
+.ctl.sel .tickmark, .ctl.sel .badmark { right:36px; }
 
 .grp.warn input, .grp.warn select, .grp.warn textarea { border-color:rgba(242,178,76,0.55); }
 .grp.warn .tickmark { opacity:0; }
 
+/* Something is actually wrong. Red, named, and never silent. A blank
+   untouched field never lands here — this is for an answer that cannot
+   work, not for one that has not been given yet. */
+.badmark {
+  position:absolute; right:13px; top:50%; transform:translateY(-50%) scale(.6);
+  width:18px; height:18px; border-radius:50%;
+  background:rgba(240,104,95,0.16); border:1px solid rgba(240,104,95,0.65);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:.18s; pointer-events:none;
+  font-family:'Inter',sans-serif; font-size:12px; font-weight:700; line-height:1;
+  color:#F0685F;
+}
+.grp.bad input, .grp.bad select, .grp.bad textarea {
+  border-color:var(--red);
+  box-shadow:0 0 0 3px rgba(240,104,95,0.13), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.grp.bad input:focus, .grp.bad select:focus, .grp.bad textarea:focus {
+  background:#1B2028; border-color:var(--red);
+  box-shadow:0 0 0 3px rgba(240,104,95,0.22), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.grp.bad .tickmark { opacity:0; }
+.grp.bad .badmark { opacity:1; transform:translateY(-50%) scale(1); }
+.grp.bad label { color:var(--red); }
+
 .msg { font-size:12px; line-height:1.5; margin-top:7px; display:none; }
 .grp.warn .msg { display:block; color:#F2B24C; }
+.grp.bad .msg { display:block; color:var(--red); }
 .msg a { color:var(--gilt-bright); cursor:pointer; text-decoration:underline; }
 
 .progress-note {
@@ -121,7 +149,11 @@ select:invalid { color:#5C636F; }
 .btn:disabled {
   background:#1B2028; color:#5C636F; cursor:not-allowed;
   border:1px solid rgba(255,255,255,0.09); transform:none; filter:none;
+  /* Lets the tap fall through to .btn-wrap so a greyed button can still
+     explain itself instead of doing nothing at all. */
+  pointer-events:none;
 }
+.btn-wrap { position:relative; cursor:pointer; }
 .btn.ghost {
   background:transparent; border:1px solid var(--hairline);
   color:var(--dim); margin-top:10px; letter-spacing:0.08em; text-transform:none;
@@ -195,14 +227,18 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
               <div class="ctl">
                 <input type="text" id="firstName" required placeholder="Priya" autocomplete="given-name">
                 <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="badmark" aria-hidden="true">!</span>
               </div>
+              <div class="msg" id="msgFirst"></div>
             </div>
             <div class="grp" id="grpLast" style="margin-bottom:0;">
               <label for="surname">Surname</label>
               <div class="ctl">
                 <input type="text" id="surname" required placeholder="Sharma" autocomplete="family-name">
                 <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="badmark" aria-hidden="true">!</span>
               </div>
+              <div class="msg" id="msgLast"></div>
             </div>
           </div>
 
@@ -211,6 +247,7 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
             <div class="ctl">
               <input type="email" id="emailAddress" required placeholder="you@email.co.nz" autocomplete="email" spellcheck="false">
               <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="badmark" aria-hidden="true">!</span>
             </div>
             <div class="msg" id="msgEmail"></div>
           </div>
@@ -220,6 +257,7 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
             <div class="ctl">
               <input type="tel" id="phoneNumber" required placeholder="021 234 5678" autocomplete="tel" inputmode="tel">
               <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="badmark" aria-hidden="true">!</span>
             </div>
             <div class="msg" id="msgPhone"></div>
           </div>
@@ -229,32 +267,44 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
             <div class="ctl">
               <input type="text" id="targetArea" required placeholder="Rototuna, Dinsdale, Hamilton East">
               <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="badmark" aria-hidden="true">!</span>
             </div>
+            <div class="msg" id="msgArea"></div>
           </div>
 
           <div class="grp" id="grpType">
             <label for="enquiryType">What do you need</label>
-            <select id="enquiryType" required>
-              <option value="" disabled selected>Choose one</option>
-              <option value="First Home">Buying my first home</option>
-              <option value="Investor">An investment property</option>
-              <option value="Refinance">Refinancing what I have</option>
-              <option value="Self-Employed">Lending while self employed</option>
-              <option value="Business">Business or commercial lending</option>
-              <option value="Other">Something else</option>
-            </select>
+            <div class="ctl sel">
+              <select id="enquiryType" required>
+                <option value="" disabled selected>Choose one</option>
+                <option value="First Home">Buying my first home</option>
+                <option value="Investor">An investment property</option>
+                <option value="Refinance">Refinancing what I have</option>
+                <option value="Self-Employed">Lending while self employed</option>
+                <option value="Business">Business or commercial lending</option>
+                <option value="Other">Something else</option>
+              </select>
+              <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="badmark" aria-hidden="true">!</span>
+            </div>
+            <div class="msg" id="msgType"></div>
           </div>
 
           <div class="grp" id="grpTime">
             <label for="purchaseTime">Your timeframe</label>
-            <select id="purchaseTime" required>
-              <option value="" disabled selected>Choose one</option>
-              <option value="Immediately">Ready right now</option>
-              <option value="Within 3 Months">Within three months</option>
-              <option value="3 to 6 Months">Three to six months</option>
-              <option value="6 to 12 Months">Six to twelve months</option>
-              <option value="Just Looking">Just looking for now</option>
-            </select>
+            <div class="ctl sel">
+              <select id="purchaseTime" required>
+                <option value="" disabled selected>Choose one</option>
+                <option value="Immediately">Ready right now</option>
+                <option value="Within 3 Months">Within three months</option>
+                <option value="3 to 6 Months">Three to six months</option>
+                <option value="6 to 12 Months">Six to twelve months</option>
+                <option value="Just Looking">Just looking for now</option>
+              </select>
+              <span class="tickmark"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="badmark" aria-hidden="true">!</span>
+            </div>
+            <div class="msg" id="msgTime"></div>
           </div>
 
           <div class="grp">
@@ -262,7 +312,9 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
             <textarea id="extraNotes" placeholder="Optional. Anything that might affect your situation."></textarea>
           </div>
 
-          <button type="submit" class="btn" id="submitBtn" disabled>Send my details</button>
+          <div class="btn-wrap" id="btnWrap">
+            <button type="submit" class="btn" id="submitBtn" disabled>Send my details</button>
+          </div>
           <div class="progress-note" id="progressNote"></div>
         </form>
       </div>
@@ -432,62 +484,134 @@ function prettyMobile(d) {
   return d;
 }
 
+/* ============================================================
+   ERROR TEXT
+
+   A greyed out Send button with no explanation is the worst of both
+   worlds: it stops the client and tells them nothing. Every rejection
+   below has to name the field and say what is wrong with it in words a
+   person who is not comfortable with forms can act on. No "invalid
+   input", no error codes, no red without a sentence next to it.
+   ============================================================ */
+function emailError(v) {
+  const at = v.lastIndexOf('@');
+  if (at < 0)   return 'This is missing the @ sign. It should look like you@email.co.nz';
+  const local  = v.slice(0, at);
+  const domain = v.slice(at + 1);
+  if (!local)   return 'There is nothing before the @. Your address goes first, like priya@gmail.com';
+  if (!domain)  return 'There is nothing after the @. It needs the email provider, like gmail.com';
+  if (domain.charAt(0) === '.') return 'There is nothing between the @ and the dot. It should look like you@gmail.com';
+  if (domain.indexOf('.') < 0)  return 'This is missing the ending, like .com or .co.nz';
+  if (domain.charAt(domain.length - 1) === '.') return 'This ends on a dot. It needs .com or .co.nz on the end.';
+  if (/\s/.test(v)) return 'There is a space in this address. Email addresses have no spaces.';
+  if (!emailLooksStructural(v)) return 'This address does not look complete. It should look like you@email.co.nz';
+  return null;
+}
+
+function phoneError(v) {
+  if (/[a-zA-Z]/.test(v)) return 'Numbers only here. Something like 021 234 5678.';
+  const digits = v.replace(/\D/g, '');
+  if (!digits)            return 'Please add a number Paddy can reach you on.';
+  if (normaliseNZMobile(v)) return null;
+  if (digits.length < 9)  return 'This looks too short. New Zealand numbers are 9 or 10 digits, like 021 234 5678.';
+  if (digits.length > 11) return 'This looks too long. New Zealand numbers are 9 or 10 digits, like 021 234 5678.';
+  return 'This does not look like a New Zealand number. Try 021 234 5678, or a landline like 07 123 4567.';
+}
+
 const REQUIRED = [
-  { id:'firstName',    grp:'grpFirst' },
-  { id:'surname',      grp:'grpLast'  },
-  { id:'emailAddress', grp:'grpEmail' },
-  { id:'phoneNumber',  grp:'grpPhone' },
-  { id:'targetArea',   grp:'grpArea'  },
-  { id:'enquiryType',  grp:'grpType'  },
-  { id:'purchaseTime', grp:'grpTime'  }
+  { id:'firstName',    grp:'grpFirst', msg:'msgFirst', short:'first name',
+    blank:'Please add your first name.' },
+  { id:'surname',      grp:'grpLast',  msg:'msgLast',  short:'surname',
+    blank:'Please add your surname.' },
+  { id:'emailAddress', grp:'grpEmail', msg:'msgEmail', short:'email',
+    blank:'Please add your email address. This is where your booking link goes.' },
+  { id:'phoneNumber',  grp:'grpPhone', msg:'msgPhone', short:'mobile',
+    blank:'Please add a number Paddy can reach you on.' },
+  { id:'targetArea',   grp:'grpArea',  msg:'msgArea',  short:'area',
+    blank:'Please tell Paddy roughly which area you are looking at.' },
+  { id:'enquiryType',  grp:'grpType',  msg:'msgType',  short:'what you need',
+    blank:'Please pick the one that fits best.' },
+  { id:'purchaseTime', grp:'grpTime',  msg:'msgTime',  short:'timeframe',
+    blank:'Please pick roughly when you are looking to move.' }
 ];
 
+/* A field turns red only once the client has actually left it, or once
+   they have tried to send. Nothing goes red while it is still being
+   typed into for the first time, because scolding someone mid keystroke
+   for an address they are halfway through writing is worse than saying
+   nothing at all. */
+const touched = new Set();
+let attempted = false;
+
+function fieldError(f, v) {
+  if (!v) return f.blank;
+  if (f.id === 'emailAddress') return emailError(v);
+  if (f.id === 'phoneNumber')  return phoneError(v);
+  return null;
+}
+
+function joinList(items) {
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return items[0] + ' and ' + items[1];
+  if (items.length <= 4)  return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+  return items.slice(0, 3).join(', ') + ' and ' + (items.length - 3) + ' more';
+}
+
 function validateAll() {
-  let missing = 0;
+  const outstanding = [];
 
   REQUIRED.forEach(f => {
     const el  = document.getElementById(f.id);
     const grp = document.getElementById(f.grp);
+    const msg = document.getElementById(f.msg);
     const v   = (el.value || '').trim();
-    let ok = v.length > 0;
+    const err = fieldError(f, v);
 
-    if (ok && f.id === 'emailAddress') ok = emailLooksStructural(v);
-    if (ok && f.id === 'phoneNumber')  ok = phoneLooksStructural(v);
+    /* Blank and merely walked past is not an error yet. Blank after a send
+       attempt is. Something typed that cannot work always is. */
+    const show = !!err && touched.has(f.id) && (v.length > 0 || attempted);
 
-    grp.classList.toggle('ok', ok);
-    if (!ok) missing++;
+    grp.classList.toggle('ok', !err);
+    grp.classList.toggle('bad', show);
+    if (msg && show) { msg.textContent = err; }
+    else if (msg && !grp.classList.contains('warn')) { msg.textContent = ''; }
+
+    if (err) outstanding.push(f.short);
   });
 
-  /* Advice runs independently of the gate and never contributes to it. */
-  const emailEl = document.getElementById('emailAddress');
+  /* Advice is the amber layer. It runs only when the field is otherwise
+     sound, never contributes to the gate, and never blocks a send. */
   const emailGrp = document.getElementById('grpEmail');
   const emailMsg = document.getElementById('msgEmail');
-  const ev = (emailEl.value || '').trim();
-  const eAdv = ev && emailLooksStructural(ev) ? emailAdvice(ev) : null;
+  const ev = (document.getElementById('emailAddress').value || '').trim();
+  const eAdv = (ev && emailLooksStructural(ev) && !emailGrp.classList.contains('bad')) ? emailAdvice(ev) : null;
   pendingEmailFix = eAdv ? eAdv.fix : null;
   if (eAdv) { emailGrp.classList.add('warn'); emailMsg.innerHTML = eAdv.text; }
-  else { emailGrp.classList.remove('warn'); emailMsg.innerHTML = ''; }
+  else { emailGrp.classList.remove('warn'); if (!emailGrp.classList.contains('bad')) emailMsg.innerHTML = ''; }
 
   const phoneGrp = document.getElementById('grpPhone');
   const phoneMsg = document.getElementById('msgPhone');
   const pv = (document.getElementById('phoneNumber').value || '').trim();
-  const pAdv = pv ? phoneAdvice(pv) : null;
+  const pAdv = (pv && !phoneGrp.classList.contains('bad')) ? phoneAdvice(pv) : null;
   if (pAdv) { phoneGrp.classList.add('warn'); phoneMsg.textContent = pAdv.text; }
-  else { phoneGrp.classList.remove('warn'); phoneMsg.textContent = ''; }
+  else { phoneGrp.classList.remove('warn'); if (!phoneGrp.classList.contains('bad')) phoneMsg.textContent = ''; }
 
+  /* Name what is left, do not count it. "2 still to fill in" makes the
+     client hunt for the two. */
   const btn  = document.getElementById('submitBtn');
   const note = document.getElementById('progressNote');
-  btn.disabled = missing > 0;
-  note.textContent = missing > 0
-    ? (missing === 1 ? 'One more to go.' : missing + ' still to fill in.')
-    : '';
+  btn.disabled = outstanding.length > 0;
+  /* Silent on an untouched form. Listing all seven before the client has
+     typed a character reads as a warning, not as help. */
+  const started = attempted || REQUIRED.some(f => (document.getElementById(f.id).value || '').trim());
+  note.textContent = (outstanding.length && started) ? 'Still needed: ' + joinList(outstanding) : '';
 }
 
 REQUIRED.forEach(f => {
   const el = document.getElementById(f.id);
   el.addEventListener('input', validateAll);
-  el.addEventListener('change', validateAll);
-  el.addEventListener('blur', validateAll);
+  el.addEventListener('change', () => { touched.add(f.id); validateAll(); });
+  el.addEventListener('blur',   () => { touched.add(f.id); validateAll(); });
 });
 /* Tidy the mobile into a readable form once they leave the field, without
    fighting them while they are still typing it. */
@@ -495,6 +619,23 @@ document.getElementById('phoneNumber').addEventListener('blur', function () {
   const d = normaliseNZMobile(this.value);
   if (d && /^02/.test(d)) { this.value = prettyMobile(d); validateAll(); }
 });
+
+/* Tapping the greyed button is the clearest signal a client can give that
+   they think they are finished. Answer it: mark everything as seen, show
+   every problem at once, and take them to the first one. */
+document.getElementById('btnWrap').addEventListener('click', function () {
+  if (!document.getElementById('submitBtn').disabled) return;
+  attempted = true;
+  REQUIRED.forEach(f => touched.add(f.id));
+  validateAll();
+  const firstBad = document.querySelector('.grp.bad');
+  if (firstBad) {
+    firstBad.scrollIntoView({ behavior:'smooth', block:'center' });
+    const inp = firstBad.querySelector('input, select, textarea');
+    if (inp) setTimeout(() => { try { inp.focus({ preventScroll:true }); } catch (e) { inp.focus(); } }, 320);
+  }
+});
+
 validateAll();
 
 function isValidNZMobile(raw) { return phoneLooksStructural(raw); }
