@@ -406,7 +406,7 @@ function initViewportDetection() {
   document.querySelectorAll('.revealOnScroll').forEach(el => observer.observe(el));
 
   /* Split text elements */
-  document.querySelectorAll('.splitText').forEach(el => observer.observe(el));
+  document.querySelectorAll('.splitText').forEach(el => observer.observe(el)); document.querySelectorAll('.splitText').forEach(el => { const r = el.getBoundingClientRect(); if (r.bottom > 0 && r.top < window.innerHeight) revealSplitText(el); });
 
   /* Stagger items with delay based on sibling index */
   document.querySelectorAll('.staggerItem').forEach((el, i) => {
@@ -770,10 +770,7 @@ function updateHowDots(dots, fill, idx, total) {
 /* ============================================================
    BOOKING MODAL — Open / Close / Steps
    ============================================================ */
-function openBooking() {
-  const overlay = document.getElementById('modalOverlay');
-  if (overlay) { overlay.style.display = 'flex'; resetBookingSteps(); fetchBusySlots(); }
-}
+function openBooking() { const overlay = document.getElementById('modalOverlay'); if (overlay) { overlay.style.display = 'flex'; resetBookingSteps(); fetchBusySlots(); const modal = overlay.querySelector('.bookingModal'); if (modal) { modal.style.opacity = '1'; modal.style.transform = 'scale(1)'; modal.style.pointerEvents = 'auto'; } } }
 
 function closeBooking() {
   const overlay = document.getElementById('modalOverlay');
