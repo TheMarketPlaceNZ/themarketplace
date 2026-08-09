@@ -8,7 +8,7 @@
 /* ============================================================
    RESET AND BASE
    ============================================================ */
-*, *::before, *::after {
+.heroVideoWrap{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none} .heroVideo{position:absolute;top:50%;left:50%;width:100%;height:100%;transform:translate(-50%,-50%);object-fit:cover;opacity:0;transition:opacity 1.4s ease} .heroVideo.isReady{opacity:1} .heroVideoScrim{position:absolute;inset:0;background:radial-gradient(115% 85% at 50% 42%,rgba(15,16,21,.28) 0%,rgba(15,16,21,.72) 52%,rgba(15,16,21,.92) 100%),linear-gradient(180deg,rgba(15,16,21,.88) 0%,rgba(15,16,21,.30) 26%,rgba(15,16,21,.62) 68%,#0F1015 100%)} .bookingIntro{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(92vw,520px);aspect-ratio:624/608;max-height:86vh;object-fit:contain;z-index:3;pointer-events:none;opacity:0;mix-blend-mode:screen;transition:opacity .45s ease} .bookingIntro.isPlaying{opacity:1} @media (prefers-reduced-motion:reduce){.heroVideo{display:none}} *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
