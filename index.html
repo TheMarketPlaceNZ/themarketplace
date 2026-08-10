@@ -79,7 +79,7 @@
   </header>
 
   <!-- HERO — full viewport, splits Jarvis core canvas on left and copy on right -->
-  <section class="heroSection" aria-label="Hero">
+  <section class="heroSection" aria-label="Hero"><div class="heroVideoWrap" aria-hidden="true"><video class="heroVideo" id="heroVideo" autoplay muted loop playsinline preload="auto" poster="hero_globe_poster.jpg"><source src="hero_globe.mp4" type="video/mp4"></video><div class="heroVideoScrim"></div></div>
 
     <h1 class="screenReaderText">
       The MarketPlace NZ, Business Operating Systems Hamilton. Automated lead intelligence, content production, SOPs, and bespoke dashboards for Hamilton owner-operators.
@@ -382,7 +382,7 @@
   </footer>
 
   <!-- BOOKING MODAL -->
-  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Book a strategy call">
+  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Book a strategy call"><video class="bookingIntro" id="bookingIntro" muted playsinline preload="auto" aria-hidden="true"><source src="Get_Started_animation.mp4" type="video/mp4"></video>
     <div class="bookingModal">
       <button onclick="closeBooking()" class="closeModalButton" aria-label="Close">&times;</button>
       <div class="bookingModalContent">
@@ -451,6 +451,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js"></script><script src="hero-anim.js"></script>
 </body>
 </html>
