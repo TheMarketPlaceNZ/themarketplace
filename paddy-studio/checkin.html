@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#07080A">
+<meta name="theme-color" content="#171B21">
 <title>Check In · Paddy Lubana, Omega Financial Services</title>
 <meta name="description" content="Two minutes, and Paddy Lubana can see exactly how to get your lending sorted.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -201,6 +201,91 @@ footer { position:relative; margin-top:34px; text-align:center; font-size:10px; 
   h1 { font-size:31px; }
   .card { padding:22px; border-radius:16px; }
   .grp.pair { grid-template-columns:1fr; gap:18px; }
+}
+/* ============================================================
+   SLATE AND GLASS  ·  Session 65 override layer (8 Aug 2026)
+   Brief: panel edges were invisible against the near black base.
+   Slate stone ground, cards lifted off it as frosted glass with a
+   gilt underlight and a top down fade. Built entirely in CSS, no
+   image asset, so a lead on mobile data pays nothing for it.
+   Delete this block to revert to plain Obsidian and Gilt.
+   ============================================================ */
+:root {
+  --slate-hi:#2B313A;
+  --slate-mid:#1E232B;
+  --slate-lo:#141821;
+  --glass-top:rgba(255,255,255,0.115);
+  --glass-mid:rgba(255,255,255,0.050);
+  --glass-bot:rgba(255,255,255,0.018);
+  --glass-edge:rgba(255,255,255,0.145);
+  --glass-edge-top:rgba(255,255,255,0.30);
+}
+/* The vertical slate falloff lives in the fixed ::before layer below, not on
+   body with background-attachment:fixed. iOS Safari mishandles fixed
+   attachment and repaints it on every scroll. */
+html, body { background:var(--slate-mid); }
+/* Stone. Two crossed grain passes under a warm gilt bloom overhead. */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(820px 600px at 50% -12%, rgba(201,165,75,0.11), transparent 64%),
+    radial-gradient(640px 480px at 88% 104%, rgba(127,169,217,0.045), transparent 62%),
+    repeating-linear-gradient(118deg, rgba(255,255,255,0.016) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(31deg, rgba(0,0,0,0.055) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 46%, rgba(0,0,0,0.38) 100%);
+}
+/* Fine grain, so large flat areas do not band on an OLED phone. */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  opacity:.42; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+.shell, header, .card { position:relative; z-index:1; }
+/* The card. Frosted, lighter at the crown, fading to nothing at the foot,
+   one bright hairline catching the light along the top edge. */
+.card {
+  background:linear-gradient(180deg, var(--glass-top) 0%, var(--glass-mid) 46%, var(--glass-bot) 100%);
+  -webkit-backdrop-filter:blur(20px) saturate(125%);
+  backdrop-filter:blur(20px) saturate(125%);
+  border:1px solid var(--glass-edge);
+  border-top-color:var(--glass-edge-top);
+  border-radius:20px;
+  box-shadow:
+    0 34px 74px -30px rgba(0,0,0,0.88),
+    0 12px 30px -18px rgba(0,0,0,0.60),
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 -60px 60px -60px rgba(0,0,0,0.50);
+}
+/* The underlight. A gilt bloom beneath the card so it hovers, not sits. */
+.card::before {
+  content:''; position:absolute; z-index:-1;
+  left:6%; right:6%; bottom:-16px; height:34px; border-radius:50%;
+  background:radial-gradient(ellipse at center,
+    rgba(201,165,75,0.68) 0%, rgba(201,165,75,0.28) 42%, transparent 74%);
+  filter:blur(15px); pointer-events:none;
+}
+/* A gilt seam along the very top edge, brightest at the middle. */
+.card::after {
+  content:''; position:absolute; top:-1px; left:14%; right:14%; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(235,206,134,0.65), transparent);
+  pointer-events:none;
+}
+/* Controls now have to lift off glass, not off a flat panel. */
+input, select, textarea, .btn.ghost {
+  background:rgba(255,255,255,0.045);
+  border-color:rgba(255,255,255,0.16);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+}
+input:hover, select:hover, textarea:hover {
+  background:rgba(255,255,255,0.075); border-color:rgba(255,255,255,0.28);
+}
+input:focus, select:focus, textarea:focus {
+  background:rgba(255,255,255,0.085); border-color:var(--gilt);
+}
+/* Older engines and reduced transparency still get a solid, readable card. */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .card { background:linear-gradient(180deg,#262B34,#171B21); }
+  input, select, textarea, .btn.ghost { background:#1D222A; }
 }
 </style>
 </head>
