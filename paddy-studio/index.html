@@ -2003,7 +2003,10 @@ function executeDeleteLead() {
   document.getElementById('deleteConfirmModal').classList.remove('open');
   pendingDeleteIdx = null;
   if (!l) return;
-  if (l.airtableId) proxyCall('delete_lead_full', { recordId: l.airtableId }).catch(() => {});
+  if (l.airtableId) {
+    appState.deletedIds.push(l.airtableId);
+    proxyCall('delete_lead_full', { recordId: l.airtableId }).catch(() => {});
+  }
   appState.leads.splice(idx, 1);
   saveState(); renderAll(); closeModal('leadModal');
 }
