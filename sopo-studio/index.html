@@ -1475,7 +1475,7 @@ body {
 
 <script>
 // ===== CONFIG & DATABASE STATE =====
-const DEFAULT_PASSCODE = 'ledger-copper-9590';
+const DEFAULT_PASSCODE = 'sopo2026';
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 // ===== AIRTABLE CONFIG =====
@@ -2722,6 +2722,74 @@ async function executeNewZoomLink() {
   }
 }
 
+// ===== INSTANT ZOOM MEETING =====
+// Permanent "Create Zoom" button in the Meeting tab corner — spins up an ad hoc
+// Zoom meeting via the "Sopo Instant Meeting" Make webhook, independent of any
+// scheduled booking. Logs to the lead's lifecycle_log only, does not touch the
+// booking fields that drive the Scheduled Meeting card above.
+async function startInstantMeeting(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+
+  const btn = document.getElementById('instantZoomBtn');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.style.opacity = '0.6';
+    btn.style.pointerEvents = 'none';
+    btn.innerHTML = 'Starting…';
+  }
+
+  try {
+    const resp = await fetch('https://hook.us2.make.com/heblarimlzr8we2fhlc16opy947c2mye', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recordId: l.airtableId, name: l.name })
+    });
+    if (!resp.ok) throw new Error('Webhook returned ' + resp.status);
+    const data = await resp.json();
+    if (!data.join_url) throw new Error('No join_url in response');
+
+    showInstantMeetingResult(data.join_url, data.start_url);
+  } catch (err) {
+    console.error('Instant meeting error:', err);
+    showSyncToast('Could not create the Zoom meeting. Please try again.');
+  } finally {
+    if (btn) {
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+      btn.innerHTML = originalHtml;
+    }
+  }
+}
+
+function showInstantMeetingResult(joinUrl, startUrl) {
+  document.getElementById('instantMeetingLink').textContent = joinUrl;
+  document.getElementById('instantMeetingOverlay').dataset.joinUrl = joinUrl;
+  document.getElementById('instantMeetingOverlay').dataset.startUrl = startUrl || joinUrl;
+  document.getElementById('instantMeetingOverlay').style.display = 'flex';
+  // Open host view straight away so Sopo lands in the call immediately.
+  if (startUrl) window.open(startUrl, '_blank');
+}
+
+async function shareInstantMeetingLink() {
+  const url = document.getElementById('instantMeetingOverlay').dataset.joinUrl;
+  if (!url) return;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Zoom meeting with Sopo', text: 'Join the Zoom call:', url });
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error('Share failed:', err);
+    }
+  } else {
+    try {
+      await navigator.clipboard.writeText(url);
+      showSyncToast('Link copied to clipboard.');
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  }
+}
+
 // ===== RESCHEDULE MEETING =====
 // Reuses the same calendar/slot-picker pattern already proven in book_meeting.html,
 // scoped to whichever lead's Meeting tab is open. On confirm it POSTs to the same
@@ -3257,6 +3325,10 @@ function openLeadDetail(idx) {
         overflow: hidden;
       ">
         <div style="position:absolute; inset:0; background: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(201,169,110,0.04) 100%); pointer-events:none; border-radius:16px;"></div>
+        <button id="instantZoomBtn" onclick="event.stopPropagation(); startInstantMeeting(${appState.leads.indexOf(l)})" style="position:absolute; top:14px; right:16px; z-index:2; display:flex; align-items:center; gap:6px; background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.4); border-radius:10px; padding:7px 12px; cursor:pointer; color:#60A5FA; font-size:11px; font-weight:700; letter-spacing:0.3px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.889L15 14"/><rect x="3" y="7" width="12" height="10" rx="2"/></svg>
+          Create Zoom
+        </button>
         <div style="font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:14px; position:relative;">Scheduled Meeting</div>
         ${l.meetingType && l.bookingTime ? `
           <div style="position:relative;">
@@ -3305,6 +3377,20 @@ function openLeadDetail(idx) {
             </div>
           </div>
         `}
+      </div>
+
+      <!-- Instant Meeting Result Popup -->
+      <div id="instantMeetingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#1a2535; border:1px solid rgba(59,130,246,0.35); border-radius:20px; padding:28px 24px; max-width:340px; width:90%; text-align:center;">
+          <div style="font-size:32px; margin-bottom:14px;">📹</div>
+          <div style="font-size:16px; font-weight:700; color:var(--white); margin-bottom:8px;">Zoom Meeting Started</div>
+          <div style="font-size:11px; color:var(--muted); line-height:1.5; margin-bottom:14px;">You've been dropped into the call. Share this link with your client:</div>
+          <div id="instantMeetingLink" style="font-size:12px; color:#60A5FA; word-break:break-all; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:10px 12px; margin-bottom:18px;"></div>
+          <div style="display:flex; gap:10px;">
+            <button onclick="document.getElementById('instantMeetingOverlay').style.display='none';" style="flex:1; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer;">Close</button>
+            <button onclick="shareInstantMeetingLink()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#3B82F6; color:#fff; font-size:13px; font-weight:700; cursor:pointer;">📤 Share</button>
+          </div>
+        </div>
       </div>
 
       <!-- New Link Confirmation Popup -->
@@ -4316,8 +4402,63 @@ function saveNewTime() {
 let mediaRecorder, audioChunks = [], timerInterval, recStart;
 let isRecording = false;
 
+// Session 18 (Aug 3 2026): Gemini's generateContent silently returns an empty
+// transcript for audio/webm (Chrome's native MediaRecorder format) — it is not
+// on Gemini's documented supported audio list (wav/mp3/aiff/aac/ogg/flac), so
+// the upload succeeds (200 OK, valid file) but decoding fails with no error
+// surfaced anywhere. This was mistaken for a caching/plumbing bug across many
+// "successful" Make runs that wrote nothing to Airtable. Fix: decode+re-encode
+// to WAV in-browser before it ever leaves the device, so the bytes Gemini
+// receives are always a format it actually supports.
+async function convertBlobToWav(blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioCtx();
+  const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+  const numChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  let samples;
+  if (numChannels === 2) {
+    const l = audioBuffer.getChannelData(0), r = audioBuffer.getChannelData(1);
+    samples = new Float32Array(l.length * 2);
+    for (let i = 0, j = 0; i < l.length; i++) { samples[j++] = l[i]; samples[j++] = r[i]; }
+  } else {
+    samples = audioBuffer.getChannelData(0);
+  }
+  const bytesPerSample = 2;
+  const blockAlign = numChannels * bytesPerSample;
+  const buffer = new ArrayBuffer(44 + samples.length * bytesPerSample);
+  const view = new DataView(buffer);
+  const writeStr = (offset, str) => { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * bytesPerSample, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, samples.length * bytesPerSample, true);
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  audioCtx.close();
+  return new Blob([view], { type: 'audio/wav' });
+}
+
 async function toggleRecording() {
   if (!isRecording) {
+    const meetingTypeCheck = (document.getElementById('meetingTypeDropdown')?.value || '').trim();
+    if (!meetingTypeCheck) {
+      alert('Please select a meeting type before starting the recording.');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // iOS Safari does not support webm and throws on the line below if forced to it,
@@ -4354,8 +4495,18 @@ async function toggleRecording() {
 
 async function processRecording() {
   // Detect actual mime type recorded (webm on desktop, mp4 on iOS Safari)
-  const mimeType = (audioChunks[0] && audioChunks[0].type) ? audioChunks[0].type.split(';')[0] : 'audio/webm';
-  const blob = new Blob(audioChunks, { type: mimeType });
+  let mimeType = (audioChunks[0] && audioChunks[0].type) ? audioChunks[0].type.split(';')[0] : 'audio/webm';
+  let blob = new Blob(audioChunks, { type: mimeType });
+  // Gemini doesn't reliably support webm/mp4 as recorded — decode+re-encode to
+  // WAV so Gemini always gets a format it can actually transcribe. See note above.
+  try {
+    document.getElementById('aiSpinnerBox').classList.add('show');
+    document.getElementById('spinnerText').textContent = 'Preparing audio...';
+    blob = await convertBlobToWav(blob);
+    mimeType = 'audio/wav';
+  } catch (convErr) {
+    console.error('WAV conversion failed, sending original format:', convErr);
+  }
   const meetingType = (document.getElementById('meetingTypeDropdown')?.value || '').trim();
   const l = appState.leads[currentLeadIndex];
 
@@ -4403,7 +4554,7 @@ async function processRecording() {
       // Drive archival and Airtable write-back), so Step 6 below is skipped
       // when this path runs, see the guard added there.
       document.getElementById('spinnerText').textContent = 'Sending to secure pipeline...';
-      const ext = mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm';
+      const ext = mimeType.includes('wav') ? 'recording.wav' : (mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm');
       const proxyForm = new FormData();
       proxyForm.append('file', blob, ext);
       proxyForm.append('meetingType', meetingType);
@@ -4416,6 +4567,7 @@ async function processRecording() {
       const proxyResp = await fetch(geminiProxyUrl, { method: 'POST', body: proxyForm });
       if (!proxyResp.ok) throw new Error(`Recorder proxy failed: ${proxyResp.status}`);
       const proxyData = await proxyResp.json();
+      if (proxyData.success === false) throw new Error(`Recorder proxy failed: ${proxyData.errorDetail || 'unknown error'}`);
       rawText        = proxyData.rawText || '';
       geminiFileName = proxyData.geminiFileName || '';
       geminiFileUri  = proxyData.geminiFileUri || '';
@@ -4423,7 +4575,7 @@ async function processRecording() {
     } else {
     // ── Step 1: Upload audio to Gemini Files API ──
     document.getElementById('spinnerText').textContent = 'Uploading audio to Gemini...';
-    const ext = mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm';
+    const ext = mimeType.includes('wav') ? 'recording.wav' : (mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm');
     const uploadForm = new FormData();
     uploadForm.append('file', blob, ext);
 
@@ -4499,6 +4651,13 @@ If the audio is too short or unclear, still provide whatever you can hear. Keep 
     // ── Step 5: Save to timeline immediately ──
     document.getElementById('spinnerText').textContent = 'Saving to timeline...';
     saveMeeting(`${meetingType} (In-Person)`, blob, fullDebrief, [], transcript);
+    // The proxy scenario already wrote the Meetings record + lifecycle log to
+    // Airtable by the time this response lands, but the Timeline tab only reads
+    // cached local data — refetch it now so the new entry actually shows up
+    // instead of requiring a manual reopen of the lead.
+    if (document.getElementById('paneTabTimeline')?.classList.contains('active')) {
+      renderClientTimeline();
+    }
 
     // ── Step 6: Also post to Make webhook for Airtable write-back (non-blocking) ──
     // Skipped when the proxy path ran above: that scenario now does its own
@@ -5625,7 +5784,7 @@ function showSyncToast(msg) {
   }
   toast.textContent = msg;
   toast.style.opacity = '1';
-  setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+  setTimeout(() => { toast.style.opacity = '0'; }, 4000);
 }
 
 // 22 Jul 2026: red variant of showSyncToast, used for save failures (e.g.
