@@ -1278,8 +1278,8 @@ body {
       <div class="settings-hint">Required to send booking reminder texts. Username is fixed as "marketplace". Get the password from smseveryone.com.</div>
     </div>
     <div class="settings-row">
-      <div class="settings-label">Change Passcode</div>
-      <input class="settings-input" id="settingsPasscode" type="password" placeholder="Leave blank to keep current">
+      <div class="settings-label">Passcode</div>
+      <div class="settings-hint">Your passcode is held on the server as a one way hash, never in this page and never on this device. That means nobody, including TMP, can read it back. To change it, ask TMP and it is swapped over in under a minute.</div>
     </div>
     <div class="settings-row" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px;">
       <div class="settings-label">Testing & Debugging</div>
@@ -1475,7 +1475,12 @@ body {
 
 <script>
 // ===== CONFIG & DATABASE STATE =====
-const DEFAULT_PASSCODE = 'sopo2026';
+/* The passcode is NOT in this file, and must never be put back into it.
+   index.html is served publicly, so anything written here is readable by
+   anyone who views source. The code is checked by a Netlify function that
+   holds only a SHA-256 hash of it, so even the hosting dashboard cannot
+   reveal what the code actually is. See netlify/functions/member-auth.js. */
+const AUTH_FN = '/.netlify/functions/member-auth';
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 // ===== AIRTABLE CONFIG =====
@@ -1832,17 +1837,26 @@ function setSetting(key, val) {
 }
 
 // ===== AUTH GATE =====
-function checkAuth() {
-  const code = document.getElementById('passcodeInput').value;
-  const stored = getSetting('passcode', DEFAULT_PASSCODE);
-  if (code === stored) {
-    document.getElementById('authScreen').classList.add('hidden');
-    document.getElementById('appShell').classList.add('visible');
-    initApp();
-  } else {
-    document.getElementById('authError').textContent = 'Incorrect passcode. Try again.';
-    document.getElementById('passcodeInput').value = '';
-    setTimeout(() => document.getElementById('authError').textContent = '', 2000);
+async function checkAuth() {
+  const inp = document.getElementById('passcodeInput');
+  const err = document.getElementById('authError');
+  const code = (inp.value || '').trim();
+  if (!code) return;
+  err.textContent = 'Checking...';
+  const deny = msg => { err.textContent = msg; inp.value = ''; setTimeout(() => { if (err.textContent === msg) err.textContent = ''; }, 2600); };
+  try {
+    const res = await fetch(AUTH_FN, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ passcode: code }) });
+    const data = res.ok ? await res.json() : null;
+    if (data && data.ok && String(data.path || '').indexOf('sopo-studio') === 0) {
+      err.textContent = '';
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('appShell').classList.add('visible');
+      initApp();
+      return;
+    }
+    deny('That passcode did not match. Try again.');
+  } catch (e) {
+    deny('Could not reach the door. Check your connection and try again.');
   }
 }
 document.getElementById('passcodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkAuth(); });
@@ -5249,7 +5263,6 @@ function saveSettings() {
   const sheetUrl = document.getElementById('settingsSheetUrl').value.trim();
   const bookingWebhookUrl = document.getElementById('settingsBookingWebhookUrl').value.trim();
   const statusWebhookUrl = document.getElementById('settingsStatusWebhookUrl').value.trim();
-  const passcode = document.getElementById('settingsPasscode').value.trim();
   
   const recordingWebhookUrl = document.getElementById('settingsRecordingWebhookUrl').value.trim();
   const geminiProxyUrl = document.getElementById('settingsGeminiProxyUrl').value.trim();
@@ -5263,7 +5276,6 @@ function saveSettings() {
   if (airtableProxyUrl) setSetting('airtableProxyUrl', airtableProxyUrl);
   const smsPassword = document.getElementById('settingsSmsPassword').value.trim();
   if (smsPassword) setSetting('smsPassword', smsPassword);
-  if (passcode) setSetting('passcode', passcode);
   
   closeSettingsModal();
   renderAll();
