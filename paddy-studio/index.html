@@ -579,6 +579,130 @@ select.input { cursor:pointer; appearance:none;
   .tmpl { padding:14px; } .tmpl .copy { position:static; transform:none; margin-top:11px; width:100%; }
 }
 @media (max-width: 560px) { .metric-strip { grid-template-columns:1fr 1fr; gap:10px; } .metric-val { font-size:27px; } }
+/* ============================================================
+   SLATE AND GLASS  ·  Session 65 override layer (8 Aug 2026)
+   Same treatment as the client facing pages, so the adviser studio
+   and the pages his leads see read as one product. Slate stone
+   ground, cards lifted off it as frosted glass, gilt underlight.
+   All CSS, no image asset. Delete this block to revert.
+
+   NOTE on the underlight: .metric and .lead-card both carry
+   overflow:hidden, so a pseudo element glow outside the box would be
+   clipped. The glow is therefore an outer box-shadow, which is not
+   clipped by overflow. Do not "tidy" it back into a ::before.
+   ============================================================ */
+:root {
+  --slate-hi:#2B313A;
+  --slate-mid:#1E232B;
+  --slate-lo:#141821;
+  --glass-top:rgba(255,255,255,0.100);
+  --glass-mid:rgba(255,255,255,0.042);
+  --glass-bot:rgba(255,255,255,0.014);
+  --glass-edge:rgba(255,255,255,0.13);
+  --glass-edge-top:rgba(255,255,255,0.27);
+}
+/* The vertical falloff lives in the fixed ::before layer, not on body with
+   background-attachment:fixed. iOS Safari repaints that on every scroll. */
+html, body { background:var(--slate-mid); }
+#authScreen { background:var(--slate-mid); }
+/* Stone. Two crossed grain passes under the existing warm light source. */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 640px at 8% -10%, rgba(201,165,75,0.085), transparent 62%),
+    radial-gradient(760px 520px at 96% 4%, rgba(127,169,217,0.040), transparent 62%),
+    repeating-linear-gradient(118deg, rgba(255,255,255,0.014) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(31deg, rgba(0,0,0,0.05) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, rgba(255,255,255,0.045) 0%, transparent 46%, rgba(0,0,0,0.34) 100%);
+}
+/* Fine grain, so large flat areas do not band on an OLED panel. */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  opacity:.38; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+/* Every container surface becomes glass. */
+.card, .metric, .lead-card, .rail-node {
+  background:linear-gradient(180deg, var(--glass-top) 0%, var(--glass-mid) 46%, var(--glass-bot) 100%);
+  -webkit-backdrop-filter:blur(16px) saturate(122%);
+  backdrop-filter:blur(16px) saturate(122%);
+  border:1px solid var(--glass-edge);
+  border-top-color:var(--glass-edge-top);
+}
+/* Underlight, graded by how much attention the surface deserves. */
+.card {
+  box-shadow:
+    0 30px 64px -28px rgba(0,0,0,0.85),
+    0 16px 34px -18px rgba(201,165,75,0.34),
+    inset 0 1px 0 rgba(255,255,255,0.13),
+    inset 0 -56px 56px -56px rgba(0,0,0,0.46);
+}
+.lead-card {
+  box-shadow:
+    0 22px 46px -24px rgba(0,0,0,0.82),
+    0 12px 26px -14px rgba(201,165,75,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 -44px 44px -44px rgba(0,0,0,0.42);
+}
+.metric, .rail-node {
+  box-shadow:
+    0 18px 38px -22px rgba(0,0,0,0.80),
+    0 9px 20px -12px rgba(201,165,75,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.11),
+    inset 0 -40px 40px -40px rgba(0,0,0,0.40);
+}
+/* A card under the cursor warms up rather than just shifting a border. */
+.lead-card:hover {
+  border-color:rgba(255,255,255,0.22);
+  box-shadow:
+    0 30px 58px -24px rgba(0,0,0,0.86),
+    0 16px 32px -14px rgba(201,165,75,0.46),
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -44px 44px -44px rgba(0,0,0,0.42);
+}
+.metric:hover { border-color:rgba(255,255,255,0.22); }
+/* Kanban. The column stays a recessed trough so the cards read as sitting
+   IN it rather than floating on it. Only the cards get glass and a glow,
+   and a smaller one, because six columns of glowing cards is a light show. */
+.kan-col {
+  background:rgba(0,0,0,0.16);
+  border-color:rgba(255,255,255,0.07);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.38), inset 0 -1px 0 rgba(255,255,255,0.03);
+}
+.kan-card {
+  background:linear-gradient(180deg, var(--glass-top) 0%, var(--glass-mid) 52%, var(--glass-bot) 100%);
+  -webkit-backdrop-filter:blur(12px) saturate(120%);
+  backdrop-filter:blur(12px) saturate(120%);
+  border:1px solid var(--glass-edge);
+  border-top-color:var(--glass-edge-top);
+  box-shadow:
+    0 12px 24px -14px rgba(0,0,0,0.78),
+    0 6px 14px -8px rgba(201,165,75,0.24),
+    inset 0 1px 0 rgba(255,255,255,0.11);
+}
+.kan-card:hover {
+  border-color:rgba(255,255,255,0.24);
+  box-shadow:
+    0 16px 30px -14px rgba(0,0,0,0.82),
+    0 8px 18px -8px rgba(201,165,75,0.40),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+/* Small controls have to lift off glass, not off a flat panel. */
+.chip, .search-input, .hdr-btn, .sync-pill, .avatar, .tag, .auth-input {
+  background:rgba(255,255,255,0.055);
+  border-color:rgba(255,255,255,0.15);
+}
+.chip:hover, .hdr-btn:hover { background:rgba(255,255,255,0.09); border-color:rgba(255,255,255,0.26); }
+.search-input:focus, .auth-input:focus { background:rgba(255,255,255,0.085); border-color:var(--gilt); }
+/* Coloured badges and the lender tag keep their own fills. They win on
+   specificity (.tag.lender beats .tag), so nothing is needed here. Do not
+   add a `revert` rule for them, revert rolls back to the user agent origin
+   and strips the fill entirely rather than restoring the earlier rule. */
+/* Older engines and reduced transparency still get solid, readable cards. */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .card, .metric, .lead-card, .rail-node, .kan-card { background:linear-gradient(180deg,#262B34,#1B2028); }
+  .chip, .search-input, .hdr-btn, .sync-pill, .avatar, .tag, .auth-input { background:#232830; }
+}
 </style>
 </head>
 <body>
