@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLaptopCanvas();
   initViewportDetection();
   initProofCounters();
-  initHowItWorksSlider();
+  /* replaced by how-works.js click-through */
   initMagneticButtons();
   initMouseSpotlight();
   initCard3DTilt();
