@@ -16,8 +16,7 @@
   Environment variables (Netlify, scope: functions):
     MEMBER_HASH_SOPO     -> sopo-studio/index.html
     MEMBER_HASH_PADDY    -> paddy-studio/index.html
-    MEMBER_HASH_COMMAND  -> command_station.html   (also unlocks the Jarvis gate)
-
+    
   TO CHANGE OR ADD A CODE
     Generate the hash, never paste the code itself into Netlify:
       node -e "console.log(require('crypto').createHash('sha256').update('YOUR NEW CODE','utf8').digest('hex'))"
@@ -40,9 +39,8 @@ const crypto = require('crypto');
 
 const ROUTES = [
   { env: 'MEMBER_HASH_SOPO',    path: 'sopo-studio/index.html',  unlockGate: false },
-  { env: 'MEMBER_HASH_PADDY',   path: 'paddy-studio/index.html', unlockGate: false },
-  { env: 'MEMBER_HASH_COMMAND', path: 'command_station.html',    unlockGate: true  }
-];
+  { env: 'MEMBER_HASH_PADDY',   path: 'paddy-studio/index.html', unlockGate: false }
+  ];
 
 const FAILURE_DELAY_MS = 700;
 const HEX_64 = /^[0-9a-f]{64}$/i;
