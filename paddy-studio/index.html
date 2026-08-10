@@ -921,6 +921,18 @@ body::after {
   </div>
 </div>
 
+<div class="modal-overlay" id="deleteConfirmModal">
+  <div class="modal-sheet" style="max-width:420px;">
+    <button class="modal-x" onclick="cancelDeleteLead()">&times;</button>
+    <div class="modal-title">Delete Lead</div>
+    <div class="hint" id="deleteConfirmText" style="margin-bottom:20px;"></div>
+    <div class="act-row">
+      <button class="btn btn-red" onclick="executeDeleteLead()">Yes, delete permanently</button>
+      <button class="btn btn-ghost" onclick="cancelDeleteLead()">No, cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="newLeadModal">
   <div class="modal-sheet">
     <button class="modal-x" onclick="closeModal('newLeadModal')">&times;</button>
@@ -1694,6 +1706,7 @@ function openLeadDetail(idx, cardEl) {
         <button class="btn btn-ghost" onclick="callLead('${esc(l.phone||'')}')">Call</button>
         <button class="btn btn-ghost" onclick="emailLead('${esc(l.email||'')}')">Email</button>
         <button class="btn btn-red" onclick="archiveLead(${idx})">Archive</button>
+        <button class="btn btn-red" onclick="confirmDeleteLead(${idx})" title="Permanently delete">Delete</button>
       </div>
     </div>
 
@@ -1968,6 +1981,29 @@ function archiveLead(idx) {
   if (!confirm('Move ' + fullName(l) + ' to the archive?')) return;
   appState.dustbin.push({ id: Date.now(), deletedAt: new Date().toISOString(), data: l });
   if (l.airtableId) appState.deletedIds.push(l.airtableId);
+  appState.leads.splice(idx, 1);
+  saveState(); renderAll(); closeModal('leadModal');
+}
+let pendingDeleteIdx = null;
+function confirmDeleteLead(idx) {
+  const l = appState.leads[idx]; if (!l) return;
+  pendingDeleteIdx = idx;
+  document.getElementById('deleteConfirmText').textContent =
+    'You are about to permanently delete ' + fullName(l) + '. This removes them from the CRM entirely, cancels any booked slot and Zoom meeting, and cannot be undone. Are you sure?';
+  document.getElementById('deleteConfirmModal').classList.add('open');
+}
+function cancelDeleteLead() {
+  pendingDeleteIdx = null;
+  document.getElementById('deleteConfirmModal').classList.remove('open');
+}
+function executeDeleteLead() {
+  const idx = pendingDeleteIdx;
+  if (idx === null) return;
+  const l = appState.leads[idx];
+  document.getElementById('deleteConfirmModal').classList.remove('open');
+  pendingDeleteIdx = null;
+  if (!l) return;
+  if (l.airtableId) proxyCall('delete_lead_full', { recordId: l.airtableId }).catch(() => {});
   appState.leads.splice(idx, 1);
   saveState(); renderAll(); closeModal('leadModal');
 }
