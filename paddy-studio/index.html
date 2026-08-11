@@ -831,6 +831,11 @@ body::after {
   color:var(--sc-dim); font-size:13px; font-family:inherit; padding:5px 2px;
 }
 .sc-shot:focus{ outline:none; border-bottom-color:var(--sc-accent); color:var(--sc-text); }
+.sc-shot-icons{ display:flex; gap:5px; margin-top:6px; flex-wrap:wrap; }
+.sc-shot-icon-btn{ width:26px; height:26px; border-radius:6px; border:1px solid var(--sc-line); background:var(--sc-raised); color:var(--sc-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; transition:all .15s; }
+.sc-shot-icon-btn:hover{ border-color:var(--sc-accent); color:var(--sc-text); }
+.sc-shot-icon-btn.active{ border-color:var(--sc-accent); color:var(--sc-accent); background:var(--sc-dim-bg,rgba(0,0,0,.15)); }
+.sc-shot-icon-btn svg{ width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 
 .sc-empty{ padding:30px 18px; text-align:center; color:var(--sc-dim); font-size:13px; line-height:1.7; }
 .sc-alert{
@@ -2658,6 +2663,14 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
       +   '<svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'
       +   '<input class="sc-shot" data-sc-field="shot" value="' + esc(b.shot) + '" placeholder="Shot description, for example close up, straight to camera">'
       + '</div>'
+      + '<div class="sc-shot-icons" role="group" aria-label="Shot type shortcuts">'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Sit" title="Sit" aria-label="Sit"><svg viewBox="0 0 24 24"><path d="M6 4v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4M6 20v-4M18 20v-4M6 12h12"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Stand" title="Stand" aria-label="Stand"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 9v7M9 12h6M9 20l3-4 3 4"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Walk to camera" title="Walk to camera" aria-label="Walk to camera"><svg viewBox="0 0 24 24"><circle cx="9" cy="5" r="2"/><path d="M9 8v6l-2 7M9 14l4-1 2 7"/><path d="M17 9l4 3-4 3"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Turn" title="Turn" aria-label="Turn"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Close up" title="Close up" aria-label="Close up"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M10 7v6M7 10h6M21 21l-4.3-4.3"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Wide" title="Wide" aria-label="Wide"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg></button>'
+      + '</div>'
       + '</div>';
   }
 
@@ -2762,6 +2775,23 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
       st.open[name] = !st.open[name];
       var box = r.querySelector('.sc-sec[data-sc-sec="' + name + '"]');
       if (box) box.classList.toggle('open', st.open[name]);
+      return;
+    }
+
+    var shotBtn = t.closest('.sc-shot-icon-btn');
+    if (shotBtn) {
+      var box2 = shotBtn.closest('.sc-beat');
+      var b2   = box2 && findBeat(box2.getAttribute('data-sc-beat'));
+      var input = box2 && box2.querySelector('input.sc-shot');
+      if (b2 && input) {
+        var tag = shotBtn.getAttribute('data-shot-tag');
+        var cur = input.value || '';
+        if (cur.indexOf(tag) === -1) {
+          input.value = cur ? (tag + ', ' + cur) : tag;
+          b2.shot = input.value;
+          queueSave('beat', b2.id, 'shot', input.value, box2.querySelector('.sc-state'));
+        }
+      }
       return;
     }
 
