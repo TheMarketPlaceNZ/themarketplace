@@ -942,6 +942,169 @@ body {
 }
 .call-note-textarea:focus { border-color: var(--gold); }
 .call-note-textarea::placeholder { color: var(--muted); }
+
+/* Scripts panel palette, Sopo. Maps the shared panel names onto this studio's tokens. */
+#viewScripts{
+  --sc-bg:            var(--navy-mid);
+  --sc-bg-2:          var(--navy);
+  --sc-raised:        var(--navy-light);
+  --sc-line:          var(--border);
+  --sc-accent:        var(--gold);
+  --sc-accent-bright: var(--gold-bright);
+  --sc-accent-soft:   var(--gold-dim);
+  --sc-text:          var(--cream);
+  --sc-dim:           var(--muted);
+  --sc-radius:        var(--radius-sm);
+  --sc-ok:            var(--green);
+  --sc-ok-line:       rgba(16,185,129,0.45);
+  --sc-warn:          var(--orange);
+  --sc-bad:           var(--red);
+  --sc-bad-soft:      var(--red-dim);
+}
+/* ===== SCRIPTS PANEL =====
+   Shared build. Sopo's and Paddy's studios carry this block byte for byte
+   identically. The only per studio difference is the token block directly
+   above, which maps this panel's own names onto that studio's palette. */
+.sc-toolbar{ display:none; margin-bottom:12px; }
+.sc-wrap{ display:flex; gap:18px; align-items:flex-start; }
+
+.sc-rail{
+  width:262px; flex:0 0 262px; background:var(--sc-bg); border:1px solid var(--sc-line);
+  border-radius:var(--sc-radius); padding:12px; position:sticky; top:12px;
+  max-height:calc(100vh - 130px); overflow-y:auto;
+}
+.sc-rail-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.sc-rail-title{ font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--sc-dim); font-weight:700; }
+.sc-refresh{
+  background:none; border:1px solid var(--sc-line); color:var(--sc-dim); border-radius:var(--sc-radius);
+  padding:5px 10px; font-size:11px; font-family:inherit; cursor:pointer; transition:.18s;
+}
+.sc-refresh:hover{ color:var(--sc-accent-bright); border-color:var(--sc-accent); }
+.sc-rail-list{ display:flex; flex-direction:column; gap:6px; }
+.sc-rail-item{
+  display:flex; gap:10px; align-items:flex-start; width:100%; text-align:left; cursor:pointer;
+  background:var(--sc-bg-2); border:1px solid var(--sc-line); border-radius:var(--sc-radius);
+  padding:10px; color:var(--sc-text); font-family:inherit; transition:border-color .18s, background .18s;
+}
+.sc-rail-item:hover{ border-color:var(--sc-accent); }
+.sc-rail-item.active{ border-color:var(--sc-accent); background:var(--sc-raised); }
+.sc-num{
+  flex:0 0 26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  background:var(--sc-accent-soft); color:var(--sc-accent-bright); font-size:12px; font-weight:700;
+}
+.sc-rail-text{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.sc-rail-name{ font-size:13px; font-weight:600; line-height:1.3; word-break:break-word; }
+.sc-rail-meta{ font-size:10.5px; color:var(--sc-dim); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.sc-dot{ width:7px; height:7px; border-radius:50%; background:var(--sc-dim); flex:0 0 auto; }
+.sc-dot[data-status="Ready to Film"]{ background:var(--sc-accent); }
+.sc-dot[data-status="In Production"]{ background:var(--sc-warn); }
+.sc-dot[data-status="Filmed"]{ background:var(--sc-ok); }
+.sc-dot[data-status="Published"]{ background:var(--sc-ok); box-shadow:0 0 6px var(--sc-ok); }
+
+.sc-main{ flex:1; min-width:0; }
+.sc-head{ background:var(--sc-bg); border:1px solid var(--sc-line); border-radius:var(--sc-radius); padding:16px; margin-bottom:14px; }
+.sc-head-top{ display:flex; gap:12px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.sc-title{ font-size:19px; font-weight:700; color:var(--sc-text); margin:0; line-height:1.25; }
+.sc-sub{ font-size:11px; color:var(--sc-dim); margin-top:5px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.sc-chip{ font-size:10px; border:1px solid var(--sc-line); border-radius:999px; padding:3px 9px; color:var(--sc-dim); }
+.sc-select{
+  background:var(--sc-bg-2); border:1px solid var(--sc-line); color:var(--sc-text); border-radius:var(--sc-radius);
+  padding:9px 12px; font-size:13px; font-family:inherit; cursor:pointer; min-height:40px;
+}
+.sc-select:focus{ outline:none; border-color:var(--sc-accent); }
+.sc-progress{ margin-top:15px; }
+.sc-bar{ height:6px; border-radius:999px; background:var(--sc-bg-2); border:1px solid var(--sc-line); overflow:hidden; }
+.sc-bar-fill{ display:block; height:100%; width:0; background:var(--sc-accent); transition:width .3s ease; }
+.sc-progress-lbl{ font-size:11px; color:var(--sc-dim); margin-top:7px; }
+.sc-notes-lbl{ display:block; font-size:10px; letter-spacing:1.6px; text-transform:uppercase; color:var(--sc-dim); font-weight:700; margin:15px 0 6px; }
+.sc-notes{
+  width:100%; background:var(--sc-bg-2); border:1px solid var(--sc-line); color:var(--sc-text);
+  border-radius:var(--sc-radius); padding:10px 12px; font-size:13px; font-family:inherit;
+  line-height:1.55; resize:vertical; min-height:58px;
+}
+.sc-notes:focus{ outline:none; border-color:var(--sc-accent); }
+
+.sc-sec{ border:1px solid var(--sc-line); border-radius:var(--sc-radius); background:var(--sc-bg); margin-bottom:12px; overflow:hidden; }
+.sc-sec-head{
+  display:flex; align-items:center; gap:10px; width:100%; padding:13px 15px; background:none;
+  border:0; cursor:pointer; color:var(--sc-text); font-family:inherit; text-align:left;
+}
+.sc-sec-head:hover{ background:var(--sc-raised); }
+.sc-caret{ width:13px; height:13px; flex:0 0 auto; color:var(--sc-dim); stroke:currentColor; fill:none; stroke-width:2.4; transition:transform .2s ease; }
+.sc-sec.open .sc-caret{ transform:rotate(90deg); }
+.sc-sec-name{ font-size:12px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; }
+.sc-sec-count{ margin-left:auto; font-size:11px; color:var(--sc-dim); }
+.sc-sec-body{ display:none; padding:0 12px 12px; flex-direction:column; gap:10px; }
+.sc-sec.open .sc-sec-body{ display:flex; }
+
+.sc-beat{ background:var(--sc-bg-2); border:1px solid var(--sc-line); border-radius:var(--sc-radius); padding:12px; transition:border-color .18s; }
+.sc-beat.done{ border-color:var(--sc-ok-line); }
+.sc-beat-top{ display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+.sc-tick{ display:inline-flex; align-items:center; cursor:pointer; flex:0 0 auto; position:relative; }
+.sc-tick input{ position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; }
+.sc-tick-box{
+  width:27px; height:27px; border-radius:8px; border:1.5px solid var(--sc-line); background:var(--sc-bg);
+  display:flex; align-items:center; justify-content:center; transition:.18s;
+}
+.sc-tick-box svg{ width:15px; height:15px; opacity:0; stroke:var(--sc-bg); stroke-width:3.2; fill:none; transition:opacity .18s; }
+.sc-tick input:checked + .sc-tick-box{ background:var(--sc-ok); border-color:var(--sc-ok); }
+.sc-tick input:checked + .sc-tick-box svg{ opacity:1; }
+.sc-tick input:focus-visible + .sc-tick-box{ border-color:var(--sc-accent); box-shadow:0 0 0 3px var(--sc-accent-soft); }
+.sc-beat-label{ font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--sc-dim); }
+.sc-beat.done .sc-beat-label{ color:var(--sc-ok); }
+.sc-state{ margin-left:auto; font-size:10.5px; color:var(--sc-dim); opacity:0; transition:opacity .2s; white-space:nowrap; }
+.sc-state.show{ opacity:1; }
+.sc-state[data-state="saved"]{ color:var(--sc-ok); }
+.sc-state[data-state="error"]{ color:var(--sc-bad); }
+.sc-line{
+  width:100%; background:var(--sc-bg); border:1px solid var(--sc-line); color:var(--sc-text);
+  border-radius:var(--sc-radius); padding:10px 12px; font-size:15px; font-family:inherit;
+  line-height:1.55; resize:none; overflow:hidden; min-height:44px; display:block;
+}
+.sc-line:focus{ outline:none; border-color:var(--sc-accent); }
+.sc-line::placeholder, .sc-shot::placeholder, .sc-notes::placeholder{ color:var(--sc-dim); opacity:.6; }
+.sc-shot-row{ display:flex; align-items:center; gap:8px; margin-top:9px; }
+.sc-shot-row svg{ width:15px; height:15px; flex:0 0 auto; color:var(--sc-dim); stroke:currentColor; fill:none; stroke-width:1.7; }
+.sc-shot{
+  flex:1; min-width:0; background:none; border:0; border-bottom:1px dashed var(--sc-line);
+  color:var(--sc-dim); font-size:13px; font-family:inherit; padding:5px 2px;
+}
+.sc-shot:focus{ outline:none; border-bottom-color:var(--sc-accent); color:var(--sc-text); }
+
+.sc-empty{ padding:30px 18px; text-align:center; color:var(--sc-dim); font-size:13px; line-height:1.7; }
+.sc-alert{
+  border:1px solid var(--sc-bad); background:var(--sc-bad-soft); color:var(--sc-text);
+  border-radius:var(--sc-radius); padding:12px 14px; font-size:12.5px; line-height:1.6; margin-bottom:14px;
+}
+.sc-alert b{ color:var(--sc-bad); }
+.sc-backdrop{ display:none; }
+
+@media (max-width: 720px){
+  .sc-toolbar{ display:block; }
+  .sc-wrap{ display:block; }
+  .sc-rail{
+    position:fixed; top:0; left:0; bottom:0; z-index:1400; width:84%; max-width:320px;
+    max-height:none; border-radius:0; border-top:0; border-bottom:0; border-left:0; padding:16px 12px;
+    transform:translateX(-102%); transition:transform .26s cubic-bezier(.22,1,.36,1);
+  }
+  #viewScripts.rail-open .sc-rail{ transform:translateX(0); }
+  .sc-backdrop{
+    display:block; position:fixed; inset:0; z-index:1399; background:rgba(0,0,0,.55);
+    opacity:0; pointer-events:none; transition:opacity .26s;
+  }
+  #viewScripts.rail-open .sc-backdrop{ opacity:1; pointer-events:auto; }
+  .sc-rail-toggle{
+    display:inline-flex; align-items:center; gap:8px; background:var(--sc-bg); color:var(--sc-text);
+    border:1px solid var(--sc-line); border-radius:var(--sc-radius); padding:10px 14px;
+    font-size:13px; font-family:inherit; cursor:pointer; min-height:44px;
+  }
+  .sc-rail-toggle svg{ width:16px; height:16px; }
+  .sc-head{ padding:14px; }
+  .sc-title{ font-size:17px; }
+  .sc-line, .sc-shot, .sc-notes, .sc-select{ font-size:16px; }
+  .sc-sec-head{ padding:14px 13px; }
+  .sc-beat{ padding:13px 11px; }
+}
 </style>
 </head>
 <body>
@@ -985,6 +1148,10 @@ body {
       <div class="menu-item" data-tab="viewEmailLists" onclick="switchView('viewEmailLists')">
         <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         Email Lists
+      </div>
+      <div class="menu-item" data-tab="viewScripts" onclick="switchView('viewScripts')">
+        <svg viewBox="0 0 24 24"><path d="M4 3h11l5 5v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><polyline points="14 3 14 9 20 9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+        Scripts
       </div>
     </nav>
     
@@ -1208,6 +1375,28 @@ body {
         </div>
       </div>
       
+      <!-- ===== SCRIPTS ===== -->
+      <div class="panel-view" id="viewScripts">
+        <div class="sc-toolbar">
+          <button class="sc-rail-toggle" type="button" data-sc-act="toggleRail">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            All scripts
+          </button>
+        </div>
+        <div class="sc-alert" id="scAlert" style="display:none;"></div>
+        <div class="sc-wrap">
+          <div class="sc-backdrop" data-sc-act="closeRail"></div>
+          <aside class="sc-rail" id="scRail">
+            <div class="sc-rail-head">
+              <span class="sc-rail-title">Scripts</span>
+              <button class="sc-refresh" type="button" data-sc-act="refresh">Refresh</button>
+            </div>
+            <div class="sc-rail-list" id="scRailList"></div>
+          </aside>
+          <main class="sc-main" id="scMain"></main>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -5921,5 +6110,492 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<script>
+/* The Scripts panel reaches Airtable through this studio's own proxy function, so it
+   inherits the queueing and error handling the rest of the dashboard already relies on.
+   This one line is the only per studio difference in the whole Scripts build. */
+window.__scriptsProxy = function(action, payload){ return airtableProxyCall(action, payload); };
+</script>
+
+<script>
+/* ===== SCRIPTS PANEL =====
+   Shared build. Sopo's and Paddy's studios carry everything below this comment
+   byte for byte identically. The single per studio difference is the
+   window.__scriptsProxy adapter defined directly above, which points this
+   panel at that studio's existing Airtable proxy function.
+
+   Backend: four routes on the studio's existing Make proxy scenario.
+     list_scripts                            reads the Scripts table
+     list_beats   { scriptId }               reads the Script Beats table
+     patch_beat   { recordId, airtableBody } writes one beat
+     patch_script { recordId, airtableBody } writes one script
+
+   Note on list_beats: the route filters with FIND(scriptId, ARRAYJOIN({Script})).
+   Airtable renders a linked record field as the linked row's primary field, so
+   what that filter actually matches is the script NAME, not its record id.
+   Passing a record id there returns nothing. This panel therefore sends the
+   name to narrow the request server side, then narrows again by record id on
+   the way in, which is what keeps two scripts sharing a name from bleeding
+   into each other. */
+(function(){
+  'use strict';
+
+  var SECTIONS  = ['Hook','Body','CTA'];
+  var SEC_ORDER = { 'Hook':0, 'Body':1, 'CTA':2 };
+  var STATUSES  = ['Draft','Ready to Film','In Production','Filmed','Published'];
+  var DEBOUNCE  = 900;
+
+  var st = {
+    scripts:    [],
+    beats:      {},     /* scriptId -> array of beats, undefined means not fetched yet */
+    activeId:   null,
+    loading:    false,
+    loadedOnce: false,
+    open:       { 'Hook':true, 'Body':true, 'CTA':true },
+    timers:     {},
+    pending:    {}
+  };
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function el(id){ return document.getElementById(id); }
+  function root(){ return el('viewScripts'); }
+  function active(){
+    for (var i = 0; i < st.scripts.length; i++) if (st.scripts[i].id === st.activeId) return st.scripts[i];
+    return null;
+  }
+  function findBeat(id){
+    var list = st.beats[st.activeId] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+  function grow(t){ t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+
+  function call(action, payload, attempt){
+    attempt = attempt || 0;
+    return Promise.resolve()
+      .then(function(){ return window.__scriptsProxy(action, payload || {}); })
+      .catch(function(err){
+        var msg = String((err && err.message) || err || '');
+        if (attempt < 2 && /(429|503|network|failed to fetch|load failed)/i.test(msg)) {
+          return new Promise(function(done){ setTimeout(done, 800 * (attempt + 1)); })
+            .then(function(){ return call(action, payload, attempt + 1); });
+        }
+        throw err;
+      });
+  }
+
+  /* Make hands back whatever Airtable returned. Normalise the handful of
+     shapes a proxy route can produce so an upstream tweak cannot blank the
+     panel silently. */
+  function records(res){
+    if (!res) return [];
+    if (typeof res === 'string') { try { return records(JSON.parse(res)); } catch(e){ return []; } }
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.records)) return res.records;
+    if (res.body && res.body !== res) return records(res.body);
+    return [];
+  }
+
+  function mapScript(r){
+    var f = r.fields || {};
+    return {
+      id:      r.id,
+      name:    f.script_name || 'Untitled script',
+      number:  typeof f.script_number === 'number' ? f.script_number : null,
+      status:  f.status || 'Draft',
+      variant: f.variant_tag || '',
+      notes:   f.notes || '',
+      beatIds: Array.isArray(f['Script Beats']) ? f['Script Beats'] : []
+    };
+  }
+  function mapBeat(r){
+    var f = r.fields || {};
+    return {
+      id:        r.id,
+      label:     f.beat_label || '',
+      section:   SEC_ORDER[f.section] === undefined ? 'Body' : f.section,
+      order:     typeof f.order === 'number' ? f.order : 0,
+      line:      f.line || '',
+      shot:      f.shot || '',
+      done:      !!f.done,
+      speaker:   f.speaker_variant || '',
+      scriptIds: Array.isArray(f.Script) ? f.Script : []
+    };
+  }
+  function cmpBeat(a, b){
+    return (SEC_ORDER[a.section] - SEC_ORDER[b.section]) || (a.order - b.order) || a.label.localeCompare(b.label);
+  }
+  function narrow(recs, scriptId){
+    return recs.map(mapBeat).filter(function(b){
+      return b.scriptIds.indexOf(scriptId) !== -1;
+    }).sort(cmpBeat);
+  }
+
+  function notify(html){
+    var node = el('scAlert');
+    if (!node) return;
+    if (!html) { node.style.display = 'none'; node.innerHTML = ''; return; }
+    node.innerHTML = html;
+    node.style.display = 'block';
+  }
+
+  function loadScripts(force){
+    if (st.loading) return Promise.resolve();
+    if (st.loadedOnce && !force) return Promise.resolve();
+    st.loading = true;
+    notify('');
+    render();
+    return call('list_scripts', {})
+      .then(function(res){
+        st.scripts = records(res).map(mapScript).sort(function(a, b){
+          var an = a.number === null ? 9999 : a.number;
+          var bn = b.number === null ? 9999 : b.number;
+          return an - bn || a.name.localeCompare(b.name);
+        });
+        st.loadedOnce = true;
+        st.loading = false;
+        if (st.scripts.length && !active()) return select(st.scripts[0].id);
+        render();
+      })
+      .catch(function(err){
+        st.loading = false;
+        notify('<b>Scripts did not load.</b> ' + esc(String((err && err.message) || err)));
+        render();
+      });
+  }
+
+  function select(id){
+    st.activeId = id;
+    var s = active();
+    render();
+    if (!s || st.beats[s.id] !== undefined) return Promise.resolve();
+    return call('list_beats', { scriptId: s.name })
+      .then(function(res){
+        var mine = narrow(records(res), s.id);
+        /* Empty result but the script says it has beats means the name based
+           filter missed, so fall back to the whole table and narrow by id. */
+        if (!mine.length && s.beatIds.length) {
+          return call('list_beats', {}).then(function(all){ return narrow(records(all), s.id); });
+        }
+        return mine;
+      })
+      .then(function(list){
+        st.beats[s.id] = list;
+        render();
+      })
+      .catch(function(err){
+        st.beats[s.id] = [];
+        notify('<b>Lines did not load for this script.</b> ' + esc(String((err && err.message) || err)));
+        render();
+      });
+  }
+
+  /* ---------- saving ---------- */
+
+  function setState(node, state, text){
+    if (!node) return;
+    node.setAttribute('data-state', state);
+    node.textContent = text;
+    node.classList.add('show');
+    if (node.__hide) clearTimeout(node.__hide);
+    if (state === 'saved') node.__hide = setTimeout(function(){ node.classList.remove('show'); }, 1800);
+  }
+
+  function queueSave(kind, id, field, value, stateNode){
+    var key = kind + ':' + id + ':' + field;
+    st.pending[key] = value;
+    if (st.timers[key]) clearTimeout(st.timers[key]);
+    setState(stateNode, 'saving', 'Saving');
+    st.timers[key] = setTimeout(function(){
+      delete st.timers[key];
+      flush(kind, id, field, stateNode);
+    }, DEBOUNCE);
+  }
+
+  function flush(kind, id, field, stateNode){
+    var key    = kind + ':' + id + ':' + field;
+    var fields = {};
+    fields[field] = st.pending[key];
+    setState(stateNode, 'saving', 'Saving');
+    call(kind === 'beat' ? 'patch_beat' : 'patch_script', {
+      recordId:     id,
+      airtableBody: JSON.stringify({ fields: fields })
+    })
+      .then(function(){
+        delete st.pending[key];
+        setState(stateNode, 'saved', 'Saved');
+      })
+      .catch(function(){
+        /* The edit stays on screen and stays in st.pending, so a retry sends
+           the current value rather than the one that failed. */
+        setState(stateNode, 'error', 'Not saved, tap to retry');
+        if (stateNode) stateNode.setAttribute('data-sc-retry', kind + '|' + id + '|' + field);
+      });
+  }
+
+  /* ---------- rendering ---------- */
+
+  function railHtml(){
+    if (!st.scripts.length) {
+      return '<div class="sc-empty">' + (st.loading ? 'Loading...' : 'Nothing here yet') + '</div>';
+    }
+    return st.scripts.map(function(s){
+      var beats = st.beats[s.id];
+      var meta  = esc(s.status);
+      if (beats && beats.length) {
+        var done = beats.filter(function(b){ return b.done; }).length;
+        meta += ' &middot; ' + done + ' of ' + beats.length + ' filmed';
+      }
+      return '<button class="sc-rail-item' + (s.id === st.activeId ? ' active' : '') + '" type="button" data-sc-pick="' + esc(s.id) + '">'
+        + '<span class="sc-num">' + (s.number === null ? '&bull;' : esc(String(s.number))) + '</span>'
+        + '<span class="sc-rail-text">'
+        +   '<span class="sc-rail-name">' + esc(s.name) + '</span>'
+        +   '<span class="sc-rail-meta"><i class="sc-dot" data-status="' + esc(s.status) + '"></i>' + meta + '</span>'
+        + '</span>'
+        + '</button>';
+    }).join('');
+  }
+
+  function headHtml(s, beats){
+    var total = beats ? beats.length : 0;
+    var done  = beats ? beats.filter(function(b){ return b.done; }).length : 0;
+    var opts  = STATUSES.map(function(v){
+      return '<option value="' + esc(v) + '"' + (v === s.status ? ' selected' : '') + '>' + esc(v) + '</option>';
+    }).join('');
+    if (s.status && STATUSES.indexOf(s.status) === -1) {
+      opts = '<option value="' + esc(s.status) + '" selected>' + esc(s.status) + '</option>' + opts;
+    }
+    return '<div class="sc-head">'
+      + '<div class="sc-head-top">'
+      +   '<div style="min-width:0;">'
+      +     '<h2 class="sc-title">' + (s.number === null ? '' : esc(String(s.number)) + '. ') + esc(s.name) + '</h2>'
+      +     '<div class="sc-sub">'
+      +       (s.variant ? '<span class="sc-chip">' + esc(s.variant) + '</span>' : '')
+      +       '<span class="sc-state" id="scHeadState"></span>'
+      +     '</div>'
+      +   '</div>'
+      +   '<select class="sc-select" data-sc-field="status" aria-label="Script status">' + opts + '</select>'
+      + '</div>'
+      + '<div class="sc-progress">'
+      +   '<span class="sc-bar"><span class="sc-bar-fill" id="scBarFill" style="width:' + (total ? Math.round(done / total * 100) : 0) + '%;"></span></span>'
+      +   '<div class="sc-progress-lbl" id="scProgressLbl">' + (total ? done + ' of ' + total + ' lines filmed' : 'No lines yet') + '</div>'
+      + '</div>'
+      + '<label class="sc-notes-lbl" for="scNotes">Notes</label>'
+      + '<textarea class="sc-notes" id="scNotes" placeholder="Anything the crew needs to know before the shoot">' + esc(s.notes) + '</textarea>'
+      + '</div>';
+  }
+
+  function beatHtml(b){
+    return '<div class="sc-beat' + (b.done ? ' done' : '') + '" data-sc-beat="' + esc(b.id) + '">'
+      + '<div class="sc-beat-top">'
+      +   '<label class="sc-tick">'
+      +     '<input type="checkbox" data-sc-done="1"' + (b.done ? ' checked' : '') + ' aria-label="Mark this line as filmed">'
+      +     '<span class="sc-tick-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>'
+      +   '</label>'
+      +   '<span class="sc-beat-label">' + esc(b.label || b.section) + '</span>'
+      +   (b.speaker ? '<span class="sc-chip">' + esc(b.speaker) + '</span>' : '')
+      +   '<span class="sc-state"></span>'
+      + '</div>'
+      + '<textarea class="sc-line" rows="1" data-sc-field="line" placeholder="Write the line to be spoken">' + esc(b.line) + '</textarea>'
+      + '<div class="sc-shot-row">'
+      +   '<svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'
+      +   '<input class="sc-shot" data-sc-field="shot" value="' + esc(b.shot) + '" placeholder="Shot description, for example close up, straight to camera">'
+      + '</div>'
+      + '</div>';
+  }
+
+  function secHtml(sec, list){
+    var done = list.filter(function(b){ return b.done; }).length;
+    return '<section class="sc-sec' + (st.open[sec] ? ' open' : '') + '" data-sc-sec="' + sec + '">'
+      + '<button class="sc-sec-head" type="button" data-sc-toggle="' + sec + '">'
+      +   '<svg class="sc-caret" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>'
+      +   '<span class="sc-sec-name">' + sec + '</span>'
+      +   '<span class="sc-sec-count">' + (list.length ? done + ' of ' + list.length + ' filmed' : 'No lines') + '</span>'
+      + '</button>'
+      + '<div class="sc-sec-body">'
+      +   (list.length ? list.map(beatHtml).join('') : '<div class="sc-empty">Nothing in this section yet.</div>')
+      + '</div>'
+      + '</section>';
+  }
+
+  function renderMain(){
+    var host = el('scMain');
+    if (!host) return;
+    if (!st.scripts.length) {
+      host.innerHTML = '<div class="sc-empty">' + (st.loading
+        ? 'Loading scripts...'
+        : 'No scripts yet.<br>Add a row to the Scripts table and it appears here.') + '</div>';
+      return;
+    }
+    var s = active();
+    if (!s) { host.innerHTML = '<div class="sc-empty">Pick a script from the list to open it.</div>'; return; }
+
+    var beats = st.beats[s.id];
+    var html  = headHtml(s, beats);
+    if (beats === undefined) {
+      html += '<div class="sc-empty">Loading lines...</div>';
+    } else if (!beats.length) {
+      html += '<div class="sc-empty">This script has no lines yet.<br>Add rows to the Script Beats table and link them to this script.</div>';
+    } else {
+      html += SECTIONS.map(function(sec){
+        return secHtml(sec, beats.filter(function(b){ return b.section === sec; }));
+      }).join('');
+    }
+    host.innerHTML = html;
+
+    var areas = host.querySelectorAll('textarea.sc-line');
+    for (var i = 0; i < areas.length; i++) grow(areas[i]);
+  }
+
+  function renderRail(){
+    var host = el('scRailList');
+    if (host) host.innerHTML = railHtml();
+  }
+
+  function render(){ renderRail(); renderMain(); }
+
+  /* Counts and the progress bar refresh in place. Re rendering the whole
+     panel on a tick would throw away focus and scroll position, which on set,
+     mid shoot, is the last thing anyone wants. */
+  function refreshCounts(){
+    var s = active();
+    var beats = s && st.beats[s.id];
+    if (!beats) return;
+    SECTIONS.forEach(function(sec){
+      var node = root().querySelector('.sc-sec[data-sc-sec="' + sec + '"] .sc-sec-count');
+      if (!node) return;
+      var list = beats.filter(function(b){ return b.section === sec; });
+      var done = list.filter(function(b){ return b.done; }).length;
+      node.textContent = list.length ? (done + ' of ' + list.length + ' filmed') : 'No lines';
+    });
+    var total = beats.length;
+    var done  = beats.filter(function(b){ return b.done; }).length;
+    var fill  = el('scBarFill');
+    var lbl   = el('scProgressLbl');
+    if (fill) fill.style.width = (total ? Math.round(done / total * 100) : 0) + '%';
+    if (lbl)  lbl.textContent  = total ? (done + ' of ' + total + ' lines filmed') : 'No lines yet';
+    renderRail();
+  }
+
+  /* ---------- events ---------- */
+
+  function onClick(e){
+    var r = root();
+    var t = e.target;
+    if (!r || !t || !t.closest || !r.contains(t)) return;
+
+    var toggle = t.closest('.sc-rail-toggle');
+    if (toggle) { r.classList.toggle('rail-open'); return; }
+
+    if (t.closest('.sc-backdrop')) { r.classList.remove('rail-open'); return; }
+
+    var refresh = t.closest('.sc-refresh');
+    if (refresh) { st.beats = {}; loadScripts(true); return; }
+
+    var pick = t.closest('[data-sc-pick]');
+    if (pick) {
+      r.classList.remove('rail-open');
+      select(pick.getAttribute('data-sc-pick'));
+      return;
+    }
+
+    var sec = t.closest('[data-sc-toggle]');
+    if (sec) {
+      var name = sec.getAttribute('data-sc-toggle');
+      st.open[name] = !st.open[name];
+      var box = r.querySelector('.sc-sec[data-sc-sec="' + name + '"]');
+      if (box) box.classList.toggle('open', st.open[name]);
+      return;
+    }
+
+    var retry = t.closest('.sc-state[data-sc-retry]');
+    if (retry) {
+      var parts = retry.getAttribute('data-sc-retry').split('|');
+      retry.removeAttribute('data-sc-retry');
+      flush(parts[0], parts[1], parts[2], retry);
+    }
+  }
+
+  function onChange(e){
+    var r = root();
+    var t = e.target;
+    if (!r || !t || !t.closest || !r.contains(t)) return;
+
+    if (t.matches('input[data-sc-done]')) {
+      var box = t.closest('.sc-beat');
+      var b   = findBeat(box.getAttribute('data-sc-beat'));
+      if (!b) return;
+      b.done = t.checked;
+      box.classList.toggle('done', b.done);
+      refreshCounts();
+      st.pending['beat:' + b.id + ':done'] = b.done;
+      flush('beat', b.id, 'done', box.querySelector('.sc-state'));
+      return;
+    }
+
+    if (t.matches('select[data-sc-field="status"]')) {
+      var s = active();
+      if (!s) return;
+      s.status = t.value;
+      renderRail();
+      st.pending['script:' + s.id + ':status'] = s.status;
+      flush('script', s.id, 'status', el('scHeadState'));
+    }
+  }
+
+  function onInput(e){
+    var r = root();
+    var t = e.target;
+    if (!r || !t || !t.closest || !r.contains(t)) return;
+
+    if (t.matches('textarea.sc-line, input.sc-shot')) {
+      var box = t.closest('.sc-beat');
+      var b   = findBeat(box.getAttribute('data-sc-beat'));
+      if (!b) return;
+      var field = t.getAttribute('data-sc-field');
+      b[field] = t.value;
+      if (t.tagName === 'TEXTAREA') grow(t);
+      queueSave('beat', b.id, field, t.value, box.querySelector('.sc-state'));
+      return;
+    }
+
+    if (t.matches('textarea.sc-notes')) {
+      var s = active();
+      if (!s) return;
+      s.notes = t.value;
+      queueSave('script', s.id, 'notes', t.value, el('scHeadState'));
+    }
+  }
+
+  function boot(){
+    document.addEventListener('click',  onClick);
+    document.addEventListener('change', onChange);
+    document.addEventListener('input',  onInput);
+
+    /* Wrap rather than edit switchView, so this panel stays a purely additive
+       block and nothing existing has to be touched to carry it. */
+    var prev = window.switchView;
+    if (typeof prev === 'function') {
+      window.switchView = function(id){
+        var out = prev.apply(this, arguments);
+        if (id === 'viewScripts') {
+          var h = el('headerTitle');
+          if (h) h.textContent = 'Scripts';
+          loadScripts(false);
+        }
+        return out;
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
 </body>
 </html>
