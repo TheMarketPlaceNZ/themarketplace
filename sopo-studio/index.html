@@ -1078,6 +1078,17 @@ body {
 .sc-shot:disabled{ opacity:.35; cursor:not-allowed; }
 .sc-shot-icon-btn:disabled{ opacity:.3; cursor:not-allowed; pointer-events:none; }
 
+/* Delete a script. Two step on purpose: this wipes the script and every line
+   under it out of Airtable with no undo, and the panel is used on a phone
+   where a mis-tap is easy. The first tap only arms the confirm. */
+.sc-del-btn{ background:none; border:1px solid var(--sc-line); color:var(--sc-dim); border-radius:var(--sc-radius); padding:0; width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:.15s; flex-shrink:0; }
+.sc-del-btn:hover{ border-color:#e0645f; color:#e0645f; }
+.sc-del-btn svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.sc-del-confirm{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; padding:12px; border:1px solid rgba(224,100,95,0.45); border-radius:var(--sc-radius); background:rgba(224,100,95,0.07); }
+.sc-del-msg{ font-size:12.5px; color:var(--sc-text); flex:1; min-width:170px; line-height:1.5; }
+.sc-del-yes{ background:#c9453f; border:0; color:#fff; border-radius:var(--sc-radius); padding:0 16px; min-height:40px; font-size:12.5px; font-family:inherit; font-weight:600; cursor:pointer; }
+.sc-del-no{ background:none; border:1px solid var(--sc-line); color:var(--sc-dim); border-radius:var(--sc-radius); padding:0 16px; min-height:40px; font-size:12.5px; font-family:inherit; cursor:pointer; }
+
 .sc-empty{ padding:30px 18px; text-align:center; color:var(--sc-dim); font-size:13px; line-height:1.7; }
 .sc-alert{
   border:1px solid var(--sc-bad); background:var(--sc-bad-soft); color:var(--sc-text);
@@ -6160,7 +6171,8 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
     loadedOnce: false,
     open:       { 'Hook':true, 'Body':true, 'CTA':true },
     timers:     {},
-    pending:    {}
+    pending:    {},
+    confirmDelete: null   /* script id whose delete confirm is currently armed */
   };
 
   function esc(s){
@@ -6277,10 +6289,11 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
 
   function select(id){
     st.activeId = id;
+    st.confirmDelete = null;
     var s = active();
     render();
     if (!s || st.beats[s.id] !== undefined) return Promise.resolve();
-    return call('list_beats', { scriptId: s.name })
+    return call('list_beats', { scriptId: s.id })
       .then(function(res){
         var mine = narrow(records(res), s.id);
         /* Empty result but the script says it has beats means the name based
@@ -6323,15 +6336,65 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
     }, DEBOUNCE);
   }
 
+  /* Beats are deleted before the script, never after. Airtable does not
+     cascade, and once the script row is gone the beats have no parent left to
+     find them by, so reversing the order would leave orphans in the table with
+     no way to reach them from the panel. Sequential rather than parallel so a
+     failure part way stops instead of half clearing the set. */
+  function deleteScript(s){
+    var loaded = st.beats[s.id] || [];
+    var ids    = loaded.length ? loaded.map(function(b){ return b.id; })
+                              : (s.beatIds || []).slice();
+    var stateNode = el('scHeadState');
+    setState(stateNode, 'saving', 'Deleting');
+
+    var chain = Promise.resolve();
+    ids.forEach(function(bid){
+      chain = chain.then(function(){ return call('delete_beat', { recordId: bid }); });
+    });
+
+    return chain
+      .then(function(){ return call('delete_script', { recordId: s.id }); })
+      .then(function(){
+        delete st.beats[s.id];
+        st.scripts = st.scripts.filter(function(x){ return x.id !== s.id; });
+        if (st.scripts.length) { select(st.scripts[0].id); }
+        else { st.activeId = null; render(); }
+      })
+      .catch(function(err){
+        setState(stateNode, 'error', 'Delete failed');
+        notify('<b>That script was not deleted.</b> ' + esc(String((err && err.message) || err)) + ' Some lines may already have gone, so reload before trying again.');
+        render();
+      });
+  }
+
   function flush(kind, id, field, stateNode){
-    var key    = kind + ':' + id + ':' + field;
-    var fields = {};
-    fields[field] = st.pending[key];
+    var key = kind + ':' + id + ':' + field;
     setState(stateNode, 'saving', 'Saving');
-    call(kind === 'beat' ? 'patch_beat' : 'patch_script', {
-      recordId:     id,
-      airtableBody: JSON.stringify({ fields: fields })
-    })
+
+    /* Session 76. This used to send a raw Airtable PATCH body and every save
+       failed with "Failed to fetch", even though Make logged the run as a
+       success. Cause: the proxy route used Airtable's generic Make an API Call
+       module for the PATCH, and that module never returns a response the
+       browser will accept. Both patch routes now use the Update a Record
+       module instead, the same one the working leads route has always used.
+
+       That module writes every field it is handed, so it would blank any field
+       we left out. We therefore send the whole editable set from local state,
+       not just the one field that changed. Local state is authoritative here,
+       it is what is on screen. */
+    var f, obj;
+    if (kind === 'beat') {
+      obj = findBeat(id);
+      if (!obj) return;
+      f = { line: obj.line || '', shot: obj.shot || '', done: !!obj.done };
+    } else {
+      obj = active();
+      if (!obj || obj.id !== id) return;
+      f = { status: obj.status || 'Draft', notes: obj.notes || '' };
+    }
+
+    call(kind === 'beat' ? 'patch_beat' : 'patch_script', { recordId: id, f: f })
       .then(function(){
         delete st.pending[key];
         setState(stateNode, 'saved', 'Saved');
@@ -6369,6 +6432,10 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
 
   function headHtml(s, beats){
     var total = beats ? beats.length : 0;
+    /* Beats may not be fetched yet, so fall back to the link array for the
+       count shown in the confirm. Never say "0 lines" about a script that
+       has them. */
+    var delCount = total || (s.beatIds ? s.beatIds.length : 0);
     var done  = beats ? beats.filter(function(b){ return b.done; }).length : 0;
     var opts  = STATUSES.map(function(v){
       return '<option value="' + esc(v) + '"' + (v === s.status ? ' selected' : '') + '>' + esc(v) + '</option>';
@@ -6385,8 +6452,18 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
       +       '<span class="sc-state" id="scHeadState"></span>'
       +     '</div>'
       +   '</div>'
-      +   '<select class="sc-select" data-sc-field="status" aria-label="Script status">' + opts + '</select>'
+      +   '<div style="display:flex; gap:8px; align-items:center;">'
+      +     '<select class="sc-select" data-sc-field="status" aria-label="Script status">' + opts + '</select>'
+      +     '<button type="button" class="sc-del-btn" data-sc-del="1" title="Delete this script" aria-label="Delete this script"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>'
+      +   '</div>'
       + '</div>'
+      + (st.confirmDelete === s.id
+          ? '<div class="sc-del-confirm">'
+            + '<span class="sc-del-msg">Delete <b>' + esc(s.name) + '</b> and its ' + delCount + ' line' + (delCount === 1 ? '' : 's') + '? This removes them from Airtable for good.</span>'
+            + '<button type="button" class="sc-del-no" data-sc-del-no="1">Cancel</button>'
+            + '<button type="button" class="sc-del-yes" data-sc-del-yes="1">Delete</button>'
+          + '</div>'
+          : '')
       + '<div class="sc-progress">'
       +   '<span class="sc-bar"><span class="sc-bar-fill" id="scBarFill" style="width:' + (total ? Math.round(done / total * 100) : 0) + '%;"></span></span>'
       +   '<div class="sc-progress-lbl" id="scProgressLbl">' + (total ? done + ' of ' + total + ' lines filmed' : 'No lines yet') + '</div>'
@@ -6525,6 +6602,15 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
       st.open[name] = !st.open[name];
       var box = r.querySelector('.sc-sec[data-sc-sec="' + name + '"]');
       if (box) box.classList.toggle('open', st.open[name]);
+      return;
+    }
+
+    if (t.closest('[data-sc-del]'))    { st.confirmDelete = st.activeId; render(); return; }
+    if (t.closest('[data-sc-del-no]')) { st.confirmDelete = null;         render(); return; }
+    if (t.closest('[data-sc-del-yes]')) {
+      var doomed = active();
+      st.confirmDelete = null;
+      if (doomed) deleteScript(doomed); else render();
       return;
     }
 
