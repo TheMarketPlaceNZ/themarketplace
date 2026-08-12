@@ -836,6 +836,8 @@ body::after {
 .sc-shot-icon-btn:hover{ border-color:var(--sc-accent); color:var(--sc-text); }
 .sc-shot-icon-btn.active{ border-color:var(--sc-accent); color:var(--sc-accent); background:var(--sc-dim-bg,rgba(0,0,0,.15)); }
 .sc-shot-icon-btn svg{ width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.sc-shot:disabled{ opacity:.35; cursor:not-allowed; }
+.sc-shot-icon-btn:disabled{ opacity:.3; cursor:not-allowed; pointer-events:none; }
 
 .sc-empty{ padding:30px 18px; text-align:center; color:var(--sc-dim); font-size:13px; line-height:1.7; }
 .sc-alert{
@@ -870,6 +872,107 @@ body::after {
   .sc-line, .sc-shot, .sc-notes, .sc-select{ font-size:16px; }
   .sc-sec-head{ padding:14px 13px; }
   .sc-beat{ padding:13px 11px; }
+}
+
+/* ============================================================
+   MOBILE HARDENING  ·  Session 76 override layer (12 Aug 2026)
+   Phone corrections only. The desktop look is deliberately untouched:
+   every rule below is either an env(safe-area-inset-*) value, which
+   resolves to 0px on any hardware without a notch and is therefore a
+   no-op on a PC, or it sits inside a max-width media query.
+   Delete this whole block to revert.
+
+   Four faults this fixes, all confirmed by reading the file:
+
+   1. SAFE AREA. viewport-fit=cover was declared in the head but
+      env(safe-area-inset-*) appeared nowhere in the stylesheet. That
+      combination is the worst of both: the page is told to draw into
+      the notch and the home indicator, and then never padded away from
+      them. The header ran under the status bar and the dustbin sat
+      under the home bar.
+   2. iOS FOCUS ZOOM. Safari zooms the entire page when you focus an
+      input whose font-size is under 16px, and does not zoom back out.
+      .input, textarea.input and .search-input were 12.5-13px. On a CRM
+      that is mostly typing, this is the single most irritating fault
+      on the page. Raised to 16px on small screens only, so the desktop
+      density is unchanged.
+   3. 100vh. On mobile browsers 100vh is the height of the viewport
+      WITHOUT the address bar, so anything sized to it is taller than
+      the screen and its last rows are unreachable. 100dvh is the
+      correct unit. The 100vh line is kept immediately above each
+      100dvh line as the fallback for browsers that do not know dvh.
+   4. TAP TARGETS. Several controls were under the 44px minimum that
+      both Apple and Google publish. Raised on small screens only.
+   ============================================================ */
+
+/* 1 · Safe area. Zero-width no-ops on any non-notched device. */
+.top-header{ padding-top: env(safe-area-inset-top); height:auto; min-height:62px; }
+.panel-container{ padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+.trash-fab{
+  bottom: calc(26px + env(safe-area-inset-bottom));
+  right:  calc(26px + env(safe-area-inset-right));
+}
+
+/* 3 · Dynamic viewport height. Fallback first, dvh second. */
+#appShell.visible{ min-height:100vh; min-height:100dvh; }
+.sidebar{
+  height:100vh; height:100dvh;
+  padding-top:    calc(22px + env(safe-area-inset-top));
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 900px){
+  /* 2 · Stop iOS zooming the page on input focus. 16px is the
+     threshold, it is not negotiable and it is not a design choice. */
+  .input, select.input, textarea.input, .search-input, .sc-select,
+  input, select, textarea{ font-size:16px; }
+
+  /* 4 · 44px minimum tap targets. Font sizes are left alone so the
+     type scale Kurt set does not shift, only the hit area grows. */
+  .btn{ min-height:44px; }
+  .hdr-btn{ width:44px; height:44px; }
+  .quick-btn{ min-height:44px; }
+  .advance-btn{ min-height:44px; }
+  .chip{ min-height:34px; }
+  .kan-acts button{ min-width:36px; min-height:36px; }
+  .menu-toggle{ width:44px; height:44px; align-items:center; justify-content:center; margin-left:-10px; }
+  .trash-fab{ width:52px; height:52px; }
+  .cal-nav{ width:44px; height:44px; }
+  .modal-x{ width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
+
+  /* Nothing on a phone should ever scroll sideways. */
+  html, body{ overflow-x:hidden; }
+  .modal-sheet{ padding:20px 16px; max-height:calc(88vh - env(safe-area-inset-bottom)); }
+  .sidebar{ padding-left:16px; padding-right:16px; }
+
+  /* 5 · THE DEAL PIPELINE. Six 190px columns in a scrolling grid meant
+     that on a phone you got column one, then column two sliced down the
+     middle at the screen edge, which reads as broken rather than as
+     "there is more to the right". Two changes fix it without touching
+     the desktop board at all:
+       (a) one column per swipe, via scroll snap, so a flick lands square
+          on the next stage instead of stopping halfway through it,
+       (b) columns set to 78% of the screen, so the next one always peeks
+          in by about a fifth. That peek is the only honest signal that
+          the board continues, and it is why the width is not 100%.
+     min-height drops too, because a 340px tall empty column ate the
+     whole screen for no information. */
+  .kanban{
+    grid-template-columns:none;
+    grid-auto-flow:column;
+    grid-auto-columns:78%;
+    gap:10px;
+    scroll-snap-type:x mandatory;
+    scroll-padding:0 16px;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+  }
+  .kan-col{ scroll-snap-align:start; min-height:200px; }
+
+  /* 6 · The dustbin is position:fixed, so it floated over whatever was
+     at the bottom of the panel. On the Client Book it sat on top of the
+     Copy button. Reserve its footprint at the end of every panel. */
+  .panel-container{ padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 }
 </style>
 </head>
@@ -934,7 +1037,6 @@ body::after {
         Add Client
       </button>
       <button class="btn btn-ghost full" id="installAppBtn" onclick="triggerInstallPrompt()" style="display:none;padding:10px;font-size:11.5px;">Install as App</button>
-      <button class="btn btn-ghost full" onclick="window.location.href='debrief.html'" style="padding:10px;font-size:11.5px;">Record Debrief</button>
       <button class="btn btn-ghost full" onclick="openSettingsModal()" style="padding:10px;font-size:11.5px;">Settings</button>
     </div>
   </aside>
@@ -959,47 +1061,7 @@ body::after {
       <!-- ===== CLIENT BOOK ===== -->
       <div class="panel-view active" id="viewLeads">
 
-        <div class="metric-strip">
-          <div class="metric">
-            <div class="metric-label">Pipeline Value</div>
-            <div class="metric-val gilt" id="mPipeline">$0</div>
-            <div class="metric-foot"><b id="mPipelineN">0</b> live deals in progress</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Settled This Year</div>
-            <div class="metric-val" id="mSettled">$0</div>
-            <div class="metric-foot"><b id="mSettledN">0</b> clients across the panel</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Enquiry to Settled</div>
-            <div class="metric-val" id="mConv">0%</div>
-            <div class="metric-foot">Of every enquiry taken on</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Cover Attached</div>
-            <div class="metric-val" id="mAttach">0%</div>
-            <div class="metric-foot"><b id="mAttachGap">0</b> settled without cover</div>
-          </div>
-        </div>
-
         <div class="rail" id="stageRail"></div>
-
-        <div class="two-col">
-          <div class="card">
-            <div class="section-title">Lender Panel Split</div>
-            <div class="split-bar" id="lenderBar"></div>
-            <div class="split-legend" id="lenderLegend"></div>
-          </div>
-          <div class="card">
-            <div class="section-title">One Stop Shop · Cover Attach Rate</div>
-            <div style="display:flex;align-items:baseline;gap:10px;">
-              <div style="font-family:var(--serif);font-size:32px;color:var(--gilt-bright);line-height:1;" id="attachBig">0%</div>
-              <div style="font-size:11.5px;color:var(--dim);">of settled clients also hold cover</div>
-            </div>
-            <div class="meter"><div class="meter-fill" id="attachMeter" style="width:0%"></div></div>
-            <div class="hint" id="attachHint" style="margin-bottom:0;">Settled clients without cover are the fastest revenue in the book. They already trust you.</div>
-          </div>
-        </div>
 
         <div class="card" style="margin-bottom:22px;">
           <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
@@ -1622,7 +1684,7 @@ function clearSyncBlocklist() {
 
 /* ---------- RENDER ---------- */
 function renderAll() {
-  renderMetrics(); renderRail(); renderSegmentFilters(); renderLenderSplit();
+  renderMetrics(); renderRail(); renderSegmentFilters();
   renderLeads(); renderKanban(); renderCalendar(); renderNurture(); updateTrashBadge();
 }
 
@@ -1637,19 +1699,11 @@ function renderMetrics() {
   const covered  = settled.filter(l => l.insurance).length;
   const attach   = settled.length ? Math.round(covered / settled.length * 100) : 0;
 
-  document.getElementById('mPipeline').textContent  = money(pipeVal);
-  document.getElementById('mPipelineN').textContent = inFlight.length;
-  document.getElementById('mSettled').textContent   = money(setVal);
-  document.getElementById('mSettledN').textContent  = settled.length;
-  document.getElementById('mConv').textContent      = conv + '%';
-  document.getElementById('mAttach').textContent    = attach + '%';
-  document.getElementById('mAttachGap').textContent = settled.length - covered;
-
-  document.getElementById('attachBig').textContent  = attach + '%';
-  document.getElementById('attachMeter').style.width = attach + '%';
-  document.getElementById('attachHint').textContent = settled.length
-    ? (settled.length - covered) + ' settled client' + (settled.length - covered === 1 ? '' : 's') + ' still without cover. They already trust you, so this is the shortest path to more revenue.'
-    : 'Once deals start settling this shows which clients still need cover placed.';
+  /* Session 76: the four headline metric tiles, the Lender Panel Split
+     card and the One Stop Shop card were removed from the Client Book at
+     Kurt's direction, so the nodes they wrote into no longer exist. The
+     sidebar Book Under Management figure below is unaffected and still
+     needs setVal and settled, which is why the maths above stays. */
 
   document.getElementById('bookValue').textContent = money(setVal);
   document.getElementById('bookNote').textContent  = settled.length
@@ -1737,24 +1791,6 @@ function renderLeads() {
       </div>
     </div>`;
   }).join('');
-}
-
-function renderLenderSplit() {
-  const L = liveLeads().filter(l => l.lender && l.amount);
-  const bar = document.getElementById('lenderBar'), leg = document.getElementById('lenderLegend');
-  if (!L.length) {
-    bar.innerHTML = `<div class="split-seg" style="width:100%;background:var(--surface-3);"></div>`;
-    leg.innerHTML = `<div class="legend-item">No lending placed against a lender yet. Set a lender and amount on a client and this fills in.</div>`;
-    return;
-  }
-  const totals = {};
-  L.forEach(l => totals[l.lender] = (totals[l.lender] || 0) + l.amount);
-  const grand = Object.values(totals).reduce((a,b) => a+b, 0);
-  const sorted = Object.entries(totals).sort((a,b) => b[1]-a[1]);
-  bar.innerHTML = sorted.map(([k,v]) =>
-    `<div class="split-seg" style="width:${v/grand*100}%;background:${LENDER_COLORS[k]||'#5C636F'}" title="${esc(k)}"></div>`).join('');
-  leg.innerHTML = sorted.map(([k,v]) =>
-    `<div class="legend-item"><span class="legend-swatch" style="background:${LENDER_COLORS[k]||'#5C636F'}"></span>${esc(k)} <b>${money(v)}</b></div>`).join('');
 }
 
 /* ---------- KANBAN ---------- */
@@ -2648,6 +2684,7 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
   }
 
   function beatHtml(b){
+    var lineFilled = !!(b.line && String(b.line).trim());
     return '<div class="sc-beat' + (b.done ? ' done' : '') + '" data-sc-beat="' + esc(b.id) + '">'
       + '<div class="sc-beat-top">'
       +   '<label class="sc-tick">'
@@ -2661,15 +2698,15 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
       + '<textarea class="sc-line" rows="1" data-sc-field="line" placeholder="Write the line to be spoken">' + esc(b.line) + '</textarea>'
       + '<div class="sc-shot-row">'
       +   '<svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'
-      +   '<input class="sc-shot" data-sc-field="shot" value="' + esc(b.shot) + '" placeholder="Shot description, for example close up, straight to camera">'
+      +   '<input class="sc-shot" data-sc-field="shot" value="' + esc(b.shot) + '" placeholder="Shot description, for example close up, straight to camera"' + (lineFilled ? '' : ' disabled') + '>'
       + '</div>'
       + '<div class="sc-shot-icons" role="group" aria-label="Shot type shortcuts">'
-      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Sit" title="Sit" aria-label="Sit"><svg viewBox="0 0 24 24"><path d="M6 4v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4M6 20v-4M18 20v-4M6 12h12"/></svg></button>'
-      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Stand" title="Stand" aria-label="Stand"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 9v7M9 12h6M9 20l3-4 3 4"/></svg></button>'
-      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Walk to camera" title="Walk to camera" aria-label="Walk to camera"><svg viewBox="0 0 24 24"><circle cx="9" cy="5" r="2"/><path d="M9 8v6l-2 7M9 14l4-1 2 7"/><path d="M17 9l4 3-4 3"/></svg></button>'
-      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Turn" title="Turn" aria-label="Turn"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>'
-      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Close up" title="Close up" aria-label="Close up"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M10 7v6M7 10h6M21 21l-4.3-4.3"/></svg></button>'
-      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Wide" title="Wide" aria-label="Wide"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Sit" title="Sit" aria-label="Sit"' + (lineFilled ? '' : ' disabled') + '><svg viewBox="0 0 24 24"><path d="M6 4v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4M6 20v-4M18 20v-4M6 12h12"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Stand" title="Stand" aria-label="Stand"' + (lineFilled ? '' : ' disabled') + '><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 9v7M9 12h6M9 20l3-4 3 4"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Walk to camera" title="Walk to camera" aria-label="Walk to camera"' + (lineFilled ? '' : ' disabled') + '><svg viewBox="0 0 24 24"><circle cx="9" cy="5" r="2"/><path d="M9 8v6l-2 7M9 14l4-1 2 7"/><path d="M17 9l4 3-4 3"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Turn" title="Turn" aria-label="Turn"' + (lineFilled ? '' : ' disabled') + '><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Close up" title="Close up" aria-label="Close up"' + (lineFilled ? '' : ' disabled') + '><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M10 7v6M7 10h6M21 21l-4.3-4.3"/></svg></button>'
+      +   '<button type="button" class="sc-shot-icon-btn" data-shot-tag="Wide" title="Wide" aria-label="Wide"' + (lineFilled ? '' : ' disabled') + '><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg></button>'
       + '</div>'
       + '</div>';
   }
@@ -2842,6 +2879,13 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
       var field = t.getAttribute('data-sc-field');
       b[field] = t.value;
       if (t.tagName === 'TEXTAREA') grow(t);
+      if (field === 'line') {
+        var filled = !!(t.value && t.value.trim());
+        var shotInput = box.querySelector('input.sc-shot');
+        if (shotInput) shotInput.disabled = !filled;
+        var iconBtns = box.querySelectorAll('.sc-shot-icon-btn');
+        for (var i = 0; i < iconBtns.length; i++) iconBtns[i].disabled = !filled;
+      }
       queueSave('beat', b.id, field, t.value, box.querySelector('.sc-state'));
       return;
     }
