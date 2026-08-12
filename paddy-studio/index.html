@@ -2421,16 +2421,20 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
    Backend: four routes on the studio's existing Make proxy scenario.
      list_scripts                            reads the Scripts table
      list_beats   { scriptId }               reads the Script Beats table
-     patch_beat   { recordId, airtableBody } writes one beat
-     patch_script { recordId, airtableBody } writes one script
+     patch_beat   { recordId, f }            writes one beat
+     patch_script { recordId, f }            writes one script
 
-   Note on list_beats: the route filters with FIND(scriptId, ARRAYJOIN({Script})).
-   Airtable renders a linked record field as the linked row's primary field, so
-   what that filter actually matches is the script NAME, not its record id.
-   Passing a record id there returns nothing. This panel therefore sends the
-   name to narrow the request server side, then narrows again by record id on
-   the way in, which is what keeps two scripts sharing a name from bleeding
-   into each other. */
+   Note on list_beats, corrected Session 76. The route used to filter with
+   FIND(scriptId, ARRAYJOIN({Script})). Airtable renders a linked record field
+   as the linked row's PRIMARY FIELD, so that filter matched the script NAME,
+   never its record id. The panel worked around it by sending the name, which
+   meant two scripts sharing a name could bleed into each other and every miss
+   fell back to pulling the entire beats table.
+
+   Fixed properly at the source instead. Scripts now carries a script_rec_id
+   formula field holding RECORD_ID(), Script Beats looks that value up through
+   its Script link, and the route filters on the lookup. The panel sends the
+   real record id. narrow() below is kept as a belt and braces check. */
 (function(){
   'use strict';
 
@@ -2567,7 +2571,7 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
     var s = active();
     render();
     if (!s || st.beats[s.id] !== undefined) return Promise.resolve();
-    return call('list_beats', { scriptId: s.name })
+    return call('list_beats', { scriptId: s.id })
       .then(function(res){
         var mine = narrow(records(res), s.id);
         /* Empty result but the script says it has beats means the name based
@@ -2611,14 +2615,32 @@ window.__scriptsProxy = function(action, payload){ return proxyCall(action, payl
   }
 
   function flush(kind, id, field, stateNode){
-    var key    = kind + ':' + id + ':' + field;
-    var fields = {};
-    fields[field] = st.pending[key];
+    var key = kind + ':' + id + ':' + field;
     setState(stateNode, 'saving', 'Saving');
-    call(kind === 'beat' ? 'patch_beat' : 'patch_script', {
-      recordId:     id,
-      airtableBody: JSON.stringify({ fields: fields })
-    })
+
+    /* Session 76. This used to send a raw Airtable PATCH body and every save
+       failed with "Failed to fetch", even though Make logged the run as a
+       success. Cause: the proxy route used Airtable's generic Make an API Call
+       module for the PATCH, and that module never returns a response the
+       browser will accept. Both patch routes now use the Update a Record
+       module instead, the same one the working leads route has always used.
+
+       That module writes every field it is handed, so it would blank any field
+       we left out. We therefore send the whole editable set from local state,
+       not just the one field that changed. Local state is authoritative here,
+       it is what is on screen. */
+    var f, obj;
+    if (kind === 'beat') {
+      obj = findBeat(id);
+      if (!obj) return;
+      f = { line: obj.line || '', shot: obj.shot || '', done: !!obj.done };
+    } else {
+      obj = active();
+      if (!obj || obj.id !== id) return;
+      f = { status: obj.status || 'Draft', notes: obj.notes || '' };
+    }
+
+    call(kind === 'beat' ? 'patch_beat' : 'patch_script', { recordId: id, f: f })
       .then(function(){
         delete st.pending[key];
         setState(stateNode, 'saved', 'Saved');
