@@ -2086,16 +2086,11 @@ function initApp() {
     inviteLinkSpan.textContent = 'https://www.themarketplace.co.nz/checkin';
   }
   
-  // Auto sync on load silently then start polling
+  // Auto sync on load silently then start smart polling
   syncLeads(true).then(() => {
     startAirtablePolling();
     checkAutoSMSReminders(); // run after sync so lead data is fresh
   });
-  
-  // Schedule background sync every 30 minutes (1,800,000 milliseconds)
-  setInterval(() => {
-    syncLeads(true);
-  }, 1800000);
 }
 
 function copyInviteText() {
@@ -6005,13 +6000,33 @@ function updateLeadStage(idx, stage, btn) {
   }
 }
 
-// ===== LIVE POLLING — refresh from Airtable every 30 minutes =====
+// ===== LIVE POLLING — sync when the tab regains focus, plus a safety net while visible =====
+// 13 Aug 2026: was a blind 30 minute setInterval here, PLUS a second identical timer
+// duplicated in initApp() firing independently — that duplicate silently doubled Sopo's
+// Make.com operations cost. Now: sync fires when you actually look at the tab (tabs left
+// open and unwatched cost nothing), with a 20 minute heartbeat so data never goes stale
+// if the tab stays focused for hours without a refocus event.
 let airtablePollInterval = null;
+let lastPollSync = 0;
+const POLL_MIN_GAP_MS = 5 * 60 * 1000;     // never re-sync more than once per 5 minutes
+const POLL_SAFETY_NET_MS = 20 * 60 * 1000; // heartbeat while the tab stays visible/focused
+
+function maybeSyncOnPoll() {
+  if (document.visibilityState !== 'visible') return;
+  const now = Date.now();
+  if (now - lastPollSync < POLL_MIN_GAP_MS) return;
+  lastPollSync = now;
+  syncLeads(true);
+}
+
 function startAirtablePolling() {
   if (airtablePollInterval) clearInterval(airtablePollInterval);
-  airtablePollInterval = setInterval(() => {
-    syncLeads(true); // silent refresh
-  }, 1800000); // 30 minutes
+  lastPollSync = Date.now(); // the initial load sync already happened
+  airtablePollInterval = setInterval(maybeSyncOnPoll, POLL_SAFETY_NET_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') maybeSyncOnPoll();
+  });
+  window.addEventListener('focus', maybeSyncOnPoll);
 }
 
 // ===== TRANSCRIPT POPUP =====
