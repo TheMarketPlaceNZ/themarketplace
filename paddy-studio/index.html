@@ -1487,12 +1487,40 @@ if (sessionStorage.getItem('paddy_authed') === '1') {
   initApp();
 }
 
+// ===== LIVE POLLING — sync when the tab regains focus, plus a safety net while visible =====
+// 13 Aug 2026: was a blind 60 second setInterval, the single heaviest Make.com operations
+// consumer in the whole account regardless of whether anyone was looking at the tab. Now:
+// sync fires when you actually look at the tab, with a 20 minute heartbeat so data never
+// goes stale if the tab stays focused for hours without a refocus event.
+let paddyPollInterval = null;
+let lastPaddyPollSync = 0;
+const PADDY_POLL_MIN_GAP_MS = 5 * 60 * 1000;     // never re-sync more than once per 5 minutes
+const PADDY_POLL_SAFETY_NET_MS = 20 * 60 * 1000; // heartbeat while the tab stays visible/focused
+
+function maybePaddySync() {
+  if (document.visibilityState !== 'visible') return;
+  const now = Date.now();
+  if (now - lastPaddyPollSync < PADDY_POLL_MIN_GAP_MS) return;
+  lastPaddyPollSync = now;
+  syncLeads(true);
+}
+
+function startAirtablePolling() {
+  if (paddyPollInterval) clearInterval(paddyPollInterval);
+  lastPaddyPollSync = Date.now(); // the initial load sync already happened
+  paddyPollInterval = setInterval(maybePaddySync, PADDY_POLL_SAFETY_NET_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') maybePaddySync();
+  });
+  window.addEventListener('focus', maybePaddySync);
+}
+
 function initApp() {
   sessionStorage.setItem('paddy_authed', '1');
   loadState();
   buildSelects();
   renderAll();
-  syncLeads(true).then(() => setInterval(() => syncLeads(true), 60000));
+  syncLeads(true).then(() => startAirtablePolling());
 }
 
 let deferredInstallPrompt = null;
