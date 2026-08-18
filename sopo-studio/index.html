@@ -414,35 +414,6 @@ body {
 .prospect-info { font-size: 13px; font-weight: 600; color: var(--white); }
 .prospect-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
-/* ===== FLOATING DUSTBIN (3-DAY EXPIRY) ===== */
-.dustbin-trigger {
-  position: fixed; bottom: 24px; right: 24px;
-  width: 56px; height: 56px; border-radius: 50%;
-  background: var(--navy-accent); border: 1px solid var(--border-gold);
-  color: var(--gold); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-  transition: all 0.2s ease; z-index: 99;
-}
-.dustbin-trigger:hover { transform: scale(1.05); border-color: var(--gold); }
-.dustbin-trigger svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; }
-.dustbin-badge {
-  position: absolute; top: -4px; right: -4px;
-  background: var(--red); color: white;
-  font-size: 10px; font-weight: 700; width: 20px; height: 20px;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
-.dustbin-list { display: flex; flex-direction: column; gap: 10px; }
-.dustbin-item {
-  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 12px; display: flex; justify-content: space-between; align-items: center;
-}
-.dustbin-meta { flex: 1; }
-.dustbin-name { font-size: 14px; font-weight: 600; color: var(--white); }
-.dustbin-time-left { font-size: 11px; color: var(--red); font-weight: 600; margin-top: 2px; }
-.dustbin-actions { display: flex; gap: 8px; }
-
 /* ===== MODAL OVERLAYS ===== */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px);
@@ -1419,25 +1390,6 @@ body {
   </main>
 </div>
 
-<!-- ===== FLOATING DUSTBIN (TRASH CAN) ===== -->
-<div class="dustbin-trigger" onclick="openDustbinModal()">
-  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-  <div class="dustbin-badge" id="dustbinBadge">0</div>
-</div>
-
-<!-- DUSTBIN MODAL -->
-<div class="modal-overlay" id="dustbinModal">
-  <div class="modal-sheet">
-    <button class="modal-close-x" onclick="closeModal('dustbinModal')">&times;</button>
-    <div class="modal-handle"></div>
-    <div class="modal-title">
-      <span>Dustbin</span>
-      <span style="font-size:12px; color:var(--muted); font-weight:normal;">Held for 3 days before permanent deletion</span>
-    </div>
-    <div class="dustbin-list" id="dustbinContainer"></div>
-  </div>
-</div>
-
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal-sheet">
@@ -1938,7 +1890,13 @@ let appState = {
   leads: [],
   meetings: [],
   tasks: [],
-  dustbin: [], // Holds deleted items: { id, deletedAt, type, data }
+  dustbin: [], // Retired 13 Aug 2026: the Dustbin soft-delete only ever touched
+                // a local blocklist and left Airtable, the slot, and the Zoom
+                // meeting untouched, which is why deleted leads kept coming
+                // back. Every delete is now immediate and permanent. This
+                // array is kept only so any leftover local data loads without
+                // errors; it is actively cleared on load below and nothing
+                // writes to it any more.
   calendarBlocks: [],
   currentFilter: 'all',
   // 25 Jul 2026 fix (Session 37): these two were previously created lazily as
@@ -2031,8 +1989,9 @@ function loadState() {
     ];
   }
   
-  // Sweep dustbin (delete items older than 3 days)
-  sweepDustbin();
+  // Dustbin retired 13 Aug 2026 (see appState.dustbin comment above) — clear
+  // out any stale entries from before the change so nothing lingers unseen.
+  appState.dustbin = [];
 }
 
 function getSetting(key, fallback = '') {
@@ -2130,7 +2089,6 @@ function renderAll() {
   renderTracker();
   renderCalendar();
   renderEmailLists();
-  renderDustbin();
 }
 
 // ===== TRACKER PIPELINE MODULE =====
@@ -2313,47 +2271,48 @@ function reEvaluateLead(idx) {
 
 // Sopo can pull a lead out of Cultivation, the Wait List, or Reactivation
 // at any time, no questions asked, sends them back to square one at Pre-Broker.
-// Genuinely and permanently delete a lead, from local state AND from
-// Airtable itself. Unlike moveLeadToDustbin, which only ever touched a
-// retired Google Sheet blocklist and left the Airtable record untouched,
-// this is a true delete with no way back. Reserved for leads already
-// past Pre-Broker, where Sopo has decided the record should simply be gone.
+// Genuinely and permanently delete a lead: removed from local state, removed
+// from Airtable, any booked Availability Slot reverted to Available, and any
+// live Zoom meeting cancelled. This is now the ONLY delete path in the app
+// (13 Aug 2026 fix: this used to be a bare Airtable delete with no slot or
+// Zoom cleanup, while the separate Dustbin soft-delete flow left the Airtable
+// record untouched entirely, which is why deleted leads kept reappearing,
+// especially on a different device that never saw the local guard). Both
+// the lead card's Delete button and the lead modal's Delete button call this
+// same function now. There is no way back once this runs.
 async function deleteLeadPermanently(idx) {
   const l = appState.leads[idx];
   if (!l) return;
-  
-  const confirmMsg = `This will permanently delete ${l.name || 'this lead'} from Airtable. This cannot be undone. Are you sure?`;
+
+  const confirmMsg = `This will permanently delete ${l.name || 'this lead'}: removed from Airtable, their booking (if any) reverted to Available, and their Zoom meeting cancelled. This cannot be undone. Are you sure?`;
   if (!confirm(confirmMsg)) return;
-  
+
   if (l.airtableId) {
+    // 25 Jul 2026 fix pattern (Session 37), applied here too on 13 Aug 2026:
+    // the guard must be set BEFORE the await. If Make takes a few seconds, an
+    // autopoll can fire mid-flight, find the still-present Airtable record,
+    // match nothing locally (we're about to splice it out below), and
+    // resurrect it before the delete has even finished, which is exactly the
+    // "delete then it comes back" symptom.
+    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
+    const guardWasAlreadySet = appState.deletedLeadIds.includes(l.airtableId);
+    if (!guardWasAlreadySet) appState.deletedLeadIds.push(l.airtableId);
+    saveState();
+
     try {
-      if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
-        await airtableProxyCall('delete', { recordId: l.airtableId });
-      } else {
-        await fetch(`${AIRTABLE_API}/${l.airtableId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
-        });
-      }
+      await airtableProxyCall('delete_lead_full', {
+        recordId: l.airtableId,
+        zoomMeetingId: l.zoomMeetingId || ''
+      });
     } catch(e) {
-      console.warn('Airtable permanent delete failed:', e.message);
-      alert('Could not delete from Airtable, please check your connection and try again.');
+      console.warn('Permanent delete (Airtable/slot/Zoom) failed:', e.message);
+      if (!guardWasAlreadySet) {
+        appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== l.airtableId);
+      }
+      saveState();
+      alert('Could not fully delete this lead from Airtable, please check your connection and try again. Nothing has been removed.');
       return;
     }
-  }
-
-  // 24 Jul 2026 fix: the very next autopoll (see airtablePollInterval) calls
-  // syncLeads(), which rebuilds appState.leads purely from whatever Airtable
-  // currently reports. If the delete above is slow, rate-limited, or the
-  // Make.com proxy's delete route silently no-ops, Airtable still has the
-  // record, syncLeads() finds no local match for it (we're about to splice
-  // it out below) and re-adds it fresh, which is exactly the "delete then it
-  // comes back" symptom. Flag the airtableId as deliberately deleted so
-  // syncLeads() can filter it out of every future poll, same pattern as
-  // unsavedNoteIds guards notes from being overwritten.
-  if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
-  if (l.airtableId && !appState.deletedLeadIds.includes(l.airtableId)) {
-    appState.deletedLeadIds.push(l.airtableId);
   }
 
   appState.leads.splice(idx, 1);
@@ -2449,7 +2408,7 @@ function renderTracker() {
         actionButtons = `
           <div style="display: flex; gap: 6px; margin-top: 10px;">
             <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold); padding: 6px;" onclick="event.stopPropagation(); openWaitPeriodPrompt(${leadIdx})">Set Wait Period</button>
-            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px; padding: 6px;" onclick="event.stopPropagation(); moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px; padding: 6px;" onclick="event.stopPropagation(); deleteLeadPermanently(${leadIdx})" title="Permanently Delete">Delete</button>
           </div>
         `;
       }
@@ -2701,7 +2660,7 @@ function renderLeads() {
         <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); sendBookingReminder(${appState.leads.indexOf(l)})">SMS</button>
         <button class="lead-act-btn" onclick="event.stopPropagation(); pushLead(${appState.leads.indexOf(l)})" title="Manually push to Pre-Broker" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Push</button>
-        <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
+        <button class="lead-act-btn delete" onclick="event.stopPropagation(); deleteLeadPermanently(${appState.leads.indexOf(l)})" title="Permanently Delete">Delete</button>
       </div>
     </div>
   `}).join('');
@@ -3831,62 +3790,90 @@ function appendLifecycleEntry(lead, text) {
   }
 }
 
-// Write the full lifecycle log back to Airtable
-//
-// 22 Jul 2026 fix: this used to fail silently (console.warn only). If the
-// Make.com "Sopo Airtable Proxy" scenario's patch route ever rejected the
-// write, this function swallowed the error, the note stayed ONLY in local
-// appState, and the very next syncLeads() pulled the still-unchanged record
-// down from Airtable and overwrote local state with it, appState.leads
-// showed the note vanishing, i.e. the "notes wiped on refresh" bug. The
-// proxy scenario itself is being patched separately to actually respond on
-// failure instead of dying silently, but this side needed a fix too: retry
-// once (covers a transient blip), and on a second failure, show a visible
-// red error toast and refuse to let the next sync silently clobber this
-// lead's local note, instead of failing invisibly.
-async function writeLifecycleLogToAirtable(airtableId, log, isRetry = false) {
-  if (!airtableId) return;
-  const fields = { [AT_FIELDS.lifecycle_log]: log };
-  try {
-    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
-      await airtableProxyCall('patch', { recordId: airtableId, fields });
-    } else {
-      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ fields })
-      });
-      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
-    }
-    // Success: clear any earlier "unsaved" flag for this lead so syncLeads()
-    // is safe to overwrite it again.
-    if (Array.isArray(appState.unsavedNoteIds)) {
-      appState.unsavedNoteIds = appState.unsavedNoteIds.filter(id => id !== airtableId);
-    }
-  } catch(e) {
-    console.warn('Airtable lifecycle log write failed:', e.message);
-    if (!isRetry) {
-      // One quiet retry, covers a transient network/Make blip without
-      // bothering the user.
-      return writeLifecycleLogToAirtable(airtableId, log, true);
-    }
-    // Second failure in a row: this is a real save failure, not a blip.
-    // Flag it so syncLeads() knows not to silently overwrite this lead's
-    // local (unsaved) note with stale Airtable data, and tell Sopo so she
-    // can retry the note herself.
-    if (!Array.isArray(appState.unsavedNoteIds)) appState.unsavedNoteIds = [];
-    if (!appState.unsavedNoteIds.includes(airtableId)) {
-      appState.unsavedNoteIds.push(airtableId);
-    }
-    if (typeof showErrorToast === 'function') {
-      showErrorToast('⚠️ Note failed to save, try again');
-    } else {
-      alert('This note failed to save to Airtable. Please try again.');
+// ===== PER-RECORD WRITE QUEUE + BACKOFF RETRY =====
+// 17 Aug 2026 fix: root cause of the "note failed to save" bug on Semisi
+// Koroibuleka's record. Two notes logged seconds apart each fired their own
+// independent fetch to the SAME Airtable record with no queue between them.
+// The Sopo Airtable Proxy scenario's patch route has an onerror branch that
+// catches an Airtable rejection and returns a clean 502 — Make's own
+// execution log shows that as a "successful" run (the scenario completed
+// its error route), which is why the Make dashboard looked totally healthy
+// while both notes silently never reached Airtable. The burst of
+// near-simultaneous requests to the same base is what tripped it. Two
+// fixes: (1) serialise all writes to a given lead record through one queue
+// so concurrent submits can't race each other or the base's rate limit,
+// (2) widen the single blind retry to three attempts with real backoff so
+// a momentary 502/429 has time to clear before the note is actually lost.
+const leadWriteQueues = new Map();
+function queueLeadWrite(airtableId, taskFn) {
+  const prevSettled = (leadWriteQueues.get(airtableId) || Promise.resolve()).catch(() => {});
+  const result = prevSettled.then(taskFn);
+  leadWriteQueues.set(airtableId, result.catch(() => {}));
+  return result;
+}
+
+async function writeAirtableFieldWithRetry(airtableId, fields, opts) {
+  const maxAttempts = (opts && opts.maxAttempts) || 3;
+  const unsavedArrayName = opts && opts.unsavedArrayName;
+  const failMsg = (opts && opts.failMsg) || '⚠️ Save failed, try again';
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
+        await airtableProxyCall('patch', { recordId: airtableId, fields });
+      } else {
+        const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fields })
+        });
+        if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
+      }
+      // Success: clear any earlier "unsaved" flag for this lead so syncLeads()
+      // is safe to overwrite it again.
+      if (unsavedArrayName && Array.isArray(appState[unsavedArrayName])) {
+        appState[unsavedArrayName] = appState[unsavedArrayName].filter(id => id !== airtableId);
+      }
+      return true;
+    } catch (e) {
+      console.warn(`Airtable write failed (attempt ${attempt}/${maxAttempts}):`, e.message);
+      if (attempt < maxAttempts) {
+        // Backoff before the next attempt — gives a momentary rate limit or
+        // Make/Airtable blip room to clear instead of failing immediately.
+        await new Promise(r => setTimeout(r, 500 * attempt));
+      }
     }
   }
+  // Every attempt failed: this is a real save failure, not a blip. Flag it
+  // so syncLeads() knows not to silently overwrite this lead's local
+  // (unsaved) data with stale Airtable data, and tell Sopo so she can retry.
+  if (unsavedArrayName) {
+    if (!Array.isArray(appState[unsavedArrayName])) appState[unsavedArrayName] = [];
+    if (!appState[unsavedArrayName].includes(airtableId)) {
+      appState[unsavedArrayName].push(airtableId);
+    }
+  }
+  if (typeof showErrorToast === 'function') {
+    showErrorToast(failMsg);
+  } else {
+    alert(failMsg);
+  }
+  return false;
+}
+
+// Write the full lifecycle log back to Airtable. Queued per lead record
+// (see leadWriteQueues above) so two notes logged in quick succession can't
+// race each other's PATCH requests.
+async function writeLifecycleLogToAirtable(airtableId, log) {
+  if (!airtableId) return;
+  return queueLeadWrite(airtableId, () =>
+    writeAirtableFieldWithRetry(airtableId, { [AT_FIELDS.lifecycle_log]: log }, {
+      unsavedArrayName: 'unsavedNoteIds',
+      failMsg: '⚠️ Note failed to save, try again'
+    })
+  );
 }
 
 // ===== CALL NOTE QUICK-TAP BUTTONS =====
@@ -3933,91 +3920,29 @@ async function submitCallNote() {
   renderModalDebriefHistory();
 }
 
-// Write a stage change back to Airtable
-// 3 Aug 2026 fix: this was the one write function that never got the 22 Jul
-// retry/flag/toast treatment. On failure it just console.warned and gave up,
-// and syncLeads' merge never protected stage the way it protects notes, so
-// a failed or slow stage write got silently overwritten on the very next
-// sync, i.e. "push to Pre-Broker, refresh, lead is back at the start."
-// Same fix pattern as writeNotesToAirtable: retry once, flag+alert on a
-// real second failure so syncLeads() knows not to overwrite it.
-async function writeStageToAirtable(airtableId, internalStage, isRetry = false) {
+// Write a stage change back to Airtable. Queued per lead record, same as
+// writeLifecycleLogToAirtable, so a stage change can't race a note write
+// (or another stage change) to the same record.
+async function writeStageToAirtable(airtableId, internalStage) {
   if (!airtableId) return;
   const atStage = internalStageToAt(internalStage);
-  const fields = { [AT_FIELDS.pipeline_stage]: atStage };
-  try {
-    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
-      await airtableProxyCall('patch', { recordId: airtableId, fields });
-    } else {
-      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ fields })
-      });
-      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
-    }
-    if (Array.isArray(appState.unsavedStageIds)) {
-      appState.unsavedStageIds = appState.unsavedStageIds.filter(id => id !== airtableId);
-    }
-  } catch(e) {
-    console.warn('Airtable stage write failed:', e.message);
-    if (!isRetry) {
-      return writeStageToAirtable(airtableId, internalStage, true);
-    }
-    if (!Array.isArray(appState.unsavedStageIds)) appState.unsavedStageIds = [];
-    if (!appState.unsavedStageIds.includes(airtableId)) {
-      appState.unsavedStageIds.push(airtableId);
-    }
-    if (typeof showErrorToast === 'function') {
-      showErrorToast('Stage change failed to save, try again');
-    } else {
-      alert('This stage change failed to save to Airtable. Please try again.');
-    }
-  }
+  return queueLeadWrite(airtableId, () =>
+    writeAirtableFieldWithRetry(airtableId, { [AT_FIELDS.pipeline_stage]: atStage }, {
+      unsavedArrayName: 'unsavedStageIds',
+      failMsg: 'Stage change failed to save, try again'
+    })
+  );
 }
 
-// Write agent notes back to Airtable
-// 22 Jul 2026 fix: same silent-swallow-then-get-wiped-on-refresh bug as
-// writeLifecycleLogToAirtable above, same fix (retry once, flag+alert on a
-// real failure so syncLeads() knows not to overwrite it).
-async function writeNotesToAirtable(airtableId, notes, isRetry = false) {
+// Write agent notes back to Airtable. Same queued/backoff fix as above.
+async function writeNotesToAirtable(airtableId, notes) {
   if (!airtableId) return;
-  const fields = { [AT_FIELDS.agent_notes]: notes };
-  try {
-    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
-      await airtableProxyCall('patch', { recordId: airtableId, fields });
-    } else {
-      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ fields })
-      });
-      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
-    }
-    if (Array.isArray(appState.unsavedNoteIds)) {
-      appState.unsavedNoteIds = appState.unsavedNoteIds.filter(id => id !== airtableId);
-    }
-  } catch(e) {
-    console.warn('Airtable notes write failed:', e.message);
-    if (!isRetry) {
-      return writeNotesToAirtable(airtableId, notes, true);
-    }
-    if (!Array.isArray(appState.unsavedNoteIds)) appState.unsavedNoteIds = [];
-    if (!appState.unsavedNoteIds.includes(airtableId)) {
-      appState.unsavedNoteIds.push(airtableId);
-    }
-    if (typeof showErrorToast === 'function') {
-      showErrorToast('⚠️ Note failed to save, try again');
-    } else {
-      alert('This note failed to save to Airtable. Please try again.');
-    }
-  }
+  return queueLeadWrite(airtableId, () =>
+    writeAirtableFieldWithRetry(airtableId, { [AT_FIELDS.agent_notes]: notes }, {
+      unsavedArrayName: 'unsavedNoteIds',
+      failMsg: '⚠️ Note failed to save, try again'
+    })
+  );
 }
 
 // ===== SYNC LEADS FROM AIRTABLE (replaces Google Sheets sync) =====
@@ -5068,18 +4993,9 @@ function toggleDebriefExpand(btn, boxId) {
 }
 
 function deleteClientDebrief(idx) {
-  if (confirm("Are you sure you want to delete this debrief? This will move it to the dustbin.")) {
+  if (confirm("Are you sure you want to permanently delete this debrief? This cannot be undone.")) {
     const l = appState.leads[currentLeadIndex];
     if (l && l.meetings) {
-      const m = l.meetings[idx];
-      const dustbinItem = {
-        id: Date.now(),
-        deletedAt: new Date().toISOString(),
-        type: 'client-meeting',
-        clientEmail: l.email,
-        data: m
-      };
-      appState.dustbin.push(dustbinItem);
       l.meetings.splice(idx, 1);
       saveState();
       renderModalDebriefHistory();
@@ -5272,19 +5188,10 @@ function copyProspectInfo(name, email) {
   alert(`Copied: ${name} <${email}>`);
 }
 
-// ===== FLOATING DUSTBIN FLOW (3-DAY RETENTION) =====
-function sweepDustbin() {
-  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  if (appState.dustbin) {
-    appState.dustbin = appState.dustbin.filter(item => {
-      const deletedAt = new Date(item.deletedAt).getTime();
-      return (now - deletedAt) < threeDaysMs;
-    });
-    saveState();
-  }
-}
-
+// Dustbin flow retired 13 Aug 2026 — see appState.dustbin comment above.
+// moveLeadToDustbin, moveMeetingToDustbin, renderDustbin, restoreDustbinItem,
+// deleteDustbinPermanently, openDustbinModal and closeDustbinModal have all
+// been removed; deleteLeadPermanently now handles every lead delete directly.
 function fireStatusWebhook(email, status) {
   const webhookUrl = getSetting('statusWebhookUrl');
   if (!webhookUrl || !email) return;
@@ -5293,45 +5200,6 @@ function fireStatusWebhook(email, status) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.toLowerCase(), status: status })
   }).catch(() => {}); // Silent fail — local action always proceeds
-}
-
-function moveLeadToDustbin(idx) {
-  const l = appState.leads[idx];
-  if (!l) return;
-  
-  const dustbinItem = {
-    id: Date.now(),
-    deletedAt: new Date().toISOString(),
-    type: 'lead',
-    data: l
-  };
-  
-  appState.dustbin.push(dustbinItem);
-
-  // Track in local deleted blocklist
-  if (!appState.deletedLeads) appState.deletedLeads = [];
-  if (l.email) appState.deletedLeads.push(l.email.toLowerCase());
-  if (l.phone) appState.deletedLeads.push(l.phone);
-
-  // Mark as deleted in Google Sheet (cross-device permanent fix)
-  fireStatusWebhook(l.email, 'deleted');
-
-  // 24 Jul 2026 fix: moving a lead to the Dustbin is a soft delete — the
-  // Airtable record is untouched. Without this guard, the very next
-  // autopoll (syncLeads) rebuilds appState.leads from Airtable, finds no
-  // local match for this lead, and re-adds it — the "delete button keeps
-  // reappearing" bug. Same deletedLeadIds guard deleteLeadPermanently uses;
-  // restoreDustbinItem removes it again so a restored lead resyncs normally.
-  if (l.airtableId) {
-    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
-    if (!appState.deletedLeadIds.includes(l.airtableId)) {
-      appState.deletedLeadIds.push(l.airtableId);
-    }
-  }
-
-  appState.leads.splice(idx, 1);
-  saveState();
-  renderAll();
 }
 
 function moveLeadToEmailList(idx) {
@@ -5358,172 +5226,15 @@ function moveLeadToEmailList(idx) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-function moveMeetingToDustbin(id) {
+function deleteMeetingPermanently(id) {
   const idx = appState.meetings.findIndex(m => m.id === id);
   if (idx === -1) return;
-  const m = appState.meetings[idx];
-  
-  const dustbinItem = {
-    id: Date.now(),
-    deletedAt: new Date().toISOString(),
-    type: 'meeting',
-    data: m
-  };
-  
-  appState.dustbin.push(dustbinItem);
+
   appState.meetings.splice(idx, 1);
   if (activeTranscriptId === id) activeTranscriptId = null;
   saveState();
   renderAll();
 }
-
-function renderDustbin() {
-  const badge = document.getElementById('dustbinBadge');
-  const container = document.getElementById('dustbinContainer');
-  const items = appState.dustbin || [];
-  
-  badge.textContent = items.length;
-  badge.style.display = items.length > 0 ? 'flex' : 'none';
-  
-  if (items.length === 0) {
-    container.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:30px;">Dustbin is empty. Deleted items are kept here for 3 days.</div>';
-    return;
-  }
-  
-  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  
-  container.innerHTML = items.map((item, idx) => {
-    const deletedTime = new Date(item.deletedAt).getTime();
-    const msLeft = threeDaysMs - (now - deletedTime);
-    const hrsLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60)));
-    const daysLeft = Math.floor(hrsLeft / 24);
-    const remainingText = daysLeft > 0 ? `${daysLeft}d left` : `${hrsLeft}h left`;
-    
-    let label = '';
-    if (item.type === 'lead') label = `Lead: ${item.data.name}`;
-    else if (item.type === 'meeting') label = `Meeting: ${item.data.label}`;
-    else if (item.type === 'client-meeting') label = `Debrief: ${item.data.label} (Client: ${item.clientEmail || 'Unknown'})`;
-    
-    return `
-      <div class="dustbin-item">
-        <div class="dustbin-meta">
-          <div class="dustbin-name">${label}</div>
-          <div class="dustbin-time-left">Held: ${remainingText}</div>
-        </div>
-        <div class="dustbin-actions">
-          <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="restoreDustbinItem(${idx})">Restore</button>
-          <button class="btn btn-red" style="padding:6px 12px; font-size:11px;" onclick="deleteDustbinPermanently(${idx})">Delete</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function restoreDustbinItem(idx) {
-  const item = appState.dustbin[idx];
-  if (!item) return;
-  
-  if (item.type === 'lead') {
-    appState.leads.unshift(item.data);
-    // Remove from deleted blocklist
-    if (appState.deletedLeads) {
-      if (item.data.email) {
-        appState.deletedLeads = appState.deletedLeads.filter(email => email !== item.data.email.toLowerCase());
-      }
-      if (item.data.phone) {
-        appState.deletedLeads = appState.deletedLeads.filter(phone => phone !== item.data.phone);
-      }
-    }
-    // Lift the syncLeads() guard so this lead resyncs normally again
-    if (Array.isArray(appState.deletedLeadIds) && item.data.airtableId) {
-      appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== item.data.airtableId);
-    }
-  } else if (item.type === 'meeting') {
-    appState.meetings.unshift(item.data);
-  } else if (item.type === 'client-meeting') {
-    const client = appState.leads.find(l => l.email === item.clientEmail);
-    if (client) {
-      if (!client.meetings) client.meetings = [];
-      client.meetings.unshift(item.data);
-    } else {
-      alert("Cannot restore debrief: Client not found. Please restore the client lead first.");
-      return;
-    }
-  }
-  
-  appState.dustbin.splice(idx, 1);
-  saveState();
-  renderAll();
-  
-  if (document.getElementById('dustbinModal').classList.contains('open')) {
-    renderDustbin();
-  }
-}
-
-async function deleteDustbinPermanently(idx) {
-  const item = appState.dustbin[idx];
-  if (!item) return;
-  if (!confirm("Permanently delete this item? This cannot be undone.")) return;
-
-  // 24 Jul 2026 fix: this used to only remove the local dustbin entry —
-  // the Airtable record, the lead's booked Availability Slot, and the
-  // Zoom meeting were all left behind, so the "permanent" delete wasn't.
-  // This is now the one true final delete: revert the slot to Available,
-  // cancel the Zoom meeting, then delete the Airtable Lead record itself.
-  if (item.type === 'lead' && item.data && item.data.airtableId) {
-    const atId = item.data.airtableId;
-
-    // 25 Jul 2026 fix (Session 37): the guard used to be set AFTER the await.
-    // If Make took a few seconds, an autopoll fired mid-flight, found the
-    // still-present Airtable record, matched nothing in appState.leads (the
-    // lead lives in the dustbin, not the lead list) and resurrected it — the
-    // lead then existed in both places at once. Flag it BEFORE the call so no
-    // poll during the round trip can bring it back, and roll the flag back in
-    // the catch so a genuine failure leaves state exactly as it was.
-    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
-    const guardWasAlreadySet = appState.deletedLeadIds.includes(atId);
-    if (!guardWasAlreadySet) appState.deletedLeadIds.push(atId);
-    saveState();
-
-    try {
-      // zoomMeetingId is sent as an advisory hint only. The delete_lead_full
-      // route reads zoom_meeting_id off the live Lead record server side
-      // before deleting it, because this dustbin entry is a local snapshot
-      // frozen at the moment the lead was binned and its Zoom id may be stale
-      // (e.g. a New Zoom Link was issued afterwards).
-      await airtableProxyCall('delete_lead_full', {
-        recordId: atId,
-        zoomMeetingId: item.data.zoomMeetingId || ''
-      });
-    } catch(e) {
-      console.warn('Permanent delete (Airtable/slot/Zoom) failed:', e.message);
-      if (!guardWasAlreadySet) {
-        appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== atId);
-      }
-      saveState();
-      alert('Could not fully delete this lead from Airtable, please check your connection and try again. Nothing has been removed locally.');
-      return;
-    }
-  }
-
-  appState.dustbin.splice(idx, 1);
-  saveState();
-  renderAll();
-  if (document.getElementById('dustbinModal').classList.contains('open')) {
-    renderDustbin();
-  }
-}
-
-function openDustbinModal() {
-  renderDustbin();
-  document.getElementById('dustbinModal').classList.add('open');
-}
-document.getElementById('dustbinModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('dustbinModal')) {
-    document.getElementById('dustbinModal').classList.remove('open');
-  }
-});
 
 // ===== SETTINGS MODULE =====
 function openSettingsModal() {
@@ -5539,9 +5250,6 @@ function openSettingsModal() {
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
-}
-function closeDustbinModal() {
-  closeModal('dustbinModal');
 }
 function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('open'); }
 document.getElementById('settingsModal').addEventListener('click', e => { if (e.target === document.getElementById('settingsModal')) closeSettingsModal(); });
