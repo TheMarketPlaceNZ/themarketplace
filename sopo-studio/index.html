@@ -336,8 +336,16 @@ body {
   font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .lead-act-btn.call { background: var(--green-dim); color: var(--green); }
+.lead-act-btn.email { background: var(--blue-dim); color: var(--blue); }
 .lead-act-btn.sms { background: var(--blue-dim); color: var(--blue); }
 .lead-act-btn.delete { background: var(--red-dim); color: var(--red); max-width: 40px; }
+/* 19 Aug 2026: score badge retired everywhere on lead cards, replaced by
+   follow-up status (New Lead / Contacted / stale dot) and Reinstated. */
+.badge.new-lead { background: var(--blue-dim); color: var(--blue); }
+.badge.contacted { background: var(--green-dim); color: var(--green); }
+.badge.reinstated { background: var(--gold-dim); color: var(--gold); }
+.lead-status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+.lead-initials.neutral { background: var(--gold-dim); color: var(--gold); }
 
 /* ===== CALENDAR TAB ===== */
 .appointment-list { display: flex; flex-direction: column; gap: 12px; }
@@ -2379,9 +2387,12 @@ function renderTracker() {
     
     container.innerHTML = list.map((l, idx) => {
       const leadIdx = leads.indexOf(l);
-      const score = l.score || scoreLead(l);
-      const scoreClass = getScoreClass(score);
-      
+      // 19 Aug 2026: score badge retired on pipeline cards too. Pre-Broker
+      // cards show "Reinstated" if reinstateLead() put them there (its own
+      // lifecycle log entry always contains the word); every other stage
+      // shows nothing where the score used to sit.
+      const isReinstated = stage.key === 'qualified' && /reinstated/i.test(l.lifecycleLog || '');
+
       let actionButtons = '';
       if (stage.key === 'qualified') {
         actionButtons = `
@@ -2433,13 +2444,13 @@ function renderTracker() {
         <div class="lead-card tracker-lead-card-anim" style="padding: 12px; margin-bottom: 8px; animation-delay: ${idx * 0.05}s;" onclick="openLeadDetail(${leadIdx})">
           <div class="lead-header" style="margin-bottom: 6px;">
             <div class="lead-info-main">
-              <div class="lead-initials ${scoreClass}" style="width:26px; height:26px; font-size:11px;">${initials(l.name)}</div>
+              <div class="lead-initials neutral" style="width:26px; height:26px; font-size:11px;">${initials(l.name)}</div>
               <div>
                 <div class="lead-name" style="font-size:13px; font-weight:600;">${l.name}</div>
                 <div class="lead-meta-sub" style="font-size:9px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
               </div>
             </div>
-            <span class="badge ${scoreClass}" style="font-size: 8px; padding: 2px 4px;">Score: ${score}</span>
+            ${isReinstated ? `<span class="badge reinstated" style="font-size: 8px; padding: 2px 4px;">Reinstated</span>` : ''}
           </div>
           <div class="lead-details-text" style="font-size: 10px; margin-bottom: 6px; line-height: 1.3;">
             Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}<br>
@@ -2554,6 +2565,34 @@ function getScoreClass(score) {
   return score >= 7 ? 'hot' : score >= 4 ? 'warm' : 'cold';
 }
 
+// 19 Aug 2026: new-lead follow-up tracking, replaces the score badge on
+// every lead card. A lead is "new" for its first 3 days and pins to the
+// top of the Lead Database ignoring alphabetical order. Any activity
+// logged against it (call, text, note, Zoom link — anything that lands
+// in lifecycleLog) flips it to Contacted and releases it into normal
+// alphabetical order. Untouched past day 3 it becomes a plain red dot,
+// still pinned, through day 5 total. Past day 5 still untouched, it
+// releases into alphabetical order but stays red — a note logged at any
+// point (blue or red phase) still flips it to Contacted.
+function getLeadFollowUpStatus(l) {
+  const hasActivity = !!(l && l.lifecycleLog && l.lifecycleLog.trim().length > 0);
+  if (hasActivity) return { key: 'contacted', pinned: false };
+  const createdMs = (l && l.timestamp) ? new Date(l.timestamp).getTime() : Date.now();
+  const ageDays = (Date.now() - (isNaN(createdMs) ? Date.now() : createdMs)) / 86400000;
+  if (ageDays < 3) return { key: 'new', pinned: true };
+  if (ageDays < 5) return { key: 'stale', pinned: true };
+  return { key: 'stale', pinned: false };
+}
+
+// Renders the badge/dot for a Lead Database card given its follow-up status.
+function renderFollowUpBadge(status) {
+  if (!status) return '';
+  if (status.key === 'contacted') return `<span class="badge contacted">Contacted</span>`;
+  if (status.key === 'new') return `<span class="badge new-lead">✱ New Lead</span>`;
+  if (status.key === 'stale') return `<span class="lead-status-dot" title="No contact logged"></span>`;
+  return '';
+}
+
 function initials(name) {
   return (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 }
@@ -2607,11 +2646,22 @@ function renderLeads() {
     return;
   }
 
+  // 19 Aug 2026: new/untouched leads pin to the top ignoring alphabetical
+  // order (blue "New Lead" for the first 3 days, red dot for days 3-5).
+  // Once contacted, or once 5 days pass untouched, they release into
+  // normal order — Array.sort is stable in every engine this runs in, so
+  // ties (same pinned state) keep whatever order they arrived in.
+  const followUpByLead = new Map();
+  leads.forEach(l => followUpByLead.set(l, getLeadFollowUpStatus(l)));
+  leads = [...leads].sort((a, b) => {
+    const pa = followUpByLead.get(a).pinned ? 1 : 0;
+    const pb = followUpByLead.get(b).pinned ? 1 : 0;
+    return pb - pa;
+  });
+
   container.innerHTML = leads.map((l, i) => {
-    const score = l.score || scoreLead(l);
-    const scoreClass = getScoreClass(score);
     const av = l.source || 'Open Home';
-    
+
     // Check birthdays today
     const todayBirthdays = getTodayBirthdays(l);
     let birthdayBanners = '';
@@ -2632,13 +2682,13 @@ function renderLeads() {
     <div class="lead-card" onclick="openLeadDetail(${appState.leads.indexOf(l)})">
       <div class="lead-header">
         <div class="lead-info-main">
-          <div class="lead-initials ${scoreClass}">${initials(l.name)}</div>
+          <div class="lead-initials neutral">${initials(l.name)}</div>
           <div>
             <div class="lead-name">${l.name || 'Unknown'}</div>
             <div class="lead-meta-sub">${l.area || 'Hamilton'} · ${av}</div>
           </div>
         </div>
-        <span class="badge ${scoreClass}">Score: ${score}/10</span>
+        ${renderFollowUpBadge(followUpByLead.get(l))}
       </div>
       <div class="lead-details-text">
         Income: ${l.income || 'N/A'}<br>
@@ -2657,7 +2707,7 @@ function renderLeads() {
       ` : ''}
       ${birthdayBanners}
       <div class="lead-actions-row" style="margin-top: 10px;">
-        <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
+        <button class="lead-act-btn email" onclick="event.stopPropagation(); pushLeadToCultivation(${appState.leads.indexOf(l)})" title="Push to Cultivation List">Email</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); sendBookingReminder(${appState.leads.indexOf(l)})">SMS</button>
         <button class="lead-act-btn" onclick="event.stopPropagation(); pushLead(${appState.leads.indexOf(l)})" title="Manually push to Pre-Broker" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Push</button>
         <button class="lead-act-btn delete" onclick="event.stopPropagation(); deleteLeadPermanently(${appState.leads.indexOf(l)})" title="Permanently Delete">Delete</button>
@@ -3370,18 +3420,25 @@ function openLeadDetail(idx) {
   const l = appState.leads[idx];
   if (!l) return;
   currentLeadIndex = idx;
-  const score = l.score || scoreLead(l);
-  const scoreClass = getScoreClass(score);
-  
+  // 19 Aug 2026: score badge retired here too. New Lead / Contacted / stale
+  // dot for anyone still in the Lead Database, Reinstated for a Pre-Broker
+  // lead reinstateLead() put there, blank otherwise.
+  let detailBadge = '';
+  if (l.stage === 'qualified' && /reinstated/i.test(l.lifecycleLog || '')) {
+    detailBadge = `<span class="badge reinstated" style="margin-top:4px;">Reinstated</span>`;
+  } else if (!l.stage || l.stage === 'new') {
+    detailBadge = renderFollowUpBadge(getLeadFollowUpStatus(l));
+  }
+
   document.getElementById('leadModalContent').innerHTML = `
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-      <div class="lead-initials ${scoreClass}" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
+      <div class="lead-initials neutral" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
       <div style="flex:1;">
         <input type="text" class="settings-input" id="editLeadName" value="${l.name || ''}" style="font-size:16px; font-weight:700; padding:6px 10px; width:100%;">
-        <span class="badge ${scoreClass}" style="margin-top:4px;">Score: ${score}/10</span>
+        <div style="margin-top:4px;">${detailBadge}</div>
       </div>
     </div>
-    
+
     <div class="modal-tabs">
       <button class="modal-tab-btn active" id="btnTabDetails" onclick="switchModalTab('details')">Client Details</button>
       <button class="modal-tab-btn" id="btnTabTimeline" onclick="switchModalTab('timeline')">Timeline</button>
@@ -5423,20 +5480,46 @@ function simulateCallNoAnswer() {
 function pushLead(idx) {
   const l = appState.leads[idx];
   if (!l) return;
-  
+
   if (l.stage && l.stage !== 'new') {
     alert('This lead has already progressed past New Lead.');
     return;
   }
-  
+
   if (!confirm(`Push ${l.name || 'this lead'} into Pre-Broker?`)) return;
-  
+
   l.stage = 'qualified';
   appendLifecycleEntry(l, 'Manually pushed to Pre-Broker by Sopo');
-  
+
   saveState();
   renderAll();
-  
+
+  if (l.airtableId) {
+    writeStageToAirtable(l.airtableId, l.stage);
+  }
+}
+
+// 19 Aug 2026: replaces the old Call button on the Lead Database card.
+// One click, no picker — pushes the lead straight to the Cultivation List
+// (leads gone cold on calls, texts and email alike). Weekly automated
+// cultivation send is a separate build, deliberately not part of this.
+function pushLeadToCultivation(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+
+  if (l.stage && l.stage !== 'new') {
+    alert('This lead has already progressed past New Lead.');
+    return;
+  }
+
+  if (!confirm(`Move ${l.name || 'this lead'} to the Cultivation List? They'll come off the active Lead Database.`)) return;
+
+  l.stage = 'cultivation';
+  appendLifecycleEntry(l, 'Pushed to Cultivation List by Sopo');
+
+  saveState();
+  renderAll();
+
   if (l.airtableId) {
     writeStageToAirtable(l.airtableId, l.stage);
   }
