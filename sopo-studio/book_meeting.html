@@ -640,7 +640,19 @@
         return;
       }
 
-      const dateObj = new Date(`${dateVal}T${timeVal}:00`);
+      // 20 Aug 2026 fix (Session 83) — this page was still on the pre-Session-37
+      // pattern: it sent only a UTC bookingTime with no bookingLocal, never sent
+      // slotId, and then wrote the slot Booked itself via a client-side Airtable
+      // PATCH carrying a hardcoded PAT. index.html's reschedule flow was fixed to
+      // the correct pattern back in Session 37 (see its confirmReschedule
+      // comments) but this page, the one real first-time bookings actually use,
+      // was never brought in line. That mismatch is why modules 18/20 in the
+      // Sopo Booking scenario were erroring on every live test: parseDate reads
+      // bookingTime's UTC digits as if they were already Pacific/Auckland wall
+      // time, so the slot search never finds a match and gets handed a blank id.
+      const bookingLocal = `${dateVal}T${timeVal}:00`;
+      const dateObj = new Date(bookingLocal);
+      const slotId = document.getElementById('bookingSlotId').value;
 
       loadState();
 
@@ -661,7 +673,8 @@
       client.stage        = 'qualified';
       saveState();
 
-      // Fire webhook
+      // Fire webhook — Make now owns the booking write, by slotId, same as the
+      // Studio's own reschedule flow. No second, client-side writer.
       const webhookUrl = localStorage.getItem('sopo_bookingWebhookUrl') ||
         'https://hook.us2.make.com/r3wjak3nle9q9qdh0ls2qxjfoveb5y0i';
       fetch(webhookUrl, {
@@ -671,23 +684,12 @@
           name, email,
           bookingDate: dateVal,
           bookingTime: dateObj.toISOString(),
+          bookingLocal: bookingLocal,
+          slotId: slotId,
           meetingType: preference,
           source: 'Booking Page'
         })
       }).catch(err => console.warn('Webhook failed:', err));
-
-      // Mark slot as Booked in Airtable
-      const slotId = document.getElementById('bookingSlotId').value;
-      if (slotId) {
-        fetch(`https://api.airtable.com/v0/appXHdiVfCGMZPtWw/tbljkZglwG1Sf32gP/${slotId}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': 'Bearer patLZ2SNfkHGTBH6C.366ee25b241f63f90b31a6d3322f4c50ac6a086d9ca441320f3b099533bdb86a',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ fields: { status: 'Booked', booked_by: name } })
-        }).catch(err => console.warn('Slot update failed:', err));
-      }
 
       localStorage.setItem('sopo_booking_completed', JSON.stringify({
         email, name,
