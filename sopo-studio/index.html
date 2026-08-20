@@ -1736,6 +1736,7 @@ const AT_FIELDS = {
   meeting_choice:   'fldbxFEIExMmHXrfL',
   zoom_link:        'fldDr724XlOrFfgc1',
   zoom_meeting_id:  'fldWGvS3W75nGpNLi',
+  zoom_start_url:   'fldmmPbi1OXwFI7jA',
   ai_debrief:       'fldOqGQVLFDb1YEYe',
   checkin_date:     'fldqj65o3Zcizdng8',
   lifecycle_log:    'fldtCNudL7GcBXqNc',
@@ -3826,13 +3827,23 @@ function atRecordToLead(record) {
     lifecycleLog: f[AT_FIELDS.lifecycle_log] || f['lifecycle_log'] || '',
     waitUntil: f[AT_FIELDS.wait_until] || f['wait_until'] || null,
     timestamp: record.createdTime || new Date().toISOString(),
-    hasBooked: !!(f['booking_time'] || f['meeting_choice']),
-    bookingTime: f['booking_time'] || null,
-    meetingType: f['meeting_choice'] || null,
-    zoomLink: f['zoom_link'] || null,
-    zoomStartUrl: f['zoom_start_url'] || null,
-    zoomMeetingId: f['zoom_meeting_id'] || null,
-    checkinDate: f['checkin_date'] || null
+    // 20 Aug 2026 fix: this used to read f['booking_time'] / f['meeting_choice'] /
+    // f['zoom_link'] / f['zoom_start_url'] / f['zoom_meeting_id'] — plain human-readable
+    // strings that are not this table's actual field keys (records come back keyed by
+    // field ID, same as every other field above). Those lookups always returned
+    // undefined, so hasBooked was permanently false and the Meeting tab showed "No
+    // meeting scheduled" even for leads the Sopo Booking automation had already booked
+    // and Zoom-linked in Airtable. Root cause of the "booking didn't create a Zoom link"
+    // report from live testing. Now reads through AT_FIELDS like everything else.
+    hasBooked: !!(f[AT_FIELDS.booking_time] || f[AT_FIELDS.meeting_choice]),
+    bookingTime: f[AT_FIELDS.booking_time] || null,
+    meetingType: (f[AT_FIELDS.meeting_choice] && typeof f[AT_FIELDS.meeting_choice] === 'object')
+      ? (f[AT_FIELDS.meeting_choice].name || null)
+      : (f[AT_FIELDS.meeting_choice] || null),
+    zoomLink: f[AT_FIELDS.zoom_link] || null,
+    zoomStartUrl: f[AT_FIELDS.zoom_start_url] || null,
+    zoomMeetingId: f[AT_FIELDS.zoom_meeting_id] || null,
+    checkinDate: f[AT_FIELDS.checkin_date] || null
   };
 }
 
@@ -5799,8 +5810,10 @@ function updateLeadStage(idx, stage, btn) {
 // if the tab stays focused for hours without a refocus event.
 let airtablePollInterval = null;
 let lastPollSync = 0;
-const POLL_MIN_GAP_MS = 5 * 60 * 1000;     // never re-sync more than once per 5 minutes
+const POLL_MIN_GAP_MS = 5 * 60 * 1000;     // heartbeat interval throttle only
 const POLL_SAFETY_NET_MS = 20 * 60 * 1000; // heartbeat while the tab stays visible/focused
+const REFOCUS_MIN_GAP_MS = 10 * 1000;      // 20 Aug 2026: separate, much shorter guard for
+                                            // refocus/visibility syncs — see note below
 
 function maybeSyncOnPoll() {
   if (document.visibilityState !== 'visible') return;
@@ -5810,14 +5823,32 @@ function maybeSyncOnPoll() {
   syncLeads(true);
 }
 
+// 20 Aug 2026 fix: coming back to the studio tab after booking a lead in a separate
+// tab (e.g. testing book_meeting.html) used to hit the same 5 minute throttle as the
+// background heartbeat, so the freshly-booked lead's real pipeline_stage/Zoom fields
+// sat stale in appState for up to 5 minutes — long enough that a "just booked, why is
+// this still sitting in the Lead Database" check during live testing saw the old stage.
+// A genuine refocus/tab-return is exactly the moment a real sync matters most, so it
+// gets its own much shorter 10 second guard instead of sharing the heartbeat's one.
+let lastRefocusSync = 0;
+function syncOnRefocus() {
+  if (document.visibilityState !== 'visible') return;
+  const now = Date.now();
+  if (now - lastRefocusSync < REFOCUS_MIN_GAP_MS) return;
+  lastRefocusSync = now;
+  lastPollSync = now;
+  syncLeads(true);
+}
+
 function startAirtablePolling() {
   if (airtablePollInterval) clearInterval(airtablePollInterval);
   lastPollSync = Date.now(); // the initial load sync already happened
+  lastRefocusSync = Date.now();
   airtablePollInterval = setInterval(maybeSyncOnPoll, POLL_SAFETY_NET_MS);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') maybeSyncOnPoll();
+    if (document.visibilityState === 'visible') syncOnRefocus();
   });
-  window.addEventListener('focus', maybeSyncOnPoll);
+  window.addEventListener('focus', syncOnRefocus);
 }
 
 // ===== TRANSCRIPT POPUP =====
