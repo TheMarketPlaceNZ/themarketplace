@@ -336,16 +336,8 @@ body {
   font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .lead-act-btn.call { background: var(--green-dim); color: var(--green); }
-.lead-act-btn.email { background: var(--blue-dim); color: var(--blue); }
 .lead-act-btn.sms { background: var(--blue-dim); color: var(--blue); }
 .lead-act-btn.delete { background: var(--red-dim); color: var(--red); max-width: 40px; }
-/* 19 Aug 2026: score badge retired everywhere on lead cards, replaced by
-   follow-up status (New Lead / Contacted / stale dot) and Reinstated. */
-.badge.new-lead { background: var(--blue-dim); color: var(--blue); }
-.badge.contacted { background: var(--green-dim); color: var(--green); }
-.badge.reinstated { background: var(--gold-dim); color: var(--gold); }
-.lead-status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
-.lead-initials.neutral { background: var(--gold-dim); color: var(--gold); }
 
 /* ===== CALENDAR TAB ===== */
 .appointment-list { display: flex; flex-direction: column; gap: 12px; }
@@ -421,6 +413,35 @@ body {
 .list-prospect-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: var(--radius-xs); border: 1px solid var(--border); }
 .prospect-info { font-size: 13px; font-weight: 600; color: var(--white); }
 .prospect-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ===== FLOATING DUSTBIN (3-DAY EXPIRY) ===== */
+.dustbin-trigger {
+  position: fixed; bottom: 24px; right: 24px;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--navy-accent); border: 1px solid var(--border-gold);
+  color: var(--gold); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: all 0.2s ease; z-index: 99;
+}
+.dustbin-trigger:hover { transform: scale(1.05); border-color: var(--gold); }
+.dustbin-trigger svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+.dustbin-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: var(--red); color: white;
+  font-size: 10px; font-weight: 700; width: 20px; height: 20px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.dustbin-list { display: flex; flex-direction: column; gap: 10px; }
+.dustbin-item {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px; display: flex; justify-content: space-between; align-items: center;
+}
+.dustbin-meta { flex: 1; }
+.dustbin-name { font-size: 14px; font-weight: 600; color: var(--white); }
+.dustbin-time-left { font-size: 11px; color: var(--red); font-weight: 600; margin-top: 2px; }
+.dustbin-actions { display: flex; gap: 8px; }
 
 /* ===== MODAL OVERLAYS ===== */
 .modal-overlay {
@@ -1398,6 +1419,25 @@ body {
   </main>
 </div>
 
+<!-- ===== FLOATING DUSTBIN (TRASH CAN) ===== -->
+<div class="dustbin-trigger" onclick="openDustbinModal()">
+  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+  <div class="dustbin-badge" id="dustbinBadge">0</div>
+</div>
+
+<!-- DUSTBIN MODAL -->
+<div class="modal-overlay" id="dustbinModal">
+  <div class="modal-sheet">
+    <button class="modal-close-x" onclick="closeModal('dustbinModal')">&times;</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">
+      <span>Dustbin</span>
+      <span style="font-size:12px; color:var(--muted); font-weight:normal;">Held for 3 days before permanent deletion</span>
+    </div>
+    <div class="dustbin-list" id="dustbinContainer"></div>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal-sheet">
@@ -1736,7 +1776,6 @@ const AT_FIELDS = {
   meeting_choice:   'fldbxFEIExMmHXrfL',
   zoom_link:        'fldDr724XlOrFfgc1',
   zoom_meeting_id:  'fldWGvS3W75nGpNLi',
-  zoom_start_url:   'fldmmPbi1OXwFI7jA',
   ai_debrief:       'fldOqGQVLFDb1YEYe',
   checkin_date:     'fldqj65o3Zcizdng8',
   lifecycle_log:    'fldtCNudL7GcBXqNc',
@@ -1899,13 +1938,7 @@ let appState = {
   leads: [],
   meetings: [],
   tasks: [],
-  dustbin: [], // Retired 13 Aug 2026: the Dustbin soft-delete only ever touched
-                // a local blocklist and left Airtable, the slot, and the Zoom
-                // meeting untouched, which is why deleted leads kept coming
-                // back. Every delete is now immediate and permanent. This
-                // array is kept only so any leftover local data loads without
-                // errors; it is actively cleared on load below and nothing
-                // writes to it any more.
+  dustbin: [], // Holds deleted items: { id, deletedAt, type, data }
   calendarBlocks: [],
   currentFilter: 'all',
   // 25 Jul 2026 fix (Session 37): these two were previously created lazily as
@@ -1998,9 +2031,8 @@ function loadState() {
     ];
   }
   
-  // Dustbin retired 13 Aug 2026 (see appState.dustbin comment above) — clear
-  // out any stale entries from before the change so nothing lingers unseen.
-  appState.dustbin = [];
+  // Sweep dustbin (delete items older than 3 days)
+  sweepDustbin();
 }
 
 function getSetting(key, fallback = '') {
@@ -2098,6 +2130,7 @@ function renderAll() {
   renderTracker();
   renderCalendar();
   renderEmailLists();
+  renderDustbin();
 }
 
 // ===== TRACKER PIPELINE MODULE =====
@@ -2280,48 +2313,47 @@ function reEvaluateLead(idx) {
 
 // Sopo can pull a lead out of Cultivation, the Wait List, or Reactivation
 // at any time, no questions asked, sends them back to square one at Pre-Broker.
-// Genuinely and permanently delete a lead: removed from local state, removed
-// from Airtable, any booked Availability Slot reverted to Available, and any
-// live Zoom meeting cancelled. This is now the ONLY delete path in the app
-// (13 Aug 2026 fix: this used to be a bare Airtable delete with no slot or
-// Zoom cleanup, while the separate Dustbin soft-delete flow left the Airtable
-// record untouched entirely, which is why deleted leads kept reappearing,
-// especially on a different device that never saw the local guard). Both
-// the lead card's Delete button and the lead modal's Delete button call this
-// same function now. There is no way back once this runs.
+// Genuinely and permanently delete a lead, from local state AND from
+// Airtable itself. Unlike moveLeadToDustbin, which only ever touched a
+// retired Google Sheet blocklist and left the Airtable record untouched,
+// this is a true delete with no way back. Reserved for leads already
+// past Pre-Broker, where Sopo has decided the record should simply be gone.
 async function deleteLeadPermanently(idx) {
   const l = appState.leads[idx];
   if (!l) return;
-
-  const confirmMsg = `This will permanently delete ${l.name || 'this lead'}: removed from Airtable, their booking (if any) reverted to Available, and their Zoom meeting cancelled. This cannot be undone. Are you sure?`;
+  
+  const confirmMsg = `This will permanently delete ${l.name || 'this lead'} from Airtable. This cannot be undone. Are you sure?`;
   if (!confirm(confirmMsg)) return;
-
+  
   if (l.airtableId) {
-    // 25 Jul 2026 fix pattern (Session 37), applied here too on 13 Aug 2026:
-    // the guard must be set BEFORE the await. If Make takes a few seconds, an
-    // autopoll can fire mid-flight, find the still-present Airtable record,
-    // match nothing locally (we're about to splice it out below), and
-    // resurrect it before the delete has even finished, which is exactly the
-    // "delete then it comes back" symptom.
-    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
-    const guardWasAlreadySet = appState.deletedLeadIds.includes(l.airtableId);
-    if (!guardWasAlreadySet) appState.deletedLeadIds.push(l.airtableId);
-    saveState();
-
     try {
-      await airtableProxyCall('delete_lead_full', {
-        recordId: l.airtableId,
-        zoomMeetingId: l.zoomMeetingId || ''
-      });
-    } catch(e) {
-      console.warn('Permanent delete (Airtable/slot/Zoom) failed:', e.message);
-      if (!guardWasAlreadySet) {
-        appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== l.airtableId);
+      if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
+        await airtableProxyCall('delete', { recordId: l.airtableId });
+      } else {
+        await fetch(`${AIRTABLE_API}/${l.airtableId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
+        });
       }
-      saveState();
-      alert('Could not fully delete this lead from Airtable, please check your connection and try again. Nothing has been removed.');
+    } catch(e) {
+      console.warn('Airtable permanent delete failed:', e.message);
+      alert('Could not delete from Airtable, please check your connection and try again.');
       return;
     }
+  }
+
+  // 24 Jul 2026 fix: the very next autopoll (see airtablePollInterval) calls
+  // syncLeads(), which rebuilds appState.leads purely from whatever Airtable
+  // currently reports. If the delete above is slow, rate-limited, or the
+  // Make.com proxy's delete route silently no-ops, Airtable still has the
+  // record, syncLeads() finds no local match for it (we're about to splice
+  // it out below) and re-adds it fresh, which is exactly the "delete then it
+  // comes back" symptom. Flag the airtableId as deliberately deleted so
+  // syncLeads() can filter it out of every future poll, same pattern as
+  // unsavedNoteIds guards notes from being overwritten.
+  if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
+  if (l.airtableId && !appState.deletedLeadIds.includes(l.airtableId)) {
+    appState.deletedLeadIds.push(l.airtableId);
   }
 
   appState.leads.splice(idx, 1);
@@ -2388,12 +2420,9 @@ function renderTracker() {
     
     container.innerHTML = list.map((l, idx) => {
       const leadIdx = leads.indexOf(l);
-      // 19 Aug 2026: score badge retired on pipeline cards too. Pre-Broker
-      // cards show "Reinstated" if reinstateLead() put them there (its own
-      // lifecycle log entry always contains the word); every other stage
-      // shows nothing where the score used to sit.
-      const isReinstated = stage.key === 'qualified' && /reinstated/i.test(l.lifecycleLog || '');
-
+      const score = l.score || scoreLead(l);
+      const scoreClass = getScoreClass(score);
+      
       let actionButtons = '';
       if (stage.key === 'qualified') {
         actionButtons = `
@@ -2420,7 +2449,7 @@ function renderTracker() {
         actionButtons = `
           <div style="display: flex; gap: 6px; margin-top: 10px;">
             <button class="lead-act-btn call" style="background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold); padding: 6px;" onclick="event.stopPropagation(); openWaitPeriodPrompt(${leadIdx})">Set Wait Period</button>
-            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px; padding: 6px;" onclick="event.stopPropagation(); deleteLeadPermanently(${leadIdx})" title="Permanently Delete">Delete</button>
+            <button class="lead-act-btn delete" style="background: var(--red-dim); color: var(--red); max-width: 40px; padding: 6px;" onclick="event.stopPropagation(); moveLeadToDustbin(${leadIdx})" title="Move to Dustbin">Delete</button>
           </div>
         `;
       }
@@ -2445,13 +2474,13 @@ function renderTracker() {
         <div class="lead-card tracker-lead-card-anim" style="padding: 12px; margin-bottom: 8px; animation-delay: ${idx * 0.05}s;" onclick="openLeadDetail(${leadIdx})">
           <div class="lead-header" style="margin-bottom: 6px;">
             <div class="lead-info-main">
-              <div class="lead-initials neutral" style="width:26px; height:26px; font-size:11px;">${initials(l.name)}</div>
+              <div class="lead-initials ${scoreClass}" style="width:26px; height:26px; font-size:11px;">${initials(l.name)}</div>
               <div>
                 <div class="lead-name" style="font-size:13px; font-weight:600;">${l.name}</div>
                 <div class="lead-meta-sub" style="font-size:9px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
               </div>
             </div>
-            ${isReinstated ? `<span class="badge reinstated" style="font-size: 8px; padding: 2px 4px;">Reinstated</span>` : ''}
+            <span class="badge ${scoreClass}" style="font-size: 8px; padding: 2px 4px;">Score: ${score}</span>
           </div>
           <div class="lead-details-text" style="font-size: 10px; margin-bottom: 6px; line-height: 1.3;">
             Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}<br>
@@ -2566,34 +2595,6 @@ function getScoreClass(score) {
   return score >= 7 ? 'hot' : score >= 4 ? 'warm' : 'cold';
 }
 
-// 19 Aug 2026: new-lead follow-up tracking, replaces the score badge on
-// every lead card. A lead is "new" for its first 3 days and pins to the
-// top of the Lead Database ignoring alphabetical order. Any activity
-// logged against it (call, text, note, Zoom link — anything that lands
-// in lifecycleLog) flips it to Contacted and releases it into normal
-// alphabetical order. Untouched past day 3 it becomes a plain red dot,
-// still pinned, through day 5 total. Past day 5 still untouched, it
-// releases into alphabetical order but stays red — a note logged at any
-// point (blue or red phase) still flips it to Contacted.
-function getLeadFollowUpStatus(l) {
-  const hasActivity = !!(l && l.lifecycleLog && l.lifecycleLog.trim().length > 0);
-  if (hasActivity) return { key: 'contacted', pinned: false };
-  const createdMs = (l && l.timestamp) ? new Date(l.timestamp).getTime() : Date.now();
-  const ageDays = (Date.now() - (isNaN(createdMs) ? Date.now() : createdMs)) / 86400000;
-  if (ageDays < 3) return { key: 'new', pinned: true };
-  if (ageDays < 5) return { key: 'stale', pinned: true };
-  return { key: 'stale', pinned: false };
-}
-
-// Renders the badge/dot for a Lead Database card given its follow-up status.
-function renderFollowUpBadge(status) {
-  if (!status) return '';
-  if (status.key === 'contacted') return `<span class="badge contacted">Contacted</span>`;
-  if (status.key === 'new') return `<span class="badge new-lead">✱ New Lead</span>`;
-  if (status.key === 'stale') return `<span class="lead-status-dot" title="No contact logged"></span>`;
-  return '';
-}
-
 function initials(name) {
   return (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 }
@@ -2647,22 +2648,11 @@ function renderLeads() {
     return;
   }
 
-  // 19 Aug 2026: new/untouched leads pin to the top ignoring alphabetical
-  // order (blue "New Lead" for the first 3 days, red dot for days 3-5).
-  // Once contacted, or once 5 days pass untouched, they release into
-  // normal order — Array.sort is stable in every engine this runs in, so
-  // ties (same pinned state) keep whatever order they arrived in.
-  const followUpByLead = new Map();
-  leads.forEach(l => followUpByLead.set(l, getLeadFollowUpStatus(l)));
-  leads = [...leads].sort((a, b) => {
-    const pa = followUpByLead.get(a).pinned ? 1 : 0;
-    const pb = followUpByLead.get(b).pinned ? 1 : 0;
-    return pb - pa;
-  });
-
   container.innerHTML = leads.map((l, i) => {
+    const score = l.score || scoreLead(l);
+    const scoreClass = getScoreClass(score);
     const av = l.source || 'Open Home';
-
+    
     // Check birthdays today
     const todayBirthdays = getTodayBirthdays(l);
     let birthdayBanners = '';
@@ -2683,13 +2673,13 @@ function renderLeads() {
     <div class="lead-card" onclick="openLeadDetail(${appState.leads.indexOf(l)})">
       <div class="lead-header">
         <div class="lead-info-main">
-          <div class="lead-initials neutral">${initials(l.name)}</div>
+          <div class="lead-initials ${scoreClass}">${initials(l.name)}</div>
           <div>
             <div class="lead-name">${l.name || 'Unknown'}</div>
             <div class="lead-meta-sub">${l.area || 'Hamilton'} · ${av}</div>
           </div>
         </div>
-        ${renderFollowUpBadge(followUpByLead.get(l))}
+        <span class="badge ${scoreClass}">Score: ${score}/10</span>
       </div>
       <div class="lead-details-text">
         Income: ${l.income || 'N/A'}<br>
@@ -2708,10 +2698,10 @@ function renderLeads() {
       ` : ''}
       ${birthdayBanners}
       <div class="lead-actions-row" style="margin-top: 10px;">
-        <button class="lead-act-btn email" onclick="event.stopPropagation(); pushLeadToCultivation(${appState.leads.indexOf(l)})" title="Push to Cultivation List">Email</button>
+        <button class="lead-act-btn call" onclick="event.stopPropagation(); callLead('${l.phone}')">Call</button>
         <button class="lead-act-btn sms" onclick="event.stopPropagation(); sendBookingReminder(${appState.leads.indexOf(l)})">SMS</button>
         <button class="lead-act-btn" onclick="event.stopPropagation(); pushLead(${appState.leads.indexOf(l)})" title="Manually push to Pre-Broker" style="background: rgba(201,169,110,0.15); color: #C9A96E; border: 1px solid rgba(201,169,110,0.3); font-size: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Push</button>
-        <button class="lead-act-btn delete" onclick="event.stopPropagation(); deleteLeadPermanently(${appState.leads.indexOf(l)})" title="Permanently Delete">Delete</button>
+        <button class="lead-act-btn delete" onclick="event.stopPropagation(); moveLeadToDustbin(${appState.leads.indexOf(l)})" title="Delete lead to Dustbin">Delete</button>
       </div>
     </div>
   `}).join('');
@@ -3421,25 +3411,18 @@ function openLeadDetail(idx) {
   const l = appState.leads[idx];
   if (!l) return;
   currentLeadIndex = idx;
-  // 19 Aug 2026: score badge retired here too. New Lead / Contacted / stale
-  // dot for anyone still in the Lead Database, Reinstated for a Pre-Broker
-  // lead reinstateLead() put there, blank otherwise.
-  let detailBadge = '';
-  if (l.stage === 'qualified' && /reinstated/i.test(l.lifecycleLog || '')) {
-    detailBadge = `<span class="badge reinstated" style="margin-top:4px;">Reinstated</span>`;
-  } else if (!l.stage || l.stage === 'new') {
-    detailBadge = renderFollowUpBadge(getLeadFollowUpStatus(l));
-  }
-
+  const score = l.score || scoreLead(l);
+  const scoreClass = getScoreClass(score);
+  
   document.getElementById('leadModalContent').innerHTML = `
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-      <div class="lead-initials neutral" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
+      <div class="lead-initials ${scoreClass}" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
       <div style="flex:1;">
         <input type="text" class="settings-input" id="editLeadName" value="${l.name || ''}" style="font-size:16px; font-weight:700; padding:6px 10px; width:100%;">
-        <div style="margin-top:4px;">${detailBadge}</div>
+        <span class="badge ${scoreClass}" style="margin-top:4px;">Score: ${score}/10</span>
       </div>
     </div>
-
+    
     <div class="modal-tabs">
       <button class="modal-tab-btn active" id="btnTabDetails" onclick="switchModalTab('details')">Client Details</button>
       <button class="modal-tab-btn" id="btnTabTimeline" onclick="switchModalTab('timeline')">Timeline</button>
@@ -3827,23 +3810,13 @@ function atRecordToLead(record) {
     lifecycleLog: f[AT_FIELDS.lifecycle_log] || f['lifecycle_log'] || '',
     waitUntil: f[AT_FIELDS.wait_until] || f['wait_until'] || null,
     timestamp: record.createdTime || new Date().toISOString(),
-    // 20 Aug 2026 fix: this used to read f['booking_time'] / f['meeting_choice'] /
-    // f['zoom_link'] / f['zoom_start_url'] / f['zoom_meeting_id'] — plain human-readable
-    // strings that are not this table's actual field keys (records come back keyed by
-    // field ID, same as every other field above). Those lookups always returned
-    // undefined, so hasBooked was permanently false and the Meeting tab showed "No
-    // meeting scheduled" even for leads the Sopo Booking automation had already booked
-    // and Zoom-linked in Airtable. Root cause of the "booking didn't create a Zoom link"
-    // report from live testing. Now reads through AT_FIELDS like everything else.
-    hasBooked: !!(f[AT_FIELDS.booking_time] || f[AT_FIELDS.meeting_choice]),
-    bookingTime: f[AT_FIELDS.booking_time] || null,
-    meetingType: (f[AT_FIELDS.meeting_choice] && typeof f[AT_FIELDS.meeting_choice] === 'object')
-      ? (f[AT_FIELDS.meeting_choice].name || null)
-      : (f[AT_FIELDS.meeting_choice] || null),
-    zoomLink: f[AT_FIELDS.zoom_link] || null,
-    zoomStartUrl: f[AT_FIELDS.zoom_start_url] || null,
-    zoomMeetingId: f[AT_FIELDS.zoom_meeting_id] || null,
-    checkinDate: f[AT_FIELDS.checkin_date] || null
+    hasBooked: !!(f['booking_time'] || f['meeting_choice']),
+    bookingTime: f['booking_time'] || null,
+    meetingType: f['meeting_choice'] || null,
+    zoomLink: f['zoom_link'] || null,
+    zoomStartUrl: f['zoom_start_url'] || null,
+    zoomMeetingId: f['zoom_meeting_id'] || null,
+    checkinDate: f['checkin_date'] || null
   };
 }
 
@@ -3858,90 +3831,62 @@ function appendLifecycleEntry(lead, text) {
   }
 }
 
-// ===== PER-RECORD WRITE QUEUE + BACKOFF RETRY =====
-// 17 Aug 2026 fix: root cause of the "note failed to save" bug on Semisi
-// Koroibuleka's record. Two notes logged seconds apart each fired their own
-// independent fetch to the SAME Airtable record with no queue between them.
-// The Sopo Airtable Proxy scenario's patch route has an onerror branch that
-// catches an Airtable rejection and returns a clean 502 — Make's own
-// execution log shows that as a "successful" run (the scenario completed
-// its error route), which is why the Make dashboard looked totally healthy
-// while both notes silently never reached Airtable. The burst of
-// near-simultaneous requests to the same base is what tripped it. Two
-// fixes: (1) serialise all writes to a given lead record through one queue
-// so concurrent submits can't race each other or the base's rate limit,
-// (2) widen the single blind retry to three attempts with real backoff so
-// a momentary 502/429 has time to clear before the note is actually lost.
-const leadWriteQueues = new Map();
-function queueLeadWrite(airtableId, taskFn) {
-  const prevSettled = (leadWriteQueues.get(airtableId) || Promise.resolve()).catch(() => {});
-  const result = prevSettled.then(taskFn);
-  leadWriteQueues.set(airtableId, result.catch(() => {}));
-  return result;
-}
-
-async function writeAirtableFieldWithRetry(airtableId, fields, opts) {
-  const maxAttempts = (opts && opts.maxAttempts) || 3;
-  const unsavedArrayName = opts && opts.unsavedArrayName;
-  const failMsg = (opts && opts.failMsg) || '⚠️ Save failed, try again';
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
-        await airtableProxyCall('patch', { recordId: airtableId, fields });
-      } else {
-        const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ fields })
-        });
-        if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
-      }
-      // Success: clear any earlier "unsaved" flag for this lead so syncLeads()
-      // is safe to overwrite it again.
-      if (unsavedArrayName && Array.isArray(appState[unsavedArrayName])) {
-        appState[unsavedArrayName] = appState[unsavedArrayName].filter(id => id !== airtableId);
-      }
-      return true;
-    } catch (e) {
-      console.warn(`Airtable write failed (attempt ${attempt}/${maxAttempts}):`, e.message);
-      if (attempt < maxAttempts) {
-        // Backoff before the next attempt — gives a momentary rate limit or
-        // Make/Airtable blip room to clear instead of failing immediately.
-        await new Promise(r => setTimeout(r, 500 * attempt));
-      }
-    }
-  }
-  // Every attempt failed: this is a real save failure, not a blip. Flag it
-  // so syncLeads() knows not to silently overwrite this lead's local
-  // (unsaved) data with stale Airtable data, and tell Sopo so she can retry.
-  if (unsavedArrayName) {
-    if (!Array.isArray(appState[unsavedArrayName])) appState[unsavedArrayName] = [];
-    if (!appState[unsavedArrayName].includes(airtableId)) {
-      appState[unsavedArrayName].push(airtableId);
-    }
-  }
-  if (typeof showErrorToast === 'function') {
-    showErrorToast(failMsg);
-  } else {
-    alert(failMsg);
-  }
-  return false;
-}
-
-// Write the full lifecycle log back to Airtable. Queued per lead record
-// (see leadWriteQueues above) so two notes logged in quick succession can't
-// race each other's PATCH requests.
-async function writeLifecycleLogToAirtable(airtableId, log) {
+// Write the full lifecycle log back to Airtable
+//
+// 22 Jul 2026 fix: this used to fail silently (console.warn only). If the
+// Make.com "Sopo Airtable Proxy" scenario's patch route ever rejected the
+// write, this function swallowed the error, the note stayed ONLY in local
+// appState, and the very next syncLeads() pulled the still-unchanged record
+// down from Airtable and overwrote local state with it, appState.leads
+// showed the note vanishing, i.e. the "notes wiped on refresh" bug. The
+// proxy scenario itself is being patched separately to actually respond on
+// failure instead of dying silently, but this side needed a fix too: retry
+// once (covers a transient blip), and on a second failure, show a visible
+// red error toast and refuse to let the next sync silently clobber this
+// lead's local note, instead of failing invisibly.
+async function writeLifecycleLogToAirtable(airtableId, log, isRetry = false) {
   if (!airtableId) return;
-  return queueLeadWrite(airtableId, () =>
-    writeAirtableFieldWithRetry(airtableId, { [AT_FIELDS.lifecycle_log]: log }, {
-      unsavedArrayName: 'unsavedNoteIds',
-      failMsg: '⚠️ Note failed to save, try again'
-    })
-  );
+  const fields = { [AT_FIELDS.lifecycle_log]: log };
+  try {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
+      await airtableProxyCall('patch', { recordId: airtableId, fields });
+    } else {
+      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields })
+      });
+      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
+    }
+    // Success: clear any earlier "unsaved" flag for this lead so syncLeads()
+    // is safe to overwrite it again.
+    if (Array.isArray(appState.unsavedNoteIds)) {
+      appState.unsavedNoteIds = appState.unsavedNoteIds.filter(id => id !== airtableId);
+    }
+  } catch(e) {
+    console.warn('Airtable lifecycle log write failed:', e.message);
+    if (!isRetry) {
+      // One quiet retry, covers a transient network/Make blip without
+      // bothering the user.
+      return writeLifecycleLogToAirtable(airtableId, log, true);
+    }
+    // Second failure in a row: this is a real save failure, not a blip.
+    // Flag it so syncLeads() knows not to silently overwrite this lead's
+    // local (unsaved) note with stale Airtable data, and tell Sopo so she
+    // can retry the note herself.
+    if (!Array.isArray(appState.unsavedNoteIds)) appState.unsavedNoteIds = [];
+    if (!appState.unsavedNoteIds.includes(airtableId)) {
+      appState.unsavedNoteIds.push(airtableId);
+    }
+    if (typeof showErrorToast === 'function') {
+      showErrorToast('⚠️ Note failed to save, try again');
+    } else {
+      alert('This note failed to save to Airtable. Please try again.');
+    }
+  }
 }
 
 // ===== CALL NOTE QUICK-TAP BUTTONS =====
@@ -3988,29 +3933,91 @@ async function submitCallNote() {
   renderModalDebriefHistory();
 }
 
-// Write a stage change back to Airtable. Queued per lead record, same as
-// writeLifecycleLogToAirtable, so a stage change can't race a note write
-// (or another stage change) to the same record.
-async function writeStageToAirtable(airtableId, internalStage) {
+// Write a stage change back to Airtable
+// 3 Aug 2026 fix: this was the one write function that never got the 22 Jul
+// retry/flag/toast treatment. On failure it just console.warned and gave up,
+// and syncLeads' merge never protected stage the way it protects notes, so
+// a failed or slow stage write got silently overwritten on the very next
+// sync, i.e. "push to Pre-Broker, refresh, lead is back at the start."
+// Same fix pattern as writeNotesToAirtable: retry once, flag+alert on a
+// real second failure so syncLeads() knows not to overwrite it.
+async function writeStageToAirtable(airtableId, internalStage, isRetry = false) {
   if (!airtableId) return;
   const atStage = internalStageToAt(internalStage);
-  return queueLeadWrite(airtableId, () =>
-    writeAirtableFieldWithRetry(airtableId, { [AT_FIELDS.pipeline_stage]: atStage }, {
-      unsavedArrayName: 'unsavedStageIds',
-      failMsg: 'Stage change failed to save, try again'
-    })
-  );
+  const fields = { [AT_FIELDS.pipeline_stage]: atStage };
+  try {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
+      await airtableProxyCall('patch', { recordId: airtableId, fields });
+    } else {
+      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields })
+      });
+      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
+    }
+    if (Array.isArray(appState.unsavedStageIds)) {
+      appState.unsavedStageIds = appState.unsavedStageIds.filter(id => id !== airtableId);
+    }
+  } catch(e) {
+    console.warn('Airtable stage write failed:', e.message);
+    if (!isRetry) {
+      return writeStageToAirtable(airtableId, internalStage, true);
+    }
+    if (!Array.isArray(appState.unsavedStageIds)) appState.unsavedStageIds = [];
+    if (!appState.unsavedStageIds.includes(airtableId)) {
+      appState.unsavedStageIds.push(airtableId);
+    }
+    if (typeof showErrorToast === 'function') {
+      showErrorToast('Stage change failed to save, try again');
+    } else {
+      alert('This stage change failed to save to Airtable. Please try again.');
+    }
+  }
 }
 
-// Write agent notes back to Airtable. Same queued/backoff fix as above.
-async function writeNotesToAirtable(airtableId, notes) {
+// Write agent notes back to Airtable
+// 22 Jul 2026 fix: same silent-swallow-then-get-wiped-on-refresh bug as
+// writeLifecycleLogToAirtable above, same fix (retry once, flag+alert on a
+// real failure so syncLeads() knows not to overwrite it).
+async function writeNotesToAirtable(airtableId, notes, isRetry = false) {
   if (!airtableId) return;
-  return queueLeadWrite(airtableId, () =>
-    writeAirtableFieldWithRetry(airtableId, { [AT_FIELDS.agent_notes]: notes }, {
-      unsavedArrayName: 'unsavedNoteIds',
-      failMsg: '⚠️ Note failed to save, try again'
-    })
-  );
+  const fields = { [AT_FIELDS.agent_notes]: notes };
+  try {
+    if (getSetting('airtableProxyUrl', 'https://hook.us2.make.com/1q5s36h2b7tdk05ldc963ojbtv42vdri')) {
+      await airtableProxyCall('patch', { recordId: airtableId, fields });
+    } else {
+      const res = await fetch(`${AIRTABLE_API}/${airtableId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields })
+      });
+      if (!res.ok) throw new Error(`Airtable PATCH ${res.status}`);
+    }
+    if (Array.isArray(appState.unsavedNoteIds)) {
+      appState.unsavedNoteIds = appState.unsavedNoteIds.filter(id => id !== airtableId);
+    }
+  } catch(e) {
+    console.warn('Airtable notes write failed:', e.message);
+    if (!isRetry) {
+      return writeNotesToAirtable(airtableId, notes, true);
+    }
+    if (!Array.isArray(appState.unsavedNoteIds)) appState.unsavedNoteIds = [];
+    if (!appState.unsavedNoteIds.includes(airtableId)) {
+      appState.unsavedNoteIds.push(airtableId);
+    }
+    if (typeof showErrorToast === 'function') {
+      showErrorToast('⚠️ Note failed to save, try again');
+    } else {
+      alert('This note failed to save to Airtable. Please try again.');
+    }
+  }
 }
 
 // ===== SYNC LEADS FROM AIRTABLE (replaces Google Sheets sync) =====
@@ -5061,9 +5068,18 @@ function toggleDebriefExpand(btn, boxId) {
 }
 
 function deleteClientDebrief(idx) {
-  if (confirm("Are you sure you want to permanently delete this debrief? This cannot be undone.")) {
+  if (confirm("Are you sure you want to delete this debrief? This will move it to the dustbin.")) {
     const l = appState.leads[currentLeadIndex];
     if (l && l.meetings) {
+      const m = l.meetings[idx];
+      const dustbinItem = {
+        id: Date.now(),
+        deletedAt: new Date().toISOString(),
+        type: 'client-meeting',
+        clientEmail: l.email,
+        data: m
+      };
+      appState.dustbin.push(dustbinItem);
       l.meetings.splice(idx, 1);
       saveState();
       renderModalDebriefHistory();
@@ -5256,10 +5272,19 @@ function copyProspectInfo(name, email) {
   alert(`Copied: ${name} <${email}>`);
 }
 
-// Dustbin flow retired 13 Aug 2026 — see appState.dustbin comment above.
-// moveLeadToDustbin, moveMeetingToDustbin, renderDustbin, restoreDustbinItem,
-// deleteDustbinPermanently, openDustbinModal and closeDustbinModal have all
-// been removed; deleteLeadPermanently now handles every lead delete directly.
+// ===== FLOATING DUSTBIN FLOW (3-DAY RETENTION) =====
+function sweepDustbin() {
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  if (appState.dustbin) {
+    appState.dustbin = appState.dustbin.filter(item => {
+      const deletedAt = new Date(item.deletedAt).getTime();
+      return (now - deletedAt) < threeDaysMs;
+    });
+    saveState();
+  }
+}
+
 function fireStatusWebhook(email, status) {
   const webhookUrl = getSetting('statusWebhookUrl');
   if (!webhookUrl || !email) return;
@@ -5268,6 +5293,45 @@ function fireStatusWebhook(email, status) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.toLowerCase(), status: status })
   }).catch(() => {}); // Silent fail — local action always proceeds
+}
+
+function moveLeadToDustbin(idx) {
+  const l = appState.leads[idx];
+  if (!l) return;
+  
+  const dustbinItem = {
+    id: Date.now(),
+    deletedAt: new Date().toISOString(),
+    type: 'lead',
+    data: l
+  };
+  
+  appState.dustbin.push(dustbinItem);
+
+  // Track in local deleted blocklist
+  if (!appState.deletedLeads) appState.deletedLeads = [];
+  if (l.email) appState.deletedLeads.push(l.email.toLowerCase());
+  if (l.phone) appState.deletedLeads.push(l.phone);
+
+  // Mark as deleted in Google Sheet (cross-device permanent fix)
+  fireStatusWebhook(l.email, 'deleted');
+
+  // 24 Jul 2026 fix: moving a lead to the Dustbin is a soft delete — the
+  // Airtable record is untouched. Without this guard, the very next
+  // autopoll (syncLeads) rebuilds appState.leads from Airtable, finds no
+  // local match for this lead, and re-adds it — the "delete button keeps
+  // reappearing" bug. Same deletedLeadIds guard deleteLeadPermanently uses;
+  // restoreDustbinItem removes it again so a restored lead resyncs normally.
+  if (l.airtableId) {
+    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
+    if (!appState.deletedLeadIds.includes(l.airtableId)) {
+      appState.deletedLeadIds.push(l.airtableId);
+    }
+  }
+
+  appState.leads.splice(idx, 1);
+  saveState();
+  renderAll();
 }
 
 function moveLeadToEmailList(idx) {
@@ -5294,15 +5358,172 @@ function moveLeadToEmailList(idx) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-function deleteMeetingPermanently(id) {
+function moveMeetingToDustbin(id) {
   const idx = appState.meetings.findIndex(m => m.id === id);
   if (idx === -1) return;
-
+  const m = appState.meetings[idx];
+  
+  const dustbinItem = {
+    id: Date.now(),
+    deletedAt: new Date().toISOString(),
+    type: 'meeting',
+    data: m
+  };
+  
+  appState.dustbin.push(dustbinItem);
   appState.meetings.splice(idx, 1);
   if (activeTranscriptId === id) activeTranscriptId = null;
   saveState();
   renderAll();
 }
+
+function renderDustbin() {
+  const badge = document.getElementById('dustbinBadge');
+  const container = document.getElementById('dustbinContainer');
+  const items = appState.dustbin || [];
+  
+  badge.textContent = items.length;
+  badge.style.display = items.length > 0 ? 'flex' : 'none';
+  
+  if (items.length === 0) {
+    container.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:30px;">Dustbin is empty. Deleted items are kept here for 3 days.</div>';
+    return;
+  }
+  
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  
+  container.innerHTML = items.map((item, idx) => {
+    const deletedTime = new Date(item.deletedAt).getTime();
+    const msLeft = threeDaysMs - (now - deletedTime);
+    const hrsLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60)));
+    const daysLeft = Math.floor(hrsLeft / 24);
+    const remainingText = daysLeft > 0 ? `${daysLeft}d left` : `${hrsLeft}h left`;
+    
+    let label = '';
+    if (item.type === 'lead') label = `Lead: ${item.data.name}`;
+    else if (item.type === 'meeting') label = `Meeting: ${item.data.label}`;
+    else if (item.type === 'client-meeting') label = `Debrief: ${item.data.label} (Client: ${item.clientEmail || 'Unknown'})`;
+    
+    return `
+      <div class="dustbin-item">
+        <div class="dustbin-meta">
+          <div class="dustbin-name">${label}</div>
+          <div class="dustbin-time-left">Held: ${remainingText}</div>
+        </div>
+        <div class="dustbin-actions">
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="restoreDustbinItem(${idx})">Restore</button>
+          <button class="btn btn-red" style="padding:6px 12px; font-size:11px;" onclick="deleteDustbinPermanently(${idx})">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function restoreDustbinItem(idx) {
+  const item = appState.dustbin[idx];
+  if (!item) return;
+  
+  if (item.type === 'lead') {
+    appState.leads.unshift(item.data);
+    // Remove from deleted blocklist
+    if (appState.deletedLeads) {
+      if (item.data.email) {
+        appState.deletedLeads = appState.deletedLeads.filter(email => email !== item.data.email.toLowerCase());
+      }
+      if (item.data.phone) {
+        appState.deletedLeads = appState.deletedLeads.filter(phone => phone !== item.data.phone);
+      }
+    }
+    // Lift the syncLeads() guard so this lead resyncs normally again
+    if (Array.isArray(appState.deletedLeadIds) && item.data.airtableId) {
+      appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== item.data.airtableId);
+    }
+  } else if (item.type === 'meeting') {
+    appState.meetings.unshift(item.data);
+  } else if (item.type === 'client-meeting') {
+    const client = appState.leads.find(l => l.email === item.clientEmail);
+    if (client) {
+      if (!client.meetings) client.meetings = [];
+      client.meetings.unshift(item.data);
+    } else {
+      alert("Cannot restore debrief: Client not found. Please restore the client lead first.");
+      return;
+    }
+  }
+  
+  appState.dustbin.splice(idx, 1);
+  saveState();
+  renderAll();
+  
+  if (document.getElementById('dustbinModal').classList.contains('open')) {
+    renderDustbin();
+  }
+}
+
+async function deleteDustbinPermanently(idx) {
+  const item = appState.dustbin[idx];
+  if (!item) return;
+  if (!confirm("Permanently delete this item? This cannot be undone.")) return;
+
+  // 24 Jul 2026 fix: this used to only remove the local dustbin entry —
+  // the Airtable record, the lead's booked Availability Slot, and the
+  // Zoom meeting were all left behind, so the "permanent" delete wasn't.
+  // This is now the one true final delete: revert the slot to Available,
+  // cancel the Zoom meeting, then delete the Airtable Lead record itself.
+  if (item.type === 'lead' && item.data && item.data.airtableId) {
+    const atId = item.data.airtableId;
+
+    // 25 Jul 2026 fix (Session 37): the guard used to be set AFTER the await.
+    // If Make took a few seconds, an autopoll fired mid-flight, found the
+    // still-present Airtable record, matched nothing in appState.leads (the
+    // lead lives in the dustbin, not the lead list) and resurrected it — the
+    // lead then existed in both places at once. Flag it BEFORE the call so no
+    // poll during the round trip can bring it back, and roll the flag back in
+    // the catch so a genuine failure leaves state exactly as it was.
+    if (!Array.isArray(appState.deletedLeadIds)) appState.deletedLeadIds = [];
+    const guardWasAlreadySet = appState.deletedLeadIds.includes(atId);
+    if (!guardWasAlreadySet) appState.deletedLeadIds.push(atId);
+    saveState();
+
+    try {
+      // zoomMeetingId is sent as an advisory hint only. The delete_lead_full
+      // route reads zoom_meeting_id off the live Lead record server side
+      // before deleting it, because this dustbin entry is a local snapshot
+      // frozen at the moment the lead was binned and its Zoom id may be stale
+      // (e.g. a New Zoom Link was issued afterwards).
+      await airtableProxyCall('delete_lead_full', {
+        recordId: atId,
+        zoomMeetingId: item.data.zoomMeetingId || ''
+      });
+    } catch(e) {
+      console.warn('Permanent delete (Airtable/slot/Zoom) failed:', e.message);
+      if (!guardWasAlreadySet) {
+        appState.deletedLeadIds = appState.deletedLeadIds.filter(id => id !== atId);
+      }
+      saveState();
+      alert('Could not fully delete this lead from Airtable, please check your connection and try again. Nothing has been removed locally.');
+      return;
+    }
+  }
+
+  appState.dustbin.splice(idx, 1);
+  saveState();
+  renderAll();
+  if (document.getElementById('dustbinModal').classList.contains('open')) {
+    renderDustbin();
+  }
+}
+
+function openDustbinModal() {
+  renderDustbin();
+  document.getElementById('dustbinModal').classList.add('open');
+}
+document.getElementById('dustbinModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('dustbinModal')) {
+    document.getElementById('dustbinModal').classList.remove('open');
+  }
+});
 
 // ===== SETTINGS MODULE =====
 function openSettingsModal() {
@@ -5318,6 +5539,9 @@ function openSettingsModal() {
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+}
+function closeDustbinModal() {
+  closeModal('dustbinModal');
 }
 function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('open'); }
 document.getElementById('settingsModal').addEventListener('click', e => { if (e.target === document.getElementById('settingsModal')) closeSettingsModal(); });
@@ -5491,46 +5715,20 @@ function simulateCallNoAnswer() {
 function pushLead(idx) {
   const l = appState.leads[idx];
   if (!l) return;
-
+  
   if (l.stage && l.stage !== 'new') {
     alert('This lead has already progressed past New Lead.');
     return;
   }
-
+  
   if (!confirm(`Push ${l.name || 'this lead'} into Pre-Broker?`)) return;
-
+  
   l.stage = 'qualified';
   appendLifecycleEntry(l, 'Manually pushed to Pre-Broker by Sopo');
-
+  
   saveState();
   renderAll();
-
-  if (l.airtableId) {
-    writeStageToAirtable(l.airtableId, l.stage);
-  }
-}
-
-// 19 Aug 2026: replaces the old Call button on the Lead Database card.
-// One click, no picker — pushes the lead straight to the Cultivation List
-// (leads gone cold on calls, texts and email alike). Weekly automated
-// cultivation send is a separate build, deliberately not part of this.
-function pushLeadToCultivation(idx) {
-  const l = appState.leads[idx];
-  if (!l) return;
-
-  if (l.stage && l.stage !== 'new') {
-    alert('This lead has already progressed past New Lead.');
-    return;
-  }
-
-  if (!confirm(`Move ${l.name || 'this lead'} to the Cultivation List? They'll come off the active Lead Database.`)) return;
-
-  l.stage = 'cultivation';
-  appendLifecycleEntry(l, 'Pushed to Cultivation List by Sopo');
-
-  saveState();
-  renderAll();
-
+  
   if (l.airtableId) {
     writeStageToAirtable(l.airtableId, l.stage);
   }
@@ -5810,10 +6008,8 @@ function updateLeadStage(idx, stage, btn) {
 // if the tab stays focused for hours without a refocus event.
 let airtablePollInterval = null;
 let lastPollSync = 0;
-const POLL_MIN_GAP_MS = 5 * 60 * 1000;     // heartbeat interval throttle only
+const POLL_MIN_GAP_MS = 5 * 60 * 1000;     // never re-sync more than once per 5 minutes
 const POLL_SAFETY_NET_MS = 20 * 60 * 1000; // heartbeat while the tab stays visible/focused
-const REFOCUS_MIN_GAP_MS = 10 * 1000;      // 20 Aug 2026: separate, much shorter guard for
-                                            // refocus/visibility syncs — see note below
 
 function maybeSyncOnPoll() {
   if (document.visibilityState !== 'visible') return;
@@ -5823,32 +6019,14 @@ function maybeSyncOnPoll() {
   syncLeads(true);
 }
 
-// 20 Aug 2026 fix: coming back to the studio tab after booking a lead in a separate
-// tab (e.g. testing book_meeting.html) used to hit the same 5 minute throttle as the
-// background heartbeat, so the freshly-booked lead's real pipeline_stage/Zoom fields
-// sat stale in appState for up to 5 minutes — long enough that a "just booked, why is
-// this still sitting in the Lead Database" check during live testing saw the old stage.
-// A genuine refocus/tab-return is exactly the moment a real sync matters most, so it
-// gets its own much shorter 10 second guard instead of sharing the heartbeat's one.
-let lastRefocusSync = 0;
-function syncOnRefocus() {
-  if (document.visibilityState !== 'visible') return;
-  const now = Date.now();
-  if (now - lastRefocusSync < REFOCUS_MIN_GAP_MS) return;
-  lastRefocusSync = now;
-  lastPollSync = now;
-  syncLeads(true);
-}
-
 function startAirtablePolling() {
   if (airtablePollInterval) clearInterval(airtablePollInterval);
   lastPollSync = Date.now(); // the initial load sync already happened
-  lastRefocusSync = Date.now();
   airtablePollInterval = setInterval(maybeSyncOnPoll, POLL_SAFETY_NET_MS);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') syncOnRefocus();
+    if (document.visibilityState === 'visible') maybeSyncOnPoll();
   });
-  window.addEventListener('focus', syncOnRefocus);
+  window.addEventListener('focus', maybeSyncOnPoll);
 }
 
 // ===== TRANSCRIPT POPUP =====
@@ -6065,7 +6243,8 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
       status:  f.status || 'Draft',
       variant: f.variant_tag || '',
       notes:   f.notes || '',
-      beatIds: Array.isArray(f['Script Beats']) ? f['Script Beats'] : []
+      beatIds: Array.isArray(f['Script Beats']) ? f['Script Beats'] : [],
+      archived: !!f.archived
     };
   }
   function mapBeat(r){
@@ -6107,7 +6286,9 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
     render();
     return call('list_scripts', {})
       .then(function(res){
-        st.scripts = records(res).map(mapScript).sort(function(a, b){
+        /* Retired packs carry archived = true in Airtable. They stay in the
+           base for the tracker and for history, but never reach the client. */
+        st.scripts = records(res).map(mapScript).filter(function(s){ return !s.archived; }).sort(function(a, b){
           var an = a.number === null ? 9999 : a.number;
           var bn = b.number === null ? 9999 : b.number;
           return an - bn || a.name.localeCompare(b.name);
@@ -6557,6 +6738,92 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
+})();
+</script>
+
+
+<!-- ===== NEW SCRIPTS REVIEW PROMPT =====
+     Additive block. Fires once per batch of scripts sitting at review_status
+     "New for review". Reuses the studio's existing modal shell and its
+     __scriptsProxy adapter, so nothing above this comment is touched. -->
+<div class="modal-overlay" id="newScriptsModal">
+  <div class="modal-sheet" style="max-width:440px;text-align:center;">
+    <button class="modal-close-x" onclick="closeModal('newScriptsModal')">&times;</button>
+    <div class="modal-handle"></div>
+    <div style="font-size:40px;line-height:1;margin:2px 0 16px;">&#128221;</div>
+    <div class="modal-title" style="justify-content:center;">
+      <span>New Scripts for review</span>
+    </div>
+    <p id="newScriptsBody" style="color:var(--muted);font-size:15px;line-height:1.65;margin:12px 0 26px;">
+      Please navigate to the scripts section and review scripts.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="goReviewScripts()"
+        style="font:inherit;font-weight:600;font-size:14px;cursor:pointer;padding:12px 22px;border-radius:var(--radius-sm);border:1px solid var(--gold);background:var(--gold);color:var(--navy);">
+        Review scripts
+      </button>
+      <button onclick="closeModal('newScriptsModal')"
+        style="font:inherit;font-weight:500;font-size:14px;cursor:pointer;padding:12px 22px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);">
+        Later
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  var KEY = 'sopo_scripts_seen_v1';
+
+  function seen(){ try { return localStorage.getItem(KEY) || ''; } catch(e){ return ''; } }
+  function markSeen(sig){ try { localStorage.setItem(KEY, sig); } catch(e){} }
+
+  function recordsOf(res){
+    if (!res) return [];
+    if (typeof res === 'string') { try { return recordsOf(JSON.parse(res)); } catch(e){ return []; } }
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.records)) return res.records;
+    if (res.body && res.body !== res) return recordsOf(res.body);
+    return [];
+  }
+
+  /* "Later" leaves the batch unseen, so it asks again next login.
+     "Review scripts" marks it seen and takes her straight there. */
+  window.goReviewScripts = function(){
+    if (typeof closeModal === 'function') closeModal('newScriptsModal');
+    if (window.__newScriptsSig) markSeen(window.__newScriptsSig);
+    if (typeof switchView === 'function') switchView('viewScripts');
+  };
+
+  function check(){
+    if (typeof window.__scriptsProxy !== 'function') return;
+    Promise.resolve(window.__scriptsProxy('list_scripts', {})).then(function(res){
+      var pending = recordsOf(res).filter(function(r){
+        var f = (r && r.fields) || {};
+        if (f.archived) return false;          /* retired packs never prompt */
+        var v = f.review_status;
+        if (v && typeof v === 'object') v = v.name;
+        return v === 'New for review';
+      });
+      if (!pending.length) return;
+
+      var sig = pending.map(function(r){ return r.id; }).sort().join(',');
+      window.__newScriptsSig = sig;
+      if (seen() === sig) return;
+
+      var body = document.getElementById('newScriptsBody');
+      if (body) {
+        body.textContent = pending.length === 1
+          ? 'There is 1 new script waiting. Please navigate to the scripts section and review it.'
+          : 'There are ' + pending.length + ' new scripts waiting. Please navigate to the scripts section and review them.';
+      }
+      var m = document.getElementById('newScriptsModal');
+      if (m) m.classList.add('open');
+    }).catch(function(){ /* silent, never block the dashboard on this */ });
+  }
+
+  function start(){ setTimeout(check, 2500); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
 </script>
 
