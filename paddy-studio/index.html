@@ -1585,8 +1585,6 @@ function liveLeads()  { return appState.leads.filter(l => !appState.deletedIds.i
    Red "Not contacted": 3 days on, still no activity, no note, no booking.
    Green "Contacted": an activity or note is logged, or a meeting is booked.
    Entries the system writes by itself do not count as contact. */
-const LEAD_NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
-const SYSTEM_LOG_LABEL = /^(Check in received|Client added|Stage moved to )/i;
 function leadCreatedMs(l) {
   const ms = new Date((l && (l.createdTime || l.createdAt)) || 0).getTime();
   return isNaN(ms) ? 0 : ms;
@@ -1595,12 +1593,16 @@ function leadHasContact(l) {
   if (!l) return false;
   if (l.bookingTime) return true;
   if ((l.notes || '').trim()) return true;
-  return (l.lifecycleLog || []).some(e => e && e.label && !SYSTEM_LOG_LABEL.test(e.label));
+  // Both values live inside their functions on purpose: a top level const here
+  // can sit below the startup path and throw "before initialization".
+  const systemLabel = /^(Check in received|Client added|Stage moved to )/i;
+  return (l.lifecycleLog || []).some(e => e && e.label && !systemLabel.test(e.label));
 }
 function getLeadStatus(l) {
   if (leadHasContact(l)) return { key:'contacted', cls:'st-contacted', label:'Contacted' };
   const created = leadCreatedMs(l);
-  if (created && Date.now() - created < LEAD_NEW_WINDOW_MS) return { key:'new', cls:'st-new', label:'New' };
+  const newWindowMs = 3 * 24 * 60 * 60 * 1000;
+  if (created && Date.now() - created < newWindowMs) return { key:'new', cls:'st-new', label:'New' };
   return { key:'notcontacted', cls:'st-notcontacted', label:'Not contacted' };
 }
 

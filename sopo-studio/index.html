@@ -2575,8 +2575,6 @@ function updateSidebarStats() {
 // Red "Not contacted": 3 days or older, still no note and no meeting booked.
 // Green "Contacted": Sopo has logged a note, or the lead has a meeting booked.
 // Green wins at any age, so a lead turns green the moment a note is saved.
-const LEAD_NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
-
 function leadHasContact(l) {
   if (!l) return false;
   if (l.hasBooked || l.bookingTime || l.meetingType) return true;
@@ -2590,7 +2588,10 @@ function getLeadStatus(l) {
   if (leadHasContact(l)) return { key: 'contacted', cls: 'st-contacted', label: 'Contacted' };
   const created = new Date((l && l.timestamp) || 0).getTime();
   const age = isNaN(created) ? Infinity : Date.now() - created;
-  if (age < LEAD_NEW_WINDOW_MS) return { key: 'new', cls: 'st-new', label: 'New' };
+  // Kept inside the function on purpose: a top level const here sits below the
+  // startup path and throws "before initialization" on the first render.
+  const newWindowMs = 3 * 24 * 60 * 60 * 1000;
+  if (age < newWindowMs) return { key: 'new', cls: 'st-new', label: 'New' };
   return { key: 'notcontacted', cls: 'st-notcontacted', label: 'Not contacted' };
 }
 
