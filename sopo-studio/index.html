@@ -1712,11 +1712,19 @@ const AIRTABLE_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE
 // after that point for the rest of the page's life. This is what broke Sync Airtable's
 // alert just now, not the proxy or the PAT, calendarState was never getting initialized
 // at all. Declaring it here, before checkAuth/initApp can ever run, fixes it for good.
-let calendarState = {
-  selectedDate: new Date(2026, 5, 6), // Saturday, June 6, 2026 as selected
-  currentYear: 2026,
-  currentMonth: 5 // June is index 5
-};
+// 5 Oct 2026 fix: this used to be hard coded to Saturday 6 June 2026, so the
+// calendar opened on that day forever. It now starts on today, and jumps back
+// to today each time the Calendar tab is opened (see switchView), which also
+// covers the installed app being left open across midnight.
+function calendarTodayState() {
+  const now = new Date();
+  return {
+    selectedDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    currentYear: now.getFullYear(),
+    currentMonth: now.getMonth()
+  };
+}
+let calendarState = calendarTodayState();
 
 // Session 8 fix (July 5 2026): same exposure pattern as the Gemini key (Session 7).
 // AIRTABLE_API_KEY above is the LIVE secret still shipping in this file's meta
@@ -2512,6 +2520,12 @@ function switchView(tabId) {
   // Switch visible panel
   document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
+
+  // Calendar always opens on today
+  if (tabId === 'viewCalendar') {
+    calendarState = calendarTodayState();
+    renderCalendar();
+  }
 
   // Update sidebar active menu styling
   document.querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
