@@ -276,6 +276,9 @@ body {
 .badge.hot { background: var(--red-dim); color: var(--red); }
 .badge.warm { background: var(--orange-dim); color: var(--orange); }
 .badge.cold { background: var(--blue-dim); color: var(--blue); }
+.badge.st-new { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue); }
+.badge.st-notcontacted { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+.badge.st-contacted { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
 .badge.settled { background: var(--green-dim); color: var(--green); }
 .badge.new { background: var(--glass); color: var(--muted); border: 1px solid var(--border); }
 .badge.source { background: var(--gold-dim); color: var(--gold); }
@@ -324,9 +327,10 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; font-weight: 700;
 }
-.lead-initials.hot { background: var(--red-dim); color: var(--red); }
-.lead-initials.warm { background: var(--orange-dim); color: var(--orange); }
-.lead-initials.cold { background: var(--blue-dim); color: var(--blue); }
+.lead-initials.st-new { background: var(--blue-dim); color: var(--blue); }
+.lead-initials.st-notcontacted { background: var(--red-dim); color: var(--red); }
+.lead-initials.st-contacted { background: var(--green-dim); color: var(--green); }
+.lead-initials.st-plain { background: var(--glass); color: var(--gold); border: 1px solid var(--border); }
 .lead-name { font-size: 15px; font-weight: 600; color: var(--white); }
 .lead-meta-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
 .lead-details-text { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
@@ -1178,7 +1182,7 @@ body {
         <div class="mini-stats-title">Performance</div>
         <div class="mini-stats-grid">
           <div class="mini-stat-item"><div class="mini-stat-val" id="miniTotal">0</div><div class="mini-stat-lbl">Leads</div></div>
-          <div class="mini-stat-item"><div class="mini-stat-val" id="miniHot" style="color:var(--red);">0</div><div class="mini-stat-lbl">Hot</div></div>
+          <div class="mini-stat-item"><div class="mini-stat-val" id="miniNotContacted" style="color:var(--red);">0</div><div class="mini-stat-lbl">Not contacted</div></div>
         </div>
       </div>
       <button class="btn btn-gold full" id="installAppBtn" onclick="triggerInstallPrompt()" style="display:none; padding: 10px; font-size:12px; margin-bottom:8px;">📲 Install Studio as App</button>
@@ -1249,9 +1253,9 @@ body {
         <div class="filter-bar">
           <div class="filter-chips">
             <div class="filter-chip active" data-filter="all" onclick="filterLeads('all', this)">All</div>
-            <div class="filter-chip" data-filter="hot" onclick="filterLeads('hot', this)">Active (Score 7-10)</div>
-            <div class="filter-chip" data-filter="warm" onclick="filterLeads('warm', this)">Cultivating (Score 4-6)</div>
-            <div class="filter-chip" data-filter="cold" onclick="filterLeads('cold', this)">Passive (Score 1-3)</div>
+            <div class="filter-chip" data-filter="new" onclick="filterLeads('new', this)">New</div>
+            <div class="filter-chip" data-filter="notcontacted" onclick="filterLeads('notcontacted', this)">Not contacted</div>
+            <div class="filter-chip" data-filter="contacted" onclick="filterLeads('contacted', this)">Contacted</div>
             <div class="filter-chip" data-filter="today" onclick="filterLeads('today', this)">Today</div>
           </div>
           <button id="syncBtn" class="btn btn-ghost" onclick="syncLeads()">
@@ -1769,7 +1773,6 @@ const AT_FIELDS = {
   area:             'fldwfkBBgMT67Jks7',
   timeframe:        'fld8NaNsskjLUKXyw',
   source:           'fldGpiOssNfEnyvRs',
-  score:            'flduRoHoygVWZbfvn',
   first_home:       'fldGpiOssNfEnyvRs',
   employment:       'fld0dUvYYHL4z9kYc',
   booking_time:     'fldcE5ZePycc97Bvm',
@@ -1797,7 +1800,6 @@ const DEFAULT_LEADS = [
     source: "Instagram",
     stage: "qualified", // Pre-Mortgage Broker
     bookingTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    score: 9,
     birthdayHusband: "1991-03-12",
     birthdayWife: "1993-06-06", // Birthday Today
     birthdayKids: "Hemi: 2018-09-22"
@@ -1815,7 +1817,6 @@ const DEFAULT_LEADS = [
     timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Facebook",
     stage: "finance-pending", // Finance Pending
-    score: 7,
     birthdayHusband: "1988-08-14",
     birthdayWife: "1990-11-20",
     birthdayKids: "Rawiri: 2015-04-12, Kiri: 2017-08-05"
@@ -1833,7 +1834,6 @@ const DEFAULT_LEADS = [
     timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Open Home",
     stage: "valuation", // Valuation
-    score: 10,
     birthdayHusband: "1989-11-04",
     birthdayWife: "1991-06-06", // Birthday Today
     birthdayKids: "Leo: 2018-06-06, Mia: 2021-12-15" // Leo Birthday Today
@@ -1852,7 +1852,6 @@ const DEFAULT_LEADS = [
     source: "Referral",
     stage: "reactivation",
     soldDate: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
-    score: 9,
     birthdayHusband: "1985-02-14",
     birthdayWife: "1987-10-09",
     birthdayKids: "Sione Jr: 2012-07-25"
@@ -1871,7 +1870,6 @@ const DEFAULT_LEADS = [
     source: "Open Home",
     stage: "reactivation",
     soldDate: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(),
-    score: 7,
     birthdayHusband: "1994-07-12",
     birthdayWife: "1996-01-29",
     birthdayKids: ""
@@ -1890,7 +1888,6 @@ const DEFAULT_LEADS = [
     source: "Referral",
     stage: "reactivation",
     soldDate: new Date(Date.now() - 450 * 24 * 60 * 60 * 1000).toISOString(),
-    score: 8,
     birthdayHusband: "1990-12-04",
     birthdayWife: "1992-04-18",
     birthdayKids: "Vaea Jr: 2019-03-30"
@@ -1908,7 +1905,6 @@ const DEFAULT_LEADS = [
     timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Open Home",
     stage: "gameplan", // Gameplan Meeting
-    score: 3,
     birthdayHusband: "1995-09-02",
     birthdayWife: "1997-05-15",
     birthdayKids: "Tevita: 2022-01-14"
@@ -1927,7 +1923,6 @@ const DEFAULT_LEADS = [
     source: "Open Home",
     stage: "sold", // Sold (held under 1 year)
     soldDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(), // Sold 25 days ago
-    score: 9,
     birthdayHusband: "1988-05-28",
     birthdayWife: "1989-12-09",
     birthdayKids: "Emma: 2016-10-04, Jack: 2019-07-19"
@@ -2420,8 +2415,6 @@ function renderTracker() {
     
     container.innerHTML = list.map((l, idx) => {
       const leadIdx = leads.indexOf(l);
-      const score = l.score || scoreLead(l);
-      const scoreClass = getScoreClass(score);
       
       let actionButtons = '';
       if (stage.key === 'qualified') {
@@ -2474,13 +2467,12 @@ function renderTracker() {
         <div class="lead-card tracker-lead-card-anim" style="padding: 12px; margin-bottom: 8px; animation-delay: ${idx * 0.05}s;" onclick="openLeadDetail(${leadIdx})">
           <div class="lead-header" style="margin-bottom: 6px;">
             <div class="lead-info-main">
-              <div class="lead-initials ${scoreClass}" style="width:26px; height:26px; font-size:11px;">${initials(l.name)}</div>
+              <div class="lead-initials st-plain" style="width:26px; height:26px; font-size:11px;">${initials(l.name)}</div>
               <div>
                 <div class="lead-name" style="font-size:13px; font-weight:600;">${l.name}</div>
                 <div class="lead-meta-sub" style="font-size:9px;">${l.area || 'Hamilton'} · ${l.source || 'Open Home'}</div>
               </div>
             </div>
-            <span class="badge ${scoreClass}" style="font-size: 8px; padding: 2px 4px;">Score: ${score}</span>
           </div>
           <div class="lead-details-text" style="font-size: 10px; margin-bottom: 6px; line-height: 1.3;">
             Income: ${l.income || 'N/A'} · Deposit: ${l.deposit || 'N/A'}${l.depositAmount ? ` (${l.depositAmount})` : ''}<br>
@@ -2545,13 +2537,11 @@ function switchView(tabId) {
 function updateSidebarStats() {
   const leads = appState.leads || [];
   const total = leads.length;
-  const hot = leads.filter(l => {
-    const s = l.score || scoreLead(l);
-    return s >= 7;
-  }).length;
+  // Leads still waiting in the Leads Database with no contact logged after 3 days
+  const notContacted = leads.filter(l => l && (!l.stage || l.stage === 'new') && getLeadStatus(l).key === 'notcontacted').length;
   
   document.getElementById('miniTotal').textContent = total;
-  document.getElementById('miniHot').textContent = hot;
+  document.getElementById('miniNotContacted').textContent = notContacted;
   
   // Update Pipeline funnels in leads tab
   const stageQualifiedEl = document.getElementById('stageQualified');
@@ -2566,33 +2556,28 @@ function updateSidebarStats() {
 }
 
 // ===== LEADS MODULE =====
-function scoreLead(lead) {
-  const income = (lead.income || '').toLowerCase();
-  const deposit = (lead.deposit || '').toLowerCase();
-  const timeframe = (lead.timeFrame || lead.purchaseTime || '').toLowerCase();
-  
-  let score = 1; // Base score
-  
-  // Income contribution (max 3 points)
-  if (income.includes('120') || income.includes('over')) score += 3;
-  else if (income.includes('80')) score += 2;
-  else if (income.includes('under') || income.length > 0) score += 1;
-  
-  // Deposit/KiwiSaver contribution (max 3 points)
-  if (deposit.includes('both')) score += 3;
-  else if (deposit.includes('deposit') || deposit.includes('kiwisaver')) score += 2;
-  else if (deposit.includes('saving') || deposit.includes('no')) score += 1;
-  
-  // Timeframe contribution (max 3 points)
-  if (timeframe.includes('immediately') || timeframe.includes('right away')) score += 3;
-  else if (timeframe.includes('3 month')) score += 2;
-  else if (timeframe.includes('6 month')) score += 1;
-  
-  return Math.min(10, score);
+// ===== LEAD CONTACT STATUS (replaced lead scoring, 5 Oct 2026) =====
+// Blue "New": under 3 days old, nothing logged yet.
+// Red "Not contacted": 3 days or older, still no note and no meeting booked.
+// Green "Contacted": Sopo has logged a note, or the lead has a meeting booked.
+// Green wins at any age, so a lead turns green the moment a note is saved.
+const LEAD_NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+
+function leadHasContact(l) {
+  if (!l) return false;
+  if (l.hasBooked || l.bookingTime || l.meetingType) return true;
+  if ((l.agent_notes || '').trim()) return true;
+  // Any lifecycle entry counts, except the automatic 3 day reminder, which is
+  // the system talking, not Sopo.
+  return (l.lifecycleLog || '').split('\n').some(line => line.trim() && !/Auto SMS reminder/i.test(line));
 }
 
-function getScoreClass(score) {
-  return score >= 7 ? 'hot' : score >= 4 ? 'warm' : 'cold';
+function getLeadStatus(l) {
+  if (leadHasContact(l)) return { key: 'contacted', cls: 'st-contacted', label: 'Contacted' };
+  const created = new Date((l && l.timestamp) || 0).getTime();
+  const age = isNaN(created) ? Infinity : Date.now() - created;
+  if (age < LEAD_NEW_WINDOW_MS) return { key: 'new', cls: 'st-new', label: 'New' };
+  return { key: 'notcontacted', cls: 'st-notcontacted', label: 'Not contacted' };
 }
 
 function initials(name) {
@@ -2622,10 +2607,11 @@ function renderLeads() {
   
   const today = new Date(); today.setHours(0,0,0,0);
   const filter = appState.currentFilter || 'all';
-  if (filter === 'hot') leads = leads.filter(l => (l.score || scoreLead(l)) >= 7);
-  else if (filter === 'warm') leads = leads.filter(l => { const s = l.score || scoreLead(l); return s >= 4 && s <= 6; });
-  else if (filter === 'cold') leads = leads.filter(l => (l.score || scoreLead(l)) <= 3);
+  if (filter === 'new' || filter === 'notcontacted' || filter === 'contacted') leads = leads.filter(l => getLeadStatus(l).key === filter);
   else if (filter === 'today') leads = leads.filter(l => l.timestamp && new Date(l.timestamp) >= today);
+
+  // Newest lead first, always, so a new arrival never gets shuffled into the middle of the list.
+  leads = leads.slice().sort((a, b) => (new Date(b.timestamp || 0).getTime() || 0) - (new Date(a.timestamp || 0).getTime() || 0));
   
   const searchTerm = (appState.leadSearchTerm || '').trim().toLowerCase();
   if (searchTerm) {
@@ -2649,8 +2635,7 @@ function renderLeads() {
   }
 
   container.innerHTML = leads.map((l, i) => {
-    const score = l.score || scoreLead(l);
-    const scoreClass = getScoreClass(score);
+    const status = getLeadStatus(l);
     const av = l.source || 'Open Home';
     
     // Check birthdays today
@@ -2673,13 +2658,13 @@ function renderLeads() {
     <div class="lead-card" onclick="openLeadDetail(${appState.leads.indexOf(l)})">
       <div class="lead-header">
         <div class="lead-info-main">
-          <div class="lead-initials ${scoreClass}">${initials(l.name)}</div>
+          <div class="lead-initials ${status.cls}">${initials(l.name)}</div>
           <div>
             <div class="lead-name">${l.name || 'Unknown'}</div>
             <div class="lead-meta-sub">${l.area || 'Hamilton'} · ${av}</div>
           </div>
         </div>
-        <span class="badge ${scoreClass}">Score: ${score}/10</span>
+        <span class="badge ${status.cls}">${status.label}</span>
       </div>
       <div class="lead-details-text">
         Income: ${l.income || 'N/A'}<br>
@@ -3411,15 +3396,14 @@ function openLeadDetail(idx) {
   const l = appState.leads[idx];
   if (!l) return;
   currentLeadIndex = idx;
-  const score = l.score || scoreLead(l);
-  const scoreClass = getScoreClass(score);
+  const status = getLeadStatus(l);
   
   document.getElementById('leadModalContent').innerHTML = `
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-      <div class="lead-initials ${scoreClass}" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
+      <div class="lead-initials ${status.cls}" style="width:48px;height:48px;font-size:16px;">${initials(l.name)}</div>
       <div style="flex:1;">
         <input type="text" class="settings-input" id="editLeadName" value="${l.name || ''}" style="font-size:16px; font-weight:700; padding:6px 10px; width:100%;">
-        <span class="badge ${scoreClass}" style="margin-top:4px;">Score: ${score}/10</span>
+        <span class="badge ${status.cls}" id="leadModalStatusBadge" style="margin-top:4px;">${status.label}</span>
       </div>
     </div>
     
@@ -3711,7 +3695,6 @@ function saveLeadDetails(idx) {
   l.birthdayHusband = document.getElementById('editLeadBdayHusband').value;
   l.birthdayWife = document.getElementById('editLeadBdayWife').value;
 
-  l.score = scoreLead(l); // Recalculate score
   
   saveState();
   closeLeadModal();
@@ -3785,9 +3768,8 @@ function atRecordToLead(record) {
   const stage = (rawStage && typeof rawStage === 'object') ? (rawStage.name || 'New Lead') : (rawStage || 'New Lead');
 
   // Try to parse quick info out of agent_notes for display
-  // Notes format: "detail... Income: X... Deposit: Y... Score X/10"
+  // Notes format: "detail... Income: X... Deposit: Y..."
   const incomeMatch = notes.match(/\$?(Over 120k|80k.120k|Under 80k|\d[\d,k]+)/i);
-  const scoreMatch = notes.match(/Score[:\s]+(\d+)\/10/i);
 
   return {
     airtableId: record.id,
@@ -3804,7 +3786,6 @@ function atRecordToLead(record) {
     employment: f[AT_FIELDS.employment] || f['employment_status'] || f['employment'] || '',
     stage: atStageToInternal(stage),
     airtableStage: stage,
-    score: parseInt(f['lead_score'] || scoreMatch?.[1] || '0') || null,
     agent_notes: notes,
     ai_debrief: f[AT_FIELDS.ai_debrief] || f['ai_debrief'] || null,
     lifecycleLog: f[AT_FIELDS.lifecycle_log] || f['lifecycle_log'] || '',
@@ -3931,6 +3912,17 @@ async function submitCallNote() {
 
   // Re-render the timeline immediately
   renderModalDebriefHistory();
+
+  // A saved note flips the lead to Contacted straight away, on the card,
+  // in the sidebar count, and on the badge in this open modal.
+  renderLeads();
+  updateSidebarStats();
+  const statusBadge = document.getElementById('leadModalStatusBadge');
+  if (statusBadge) {
+    const st = getLeadStatus(l);
+    statusBadge.className = 'badge ' + st.cls;
+    statusBadge.textContent = st.label;
+  }
 }
 
 // Write a stage change back to Airtable
