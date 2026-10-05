@@ -335,6 +335,10 @@ body::before {
 .badge.s-approved  { background:var(--gilt-wash); color:var(--gilt-bright); border-color:transparent; }
 .badge.s-settled   { background:var(--green-dim); color:var(--green); border-color:transparent; }
 .badge.s-lost      { background:var(--red-dim); color:var(--red); border-color:transparent; }
+/* Contact status ovals, Enquiry stage only (5 Oct 2026) */
+.badge.st-new          { background:rgba(127,169,217,0.14); color:var(--blue); border-color:var(--blue); }
+.badge.st-notcontacted { background:var(--red-dim); color:var(--red); border-color:var(--red); }
+.badge.st-contacted    { background:var(--green-dim); color:var(--green); border-color:var(--green); }
 
 .lead-amount { font-family:var(--serif); font-size:23px; color:var(--gilt-bright); line-height:1; margin-bottom:3px; }
 .lead-amount.none { color:var(--muted); font-size:14px; font-family:'Inter',sans-serif; font-weight:400; }
@@ -1548,7 +1552,11 @@ function switchView(id) {
   document.getElementById('headerTitle').textContent = VIEW_TITLES[id] || 'Studio';
   closeSidebar();
   if (id === 'viewTracker')  renderKanban();
-  if (id === 'viewCalendar') renderCalendar();
+  if (id === 'viewCalendar') {
+    const now = new Date();
+    calState = { selected: now, year: now.getFullYear(), month: now.getMonth() };
+    renderCalendar();
+  }
   if (id === 'viewNurture')  renderNurture();
 }
 
@@ -1569,6 +1577,32 @@ function initials(l) {
 }
 function stageMeta(k) { return STAGES.find(s => s.key === k) || STAGES[0]; }
 function liveLeads()  { return appState.leads.filter(l => !appState.deletedIds.includes(l.airtableId)); }
+
+/* ---------- CONTACT STATUS (5 Oct 2026, mirrors Sopo's studio) ----------
+   Shown on Enquiry stage clients only, since anyone further along has by
+   definition been spoken to.
+   Blue "New": under 3 days old, nothing logged by the adviser.
+   Red "Not contacted": 3 days on, still no activity, no note, no booking.
+   Green "Contacted": an activity or note is logged, or a meeting is booked.
+   Entries the system writes by itself do not count as contact. */
+const LEAD_NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+const SYSTEM_LOG_LABEL = /^(Check in received|Client added|Stage moved to )/i;
+function leadCreatedMs(l) {
+  const ms = new Date((l && (l.createdTime || l.createdAt)) || 0).getTime();
+  return isNaN(ms) ? 0 : ms;
+}
+function leadHasContact(l) {
+  if (!l) return false;
+  if (l.bookingTime) return true;
+  if ((l.notes || '').trim()) return true;
+  return (l.lifecycleLog || []).some(e => e && e.label && !SYSTEM_LOG_LABEL.test(e.label));
+}
+function getLeadStatus(l) {
+  if (leadHasContact(l)) return { key:'contacted', cls:'st-contacted', label:'Contacted' };
+  const created = leadCreatedMs(l);
+  if (created && Date.now() - created < LEAD_NEW_WINDOW_MS) return { key:'new', cls:'st-new', label:'New' };
+  return { key:'notcontacted', cls:'st-notcontacted', label:'Not contacted' };
+}
 
 /* ---------- AIRTABLE PROXY ----------
    Make runs one execution of this scenario at a time. Fire two requests at
@@ -1667,6 +1701,7 @@ function recordToLead(r) {
     zoomStart:  f.zoom_start_url || '',
     zoomId:     f.zoom_meeting_id || '',
     createdAt:  f.checkin_date || r.createdTime || '',
+    createdTime: r.createdTime || '',
     lifecycleLog: parseLog(f.lifecycle_log)
   };
 }
@@ -1784,7 +1819,8 @@ function getFiltered() {
     L = L.filter(l => [fullName(l), l.email, l.phone, l.area, l.lender, l.source]
       .some(v => String(v||'').toLowerCase().includes(q)));
   }
-  return L;
+  // Newest client first, always, so a new arrival never lands in the middle of the book.
+  return L.slice().sort((a, b) => leadCreatedMs(b) - leadCreatedMs(a));
 }
 
 function renderLeads() {
@@ -1816,6 +1852,7 @@ function renderLeads() {
       <div class="lead-amount-lbl">Indicative lending</div>
 
       <div class="tag-row">
+        ${l.stage === 'Enquiry' ? `<span class="badge ${getLeadStatus(l).cls}">${getLeadStatus(l).label}</span>` : ''}
         ${l.lender    ? `<span class="tag lender">${esc(l.lender)}</span>` : ''}
         ${l.segment   ? `<span class="tag">${esc(l.segment)}</span>` : ''}
         ${l.timeframe ? `<span class="tag">${esc(l.timeframe)}</span>` : ''}
@@ -2153,6 +2190,7 @@ function submitActivity(idx) {
   if (!selectedQuickLabel && !note) return;
   logActivity(l, selectedQuickLabel || 'Note', note);
   saveState();
+  renderLeads();
   document.getElementById('timelineList').innerHTML = renderTimeline(l);
   document.getElementById('quickNote').value = '';
   selectedQuickLabel = '';
