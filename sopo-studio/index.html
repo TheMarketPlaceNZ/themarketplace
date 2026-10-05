@@ -6752,7 +6752,10 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
 <!-- ===== NEW SCRIPTS REVIEW PROMPT =====
      Additive block. Fires once per batch of scripts sitting at review_status
      "New for review". Reuses the studio's existing modal shell and its
-     __scriptsProxy adapter, so nothing above this comment is touched. -->
+     __scriptsProxy adapter, so nothing above this comment is touched.
+     5 Oct 2026: the prompt now only shows for ONE DAY after a batch is added
+     (see PROMPT_WINDOW_MS below), then stays quiet whether or not she clicked
+     Review. Before this it asked on every login, indefinitely. -->
 <div class="modal-overlay" id="newScriptsModal">
   <div class="modal-sheet" style="max-width:440px;text-align:center;">
     <button class="modal-close-x" onclick="closeModal('newScriptsModal')">&times;</button>
@@ -6780,6 +6783,28 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
 (function(){
   'use strict';
   var KEY = 'sopo_scripts_seen_v1';
+  var FIRST_KEY = 'sopo_scripts_first_seen_v1';
+  var PROMPT_WINDOW_MS = 24 * 60 * 60 * 1000;   /* one day */
+
+  /* When was this batch added? Airtable knows: the newest pending script's
+     client_notified_at, or failing that its created time. If neither comes
+     back, fall back to the first moment this device saw the batch, so the
+     prompt still stops after a day instead of nagging forever. */
+  function batchAddedMs(pending, sig){
+    var newest = 0;
+    pending.forEach(function(r){
+      var f = (r && r.fields) || {};
+      var ms = Date.parse(f.client_notified_at || r.createdTime || '');
+      if (ms && ms > newest) newest = ms;
+    });
+    if (newest) return newest;
+    try {
+      var saved = JSON.parse(localStorage.getItem(FIRST_KEY) || 'null');
+      if (saved && saved.sig === sig && saved.at) return saved.at;
+      localStorage.setItem(FIRST_KEY, JSON.stringify({ sig: sig, at: Date.now() }));
+    } catch(e){}
+    return Date.now();
+  }
 
   function seen(){ try { return localStorage.getItem(KEY) || ''; } catch(e){ return ''; } }
   function markSeen(sig){ try { localStorage.setItem(KEY, sig); } catch(e){} }
@@ -6816,6 +6841,7 @@ window.__scriptsProxy = function(action, payload){ return airtableProxyCall(acti
       var sig = pending.map(function(r){ return r.id; }).sort().join(',');
       window.__newScriptsSig = sig;
       if (seen() === sig) return;
+      if (Date.now() - batchAddedMs(pending, sig) > PROMPT_WINDOW_MS) return;   /* older than a day, stay quiet */
 
       var body = document.getElementById('newScriptsBody');
       if (body) {
